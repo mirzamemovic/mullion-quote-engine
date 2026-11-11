@@ -1,0 +1,59 @@
+# Local checks before each commit. Turn them on once after cloning:
+#   uv run --project backend pre-commit install
+# The local hooks use the tool versions pinned in backend/uv.lock and frontend/package-lock.json,
+# so a commit is checked with exactly what CI runs.
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: check-merge-conflict
+      - id: check-yaml
+      - id: check-toml
+      - id: check-json
+      - id: check-added-large-files
+      - id: end-of-file-fixer
+      - id: trailing-whitespace
+        args: [--markdown-linebreak-ext=md]
+      - id: mixed-line-ending
+        args: [--fix=lf]
+
+  - repo: local
+    hooks:
+      - id: ruff-check
+        name: ruff check (backend)
+        entry: uv run --project backend ruff check --fix
+        language: system
+        files: ^backend/.*\.py$
+
+      - id: ruff-format
+        name: ruff format (backend)
+        entry: uv run --project backend ruff format
+        language: system
+        files: ^backend/.*\.py$
+
+      - id: mypy
+        name: mypy (backend)
+        entry: uv run --directory backend mypy
+        language: system
+        files: ^backend/.*\.py$
+        pass_filenames: false
+
+      - id: lint-imports
+        name: import-linter (engine purity)
+        entry: uv run --directory backend lint-imports
+        language: system
+        files: ^backend/src/.*\.py$
+        pass_filenames: false
+
+      - id: eslint
+        name: eslint (frontend)
+        entry: npm --prefix frontend run lint
+        language: system
+        files: ^frontend/.*\.(ts|tsx)$
+        pass_filenames: false
+
+      - id: only-human-todos
+        name: no TODO except TODO(human)
+        entry: TODO(?!\(human\))
+        language: pygrep
+        types_or: [python, ts, tsx, javascript]

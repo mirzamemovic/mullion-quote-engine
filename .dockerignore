@@ -1,0 +1,20 @@
+# Keep the build context small and free of secrets and local state.
+.git
+.claude
+.github
+docs
+
+.env
+.env.*
+infra/secrets
+
+**/.venv
+**/__pycache__
+**/.pytest_cache
+**/.mypy_cache
+**/.ruff_cache
+**/.coverage
+**/htmlcov
+
+**/node_modules
+frontend/dist
