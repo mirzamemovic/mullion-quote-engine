@@ -7,7 +7,7 @@ Statuses: todo / in progress / waiting for Mirza / blocked / done.
 
 | Milestone | Status | Branch | PR | Blockers / notes |
 |---|---|---|---|---|
-| M0 Repo and tooling | in progress | `feat/m0-repo-tooling` | | Plan approved by Mirza on 2026-11-11 (see "M0 plan" below) |
+| M0 Repo and tooling | in progress | `feat/m0-repo-tooling` | | Plan approved 2026-11-11. Session stopped early (usage limit); see "M0 status" below. |
 | M1 Requirements | waiting for Mirza | | | Human-led with the workshop owner. Claude never works on this. |
 | M2 Engine types and measuring | todo | | | |
 | M3 Cut rules | todo | | | Formulas are Mirza's (section 13) |
@@ -19,6 +19,30 @@ Statuses: todo / in progress / waiting for Mirza / blocked / done.
 | M9 Deploy and operations | todo | | | Files only (Dockerfile, compose, scripts, workflows). No real server without Mirza. |
 | M10 Shadow mode and live use | waiting for Mirza | | | Human-led with the workshop owner. Claude never works on this. |
 | M11 Docs and presentation | todo | | | Case study, ADR decisions and video are Mirza's |
+
+## M0 status (end of session 2026-11-11)
+
+The session stopped early because the usage limit was reached. Everything is committed on `feat/m0-repo-tooling`; `main` is untouched and nothing is pushed.
+
+Done and verified (commands run, all green):
+- Hook: PowerShell, backslash and case coverage. `pytest .claude/hooks`: 22 passed, 7 xfailed (waiting for `POWERSHELL_WRITE_NAMES`).
+- Backend: `ruff check`, `ruff format --check`, `mypy`, `lint-imports`, `pytest --cov` (6 passed, 100% coverage, engine floor command works). Engine purity was proven by planting a temporary forbidden import: import-linter and the purity test both failed, then it was removed.
+- Frontend: `npm run lint`, `npm run typecheck`, `npm test` (1 passed), `npm run build`. Type-aware linting was proven with a temporary un-awaited promise.
+
+Written but not verified:
+- `compose.yaml`, `infra/Dockerfile`, `.dockerignore`: Docker is not installed on this machine.
+- `.pre-commit-config.yaml`: not run yet.
+
+Still to do in M0:
+- `.github/workflows/ci.yml` (backend, frontend, stack jobs) and `.github/dependabot.yml`. Versions already looked up: actions/checkout v7.0.1, actions/setup-node v7.1.0, astral-sh/setup-uv v10.3.3.
+- `README.md` skeleton and `docs/adr/0007-m0-tooling.md`.
+- Run pre-commit on all files, the final full check run, the fresh-context subagent review, and the PR text.
+
+Notes for Mirza:
+- Starlette's test client now warns that `httpx` is deprecated and suggests `httpx2`. PLAN.md names `httpx`, so nothing was changed. A decision is needed before the warning becomes an error.
+- `npm audit` reports 10 moderate findings, all one advisory in `minimatch` through ESLint tooling (development only). That is below the `--audit-level=high` bar in PLAN.md section 11.
+- Packages added beyond the approved list, each part of a named tool: `@eslint/js` (ESLint's own rule set), `@testing-library/dom` (required by Testing Library for React).
+- `quote_engine/db/` exists as an empty package because import-linter rejects a contract that names a missing module.
 
 ## Gates
 
@@ -52,7 +76,7 @@ Only Mirza changes a gate's status.
 
 | Date | Deviation | Reason |
 |---|---|---|
-| 2026-11-11 | `protect_human_files.py` extended beyond the kit: PowerShell commands, backslash paths and case-insensitive names (uncommitted, pending review). | The kit's hook only checked Bash; on Windows, PowerShell writes were not checked. |
+| 2026-11-11 | `protect_human_files.py` extended beyond the kit: PowerShell commands, backslash paths and case-insensitive names (commit `a1eb108`, for Mirza's review). | The kit's hook only checked Bash; on Windows, PowerShell writes were not checked. |
 
 ## M0 plan (approved 2026-11-11)
 
