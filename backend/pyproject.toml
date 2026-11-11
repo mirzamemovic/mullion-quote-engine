@@ -1,0 +1,91 @@
+[project]
+name = "quote-engine"
+version = "0.1.0"
+description = "Quoting and cut-optimization app for a PVC window workshop"
+authors = [
+    { name = "Mirza Memovic", email = "287782520+mirzamemovic@users.noreply.github.com" }
+]
+requires-python = ">=3.13"
+dependencies = [
+    "fastapi>=0.162.4",
+    "pydantic>=2.14.3",
+    "uvicorn>=0.54.0",
+]
+
+[build-system]
+requires = ["uv_build>=0.13.7,<0.14.0"]
+build-backend = "uv_build"
+
+[tool.ruff]
+line-length = 100
+target-version = "py313"
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = [
+    "E", "W", "F",  # pycodestyle, pyflakes
+    "I",            # import order
+    "N",            # naming
+    "UP",           # modern syntax
+    "B",            # likely bugs
+    "S",            # security
+    "C4", "SIM",    # simpler code
+    "PT",           # pytest style
+    "T20",          # no print statements
+    "ERA",          # no commented-out code
+    "RUF",
+]
+
+[tool.ruff.lint.per-file-ignores]
+# Tests use assert, and start the project's own interpreter in a subprocess.
+"tests/**" = ["S101", "S603"]
+
+[tool.mypy]
+python_version = "3.13"
+strict = true
+warn_unreachable = true
+files = ["src", "tests"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = ["--strict-markers", "--strict-config", "-ra"]
+markers = [
+    "slow: property tests with many examples and the benchmark (skip with -m \"not slow\")",
+]
+
+[tool.coverage.run]
+source = ["quote_engine"]
+branch = true
+
+[tool.coverage.report]
+fail_under = 80
+show_missing = true
+skip_covered = true
+
+[tool.importlinter]
+root_package = "quote_engine"
+include_external_packages = true
+
+[[tool.importlinter.contracts]]
+name = "The engine is pure: no web, database or validation framework"
+type = "forbidden"
+source_modules = ["quote_engine.engine"]
+forbidden_modules = [
+    "fastapi",
+    "sqlalchemy",
+    "pydantic",
+    "httpx",
+    "quote_engine.api",
+    "quote_engine.db",
+]
+
+[dependency-groups]
+dev = [
+    "httpx>=0.28.1",
+    "import-linter>=2.16",
+    "mypy>=2.4.1",
+    "pre-commit>=4.7.0",
+    "pytest>=9.2.0",
+    "pytest-cov>=7.1.0",
+    "ruff>=0.17.4",
+]
