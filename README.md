@@ -5,6 +5,8 @@ The owner measures a window opening on site and gets a priced quote, a cut list 
 
 **Status:** under construction. Milestone progress is in [docs/PROGRESS.md](docs/PROGRESS.md).
 
+**About the numbers:** prices, margins and cutting constants in this repository are sample defaults for development. The workshop's real prices, margins and client data are never stored here.
+
 ## What it will do
 
 - Turn window sizes into a cut list, glass list and hardware list, with the formula behind every piece.

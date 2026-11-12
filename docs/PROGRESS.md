@@ -110,7 +110,8 @@ Only Mirza changes a gate's status.
 
 | What | Where | Needed for |
 |---|---|---|
-| Create the GitHub repository, push `main`, push `feat/m0-repo-tooling` and open the pull request (text under "M0 status") | GitHub | CI, which M0's "done when" needs |
+| Review and merge the M0 pull request once CI is green | GitHub | M0's "done when"; M2 starts from the merged `main` |
+| Turn on the repository's protections: secret scanning with push protection, a rule that protects `main`, approval for workflow runs from outside contributors; check that the account's spending limits are zero | GitHub settings | The repository is public. These are account and security settings, so they are Mirza's to change. |
 | Fill in the PowerShell write-command list (`TODO(human)`) | `.claude/hooks/protect_human_files.py`, `POWERSHELL_WRITE_NAMES` | The protection hook to block PowerShell cmdlets such as `Set-Content`; 7 tests are `xfail` until then |
 | Decide: keep `httpx` or switch to `httpx2` | backend dev dependencies | Starlette's test client warns that `httpx` is deprecated |
 | Review `docs/adr/0007-m0-tooling.md` (status: proposed) | docs | ADR decisions are Mirza's (PLAN.md section 13) |
@@ -127,6 +128,9 @@ Only Mirza changes a gate's status.
 | 2026-11-12 | The M0 tooling decisions are recorded in `docs/adr/0007-m0-tooling.md` (TypeScript 6.0.x, LF endings, action pinning, pre-commit through `uv`, the `db` placeholder package and others). | One place for the reasons; the ten decisions in the M0 plan were approved by Mirza on 2026-11-11. |
 | 2026-11-12 | The pre-commit git hook is not installed automatically. | Environments built inside the Claude app are private to it, so an auto-installed hook could block commits made from a normal terminal. The README gives the one command. |
 | 2026-11-12 | Mirza approved two frontend packages that were added without asking first: `@eslint/js` and `@testing-library/dom`. | ESLint's base rules need the first; Testing Library for React requires the second. CLAUDE.md asks for approval before any dependency PLAN.md does not name. |
+| 2026-11-12 | The GitHub repository `mirzamemovic/quote-engine` is public (created by Mirza). Before every push, Claude audits everything that would be published (secrets, private data, workflow and billing risks) and reports first. | Mirza's standing instruction. |
+| 2026-11-12 | Claude made the first push of `main` (the kit commit only), at Mirza's request. | A one-time exception to "never push to `main`". Every later change reaches `main` through a pull request. |
+| 2026-11-12 | The README states that numbers in the repository are sample defaults. Nothing was removed from the docs. | The docs name the workshop's town and a default margin. Mirza chose a note over removing them. |
 | 2026-11-12 | Tests waiting for Mirza use non-strict `xfail`. | His implementation shows as unexpectedly passing without turning CI red; the marker is then removed. |
 
 ## Deviations from PLAN.md
