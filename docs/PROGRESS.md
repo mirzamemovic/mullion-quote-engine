@@ -45,7 +45,7 @@ Proof that the guards bite (temporary files, never committed):
 - An un-awaited promise made ESLint fail.
 - After the app restart, the live protection hook blocked a Bash probe and a PowerShell probe.
 
-Fresh-context review (subagent, full diff against PLAN.md M0 and the CLAUDE.md hard rules): no gap in the "done when" commands. It found three holes in the protection hook, and a fourth turned up while writing the tests. All four are fixed in commit `48b8623`, each with a test that failed first:
+Fresh-context review (subagent, full diff against PLAN.md M0 and the CLAUDE.md hard rules): no gap in the "done when" commands. It found three holes in the protection hook, and a fourth turned up while writing the tests. All four are fixed in commit `c1a7106`, each with a test that failed first:
 - a quoted redirect target containing spaces (this project's folder name has spaces);
 - stream redirects such as `2>` and `&>`;
 - a separator or bracket glued to a path, as in `git checkout .; npm ci`;
@@ -53,7 +53,7 @@ Fresh-context review (subagent, full diff against PLAN.md M0 and the CLAUDE.md h
 
 The review also flagged two packages added without asking first, `@eslint/js` and `@testing-library/dom`. Mirza approved both on 2026-11-12.
 
-First CI run (2026-11-12, pull request #1, commit `6386493`): all three jobs passed in 1m 14s (Backend 20s, Frontend 1m 10s, Local stack 30s). It was the first time `ci.yml`, `compose.yaml` and `infra/Dockerfile` ran anywhere, so M0's "done when" (the commands pass locally and in CI) is met. Docker is still not installed on the development machine, so the stack has not been run locally.
+First CI run (2026-11-12, pull request #1, commit `75541e3`): all three jobs passed in 1m 14s (Backend 20s, Frontend 1m 10s, Local stack 30s). It was the first time `ci.yml`, `compose.yaml` and `infra/Dockerfile` ran anywhere, so M0's "done when" (the commands pass locally and in CI) is met. Docker is still not installed on the development machine, so the stack has not been run locally.
 
 Before the push, every commit on both branches was audited for secrets, private data, and workflow or billing risks. Nothing was found; the only match was the local-development database password default in `compose.yaml`, which is not a real credential.
 
@@ -122,7 +122,7 @@ Only Mirza changes a gate's status.
 
 | Date | Decision | Reason |
 |---|---|---|
-| 2026-11-11 | The repository root is the existing project folder; the kit files were moved into it unchanged (commit `ccf14c2`). | `CLAUDE.md` and `.claude/` must sit where Claude runs. |
+| 2026-11-11 | The repository root is the existing project folder; the kit files were moved into it unchanged (commit `86fb72f`). | `CLAUDE.md` and `.claude/` must sit where Claude runs. |
 | 2026-11-11 | Commits use Mirza's GitHub noreply address, set for this repo only. | Keeps the real email out of a public history. |
 | 2026-11-11 | Python 3.13 is managed by `uv`; no system Python is installed. | PLAN.md section 3 asks for Python 3.13+ and `uv`. |
 | 2026-11-12 | The M0 tooling decisions are recorded in `docs/adr/0007-m0-tooling.md` (TypeScript 6.0.x, LF endings, action pinning, pre-commit through `uv`, the `db` placeholder package and others). | One place for the reasons; the ten decisions in the M0 plan were approved by Mirza on 2026-11-11. |
@@ -131,14 +131,15 @@ Only Mirza changes a gate's status.
 | 2026-11-12 | The GitHub repository `mirzamemovic/quote-engine` is public (created by Mirza). Before every push, Claude audits everything that would be published (secrets, private data, workflow and billing risks) and reports first. | Mirza's standing instruction. |
 | 2026-11-12 | Claude made the first push of `main` (the kit commit only), at Mirza's request. | A one-time exception to "never push to `main`". Every later change reaches `main` through a pull request. |
 | 2026-11-12 | The README states that numbers in the repository are sample defaults. Nothing was removed from the docs. | The docs name the workshop's town and a default margin. Mirza chose a note over removing them. |
+| 2026-11-12 | Commits list Mirza as the only author, with no co-author line. The existing history was rewritten once to match, so commit IDs from before that change are different now. Each pull request still ends with its `AI use:` line. | Mirza's instruction. |
 | 2026-11-12 | Tests waiting for Mirza use non-strict `xfail`. | His implementation shows as unexpectedly passing without turning CI red; the marker is then removed. |
 
 ## Deviations from PLAN.md
 
 | Date | Deviation | Reason |
 |---|---|---|
-| 2026-11-11 | `protect_human_files.py` extended beyond the kit: PowerShell commands, backslash paths and case-insensitive names (commit `a1eb108`, for Mirza's review). | The kit's hook only checked Bash; on Windows, PowerShell writes were not checked. |
-| 2026-11-12 | The hook's redirect and chaining checks changed from the kit (commit `48b8623`): quoted targets, `2>` and `&>`, punctuation glued to a path, upper-case command names. | Holes found by the fresh-context review. |
+| 2026-11-11 | `protect_human_files.py` extended beyond the kit: PowerShell commands, backslash paths and case-insensitive names (commit `c9f9970`, for Mirza's review). | The kit's hook only checked Bash; on Windows, PowerShell writes were not checked. |
+| 2026-11-12 | The hook's redirect and chaining checks changed from the kit (commit `c1a7106`): quoted targets, `2>` and `&>`, punctuation glued to a path, upper-case command names. | Holes found by the fresh-context review. |
 | 2026-11-12 | CI has a third job, `stack`, in M0. Approved in the M0 plan. | Docker is not available on the development machine. |
 | 2026-11-12 | mypy is strict for the whole backend, not only the engine. Approved in the M0 plan. | Cheap while the code is small. |
 | 2026-11-12 | The health endpoint has no database check yet. Approved in the M0 plan. | There is no database layer until M6. |
@@ -147,7 +148,7 @@ Only Mirza changes a gate's status.
 
 ### Context
 
-The repository holds only the Claude kit (commit `ccf14c2`) plus `docs/PROGRESS.md`. M0 (PLAN.md section 14) builds the project skeleton so that every later milestone starts with tests, linting, type checks and CI already in place.
+The repository holds only the Claude kit (commit `86fb72f`) plus `docs/PROGRESS.md`. M0 (PLAN.md section 14) builds the project skeleton so that every later milestone starts with tests, linting, type checks and CI already in place.
 
 Target: `uv run pytest`, `uv run lint-imports`, `npm test` and `npm run build` pass locally, and the same checks are defined for CI.
 
