@@ -30,6 +30,11 @@ def test_pct_keeps_the_unit_for_lengths() -> None:
     assert pct(Mm(4400), Bp(500)) == 220
 
 
+def test_pct_works_on_areas_and_basis_points() -> None:
+    assert pct(Mm2(300_000), Bp(1000)) == 30_000
+    assert pct(Bp(2500), Bp(5000)) == 1250
+
+
 @pytest.mark.parametrize(
     ("length_mm", "cents_per_m", "expected"),
     [

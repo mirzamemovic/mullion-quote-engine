@@ -109,6 +109,11 @@ def test_system_constants_have_no_default_values() -> None:
         pytest.param({"bar_end_trim_mm": Mm(-1)}, id="negative-end-trim"),
         pytest.param({"steel_shortening_mm": Mm(-1)}, id="negative-steel-shortening"),
         pytest.param({"min_offcut_mm": Mm(-1)}, id="negative-min-offcut"),
+        pytest.param({"deductions": {"sample": Mm(-1)}}, id="negative-deduction"),
+        pytest.param({"deductions": {"sample": 12.5}}, id="deduction-not-whole"),
+        pytest.param({"bar_length_mm": {Role.FRAME: 6000.0}}, id="bar-length-not-whole"),
+        pytest.param({"kerf_mm": 4.0}, id="kerf-not-whole"),
+        pytest.param({"kerf_mm": True}, id="kerf-is-a-bool"),
     ],
 )
 def test_system_constants_reject_bad_values(
@@ -124,11 +129,20 @@ def test_system_constants_reject_bad_values(
         pytest.param({"width_mm": Mm(0)}, id="zero-width"),
         pytest.param({"height_mm": Mm(-5)}, id="negative-height"),
         pytest.param({"qty": 0}, id="zero-quantity"),
+        pytest.param({"width_mm": 1200.5}, id="width-not-whole"),
+        pytest.param({"qty": True}, id="quantity-is-a-bool"),
+        pytest.param({"construction_type": " "}, id="blank-construction-type"),
+        pytest.param({"openings": ()}, id="no-openings"),
     ],
 )
 def test_position_rejects_bad_values(changes: dict[str, Any]) -> None:
     with pytest.raises(InvalidInput, match="P1"):
         a_position(**changes)
+
+
+def test_position_needs_a_ref() -> None:
+    with pytest.raises(InvalidInput, match="position ref"):
+        a_position(ref="")
 
 
 @pytest.mark.parametrize(
@@ -139,6 +153,8 @@ def test_position_rejects_bad_values(changes: dict[str, Any]) -> None:
         pytest.param({"angle_right": 0}, id="right-angle-not-45-or-90"),
         pytest.param({"qty": 0}, id="zero-quantity"),
         pytest.param({"formula": "   "}, id="blank-formula"),
+        pytest.param({"length_mm": 806.0}, id="length-not-whole"),
+        pytest.param({"angle_left": 45.0}, id="angle-not-whole"),
     ],
 )
 def test_piece_rejects_bad_values(changes: dict[str, Any]) -> None:
@@ -189,6 +205,20 @@ def test_cut_list_holds_everything_a_job_needs() -> None:
     assert cut_list.hardware_sets == (hardware,)
 
 
+def test_hardware_need_rejects_a_fixed_field() -> None:
+    with pytest.raises(InvalidInput, match="fixed field"):
+        HardwareNeed(position_ref="P1", opening=Opening.FIXED, qty=1)
+
+
 def test_cut_list_rejects_a_negative_gasket_length() -> None:
     with pytest.raises(InvalidInput):
         CutList(pieces=(), steel=(), glass=(), hardware_sets=(), gasket_mm=Mm(-1))
+
+
+def test_cut_list_keeps_steel_and_profiles_apart() -> None:
+    steel = a_piece(role=Role.STEEL, label="frame steel", angle_left=90, angle_right=90)
+
+    with pytest.raises(InvalidInput, match="steel belongs in the steel list"):
+        CutList(pieces=(steel,), steel=(), glass=(), hardware_sets=(), gasket_mm=Mm(0))
+    with pytest.raises(InvalidInput, match="only steel belongs"):
+        CutList(pieces=(), steel=(a_piece(),), glass=(), hardware_sets=(), gasket_mm=Mm(0))

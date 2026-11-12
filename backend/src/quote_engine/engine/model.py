@@ -50,6 +50,17 @@ def _require(condition: bool, message: str) -> None:
         raise InvalidInput(message)
 
 
+def _whole(value: object, what: str, *, minimum: int) -> None:
+    """Refuse anything that is not a whole number of at least ``minimum`` (``bool`` included)."""
+    if isinstance(value, bool) or not isinstance(value, int):
+        raise InvalidInput(f"{what} must be a whole number, got {value!r}")
+    _require(value >= minimum, f"{what} must be at least {minimum}, got {value}")
+
+
+def _text(value: str, what: str) -> None:
+    _require(bool(value.strip()), f"{what} must not be empty")
+
+
 @dataclass(frozen=True)
 class SystemConstants:
     """One version of a profile system's sheet.
@@ -70,9 +81,11 @@ class SystemConstants:
     def __post_init__(self) -> None:
         object.__setattr__(self, "bar_length_mm", MappingProxyType(dict(self.bar_length_mm)))
         object.__setattr__(self, "deductions", MappingProxyType(dict(self.deductions)))
-        _require(bool(self.system_id.strip()), "system_id must not be empty")
+        _text(self.system_id, "system_id")
         for role, length in self.bar_length_mm.items():
-            _require(length > 0, f"bar length for {role} must be above zero, got {length}")
+            _whole(length, f"bar length for {role}", minimum=1)
+        for deduction, value in self.deductions.items():
+            _whole(value, f"deduction '{deduction}'", minimum=0)
         for name in (
             "weld_allowance_mm",
             "kerf_mm",
@@ -80,8 +93,7 @@ class SystemConstants:
             "steel_shortening_mm",
             "min_offcut_mm",
         ):
-            value = getattr(self, name)
-            _require(value >= 0, f"{name} must not be negative, got {value}")
+            _whole(getattr(self, name), name, minimum=0)
 
 
 @dataclass(frozen=True)
@@ -98,9 +110,12 @@ class PositionSpec:
     openings: tuple[Opening, ...]
 
     def __post_init__(self) -> None:
-        _require(self.width_mm > 0, f"{self.ref}: width must be above zero, got {self.width_mm}")
-        _require(self.height_mm > 0, f"{self.ref}: height must be above zero, got {self.height_mm}")
-        _require(self.qty >= 1, f"{self.ref}: quantity must be at least 1, got {self.qty}")
+        _text(self.ref, "position ref")
+        _text(self.construction_type, f"{self.ref}: construction type")
+        _whole(self.width_mm, f"{self.ref}: width", minimum=1)
+        _whole(self.height_mm, f"{self.ref}: height", minimum=1)
+        _whole(self.qty, f"{self.ref}: quantity", minimum=1)
+        _require(bool(self.openings), f"{self.ref}: at least one field (opening) is needed")
 
 
 @dataclass(frozen=True)
@@ -118,12 +133,13 @@ class Piece:
 
     def __post_init__(self) -> None:
         where = f"{self.position_ref} {self.label}"
-        _require(self.length_mm > 0, f"{where}: length must be above zero, got {self.length_mm}")
+        _whole(self.length_mm, f"{where}: length", minimum=1)
         for side, angle in (("left", self.angle_left), ("right", self.angle_right)):
             _require(
-                angle in ALLOWED_ANGLES, f"{where}: {side} angle must be 45 or 90, got {angle}"
+                type(angle) is int and angle in ALLOWED_ANGLES,
+                f"{where}: {side} angle must be 45 or 90, got {angle!r}",
             )
-        _require(self.qty >= 1, f"{where}: quantity must be at least 1, got {self.qty}")
+        _whole(self.qty, f"{where}: quantity", minimum=1)
         _require(bool(self.formula.strip()), f"{where}: every piece needs its formula")
 
 
@@ -141,9 +157,9 @@ class GlassPane:
 
     def __post_init__(self) -> None:
         where = f"{self.position_ref} glass"
-        _require(self.width_mm > 0, f"{where}: width must be above zero, got {self.width_mm}")
-        _require(self.height_mm > 0, f"{where}: height must be above zero, got {self.height_mm}")
-        _require(self.qty >= 1, f"{where}: quantity must be at least 1, got {self.qty}")
+        _whole(self.width_mm, f"{where}: width", minimum=1)
+        _whole(self.height_mm, f"{where}: height", minimum=1)
+        _whole(self.qty, f"{where}: quantity", minimum=1)
         _require(bool(self.formula_w.strip()), f"{where}: the width needs its formula")
         _require(bool(self.formula_h.strip()), f"{where}: the height needs its formula")
 
@@ -157,10 +173,9 @@ class HardwareNeed:
     qty: int
 
     def __post_init__(self) -> None:
-        _require(
-            self.qty >= 1,
-            f"{self.position_ref} hardware: quantity must be at least 1, got {self.qty}",
-        )
+        where = f"{self.position_ref} hardware"
+        _require(self.opening is not Opening.FIXED, f"{where}: a fixed field has no hardware set")
+        _whole(self.qty, f"{where}: quantity", minimum=1)
 
 
 @dataclass(frozen=True)
@@ -174,4 +189,14 @@ class CutList:
     gasket_mm: Mm
 
     def __post_init__(self) -> None:
-        _require(self.gasket_mm >= 0, f"gasket length must not be negative, got {self.gasket_mm}")
+        _whole(self.gasket_mm, "gasket length", minimum=0)
+        for piece in self.pieces:
+            _require(
+                piece.role is not Role.STEEL,
+                f"{piece.position_ref} {piece.label}: steel belongs in the steel list",
+            )
+        for piece in self.steel:
+            _require(
+                piece.role is Role.STEEL,
+                f"{piece.position_ref} {piece.label}: only steel belongs in the steel list",
+            )
