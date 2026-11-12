@@ -1,0 +1,41 @@
+"""Unit types and rounding helpers for the engine (PLAN.md section 2).
+
+Every quantity is a whole number: lengths in millimetres, areas in square millimetres, money in
+cents and percentages in basis points (2500 = 25%). Nothing here uses a float.
+
+Rounding is half up, done once per line with the helpers below. On a tie the result moves towards
+positive infinity, so 0.5 becomes 1 and -12.5 becomes -12.
+"""
+
+from typing import NewType, overload
+
+Mm = NewType("Mm", int)
+Mm2 = NewType("Mm2", int)
+Cents = NewType("Cents", int)
+Bp = NewType("Bp", int)
+
+BP_PER_WHOLE = 10_000
+MM_PER_M = 1_000
+MM2_PER_M2 = 1_000_000
+
+
+@overload
+def pct(amount: Cents, bp: Bp) -> Cents: ...
+@overload
+def pct(amount: Mm, bp: Bp) -> Mm: ...
+def pct(amount: int, bp: int) -> int:
+    """Return ``bp`` basis points of ``amount``, rounded half up.
+
+    The result keeps the unit of ``amount``: 2500 bp of 1000 cents is 250 cents.
+    """
+    return (amount * bp + BP_PER_WHOLE // 2) // BP_PER_WHOLE
+
+
+def per_metre(length_mm: Mm, cents_per_m: Cents) -> Cents:
+    """Return the price of ``length_mm`` at ``cents_per_m`` per metre, rounded half up."""
+    return Cents((length_mm * cents_per_m + MM_PER_M // 2) // MM_PER_M)
+
+
+def per_m2(area_mm2: Mm2, cents_per_m2: Cents) -> Cents:
+    """Return the price of ``area_mm2`` at ``cents_per_m2`` per square metre, rounded half up."""
+    return Cents((area_mm2 * cents_per_m2 + MM2_PER_M2 // 2) // MM2_PER_M2)
