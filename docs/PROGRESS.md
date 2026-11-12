@@ -7,7 +7,7 @@ Statuses: todo / in progress / waiting for Mirza / blocked / done.
 
 | Milestone | Status | Branch | PR | Blockers / notes |
 |---|---|---|---|---|
-| M0 Repo and tooling | waiting for Mirza | `feat/m0-repo-tooling` | not opened (no remote yet) | Built and green locally. Needs the GitHub repository for CI, and Mirza's sign-off on two packages. See "M0 status". |
+| M0 Repo and tooling | waiting for Mirza | `feat/m0-repo-tooling` | not opened (no remote yet) | Built and green locally. Needs the GitHub repository for CI. See "M0 status". |
 | M1 Requirements | waiting for Mirza | | | Human-led with the workshop owner. Claude never works on this. |
 | M2 Engine types and measuring | todo | | | Next for Claude. Branches from `main`, so it starts once M0 is merged there (it builds on the backend project). |
 | M3 Cut rules | todo | | | Formulas are Mirza's (section 13) |
@@ -51,7 +51,7 @@ Fresh-context review (subagent, full diff against PLAN.md M0 and the CLAUDE.md h
 - a separator or bracket glued to a path, as in `git checkout .; npm ci`;
 - upper-case command names in PowerShell.
 
-The review also flagged the two packages listed under "Waiting for Mirza".
+The review also flagged two packages added without asking first, `@eslint/js` and `@testing-library/dom`. Mirza approved both on 2026-11-12.
 
 Never run anywhere yet:
 - `compose.yaml` and `infra/Dockerfile`: no Docker on this machine. The review read them and found no fault.
@@ -90,7 +90,7 @@ How it was tested
 - Not tested: the compose file, the Dockerfile and the CI workflow have never run. This pull request's CI run is their first test.
 
 For the reviewer
-- Two packages were added without asking first: `@eslint/js` and `@testing-library/dom`. Please approve or reject them.
+- Two packages beyond the plan's approved list, `@eslint/js` and `@testing-library/dom`, were approved by Mirza on 2026-11-12.
 - `POWERSHELL_WRITE_NAMES` in `.claude/hooks/protect_human_files.py` is yours to fill in.
 - ADR 0007 is a proposal.
 
@@ -110,7 +110,6 @@ Only Mirza changes a gate's status.
 
 | What | Where | Needed for |
 |---|---|---|
-| Approve or reject two packages added without asking first: `@eslint/js` and `@testing-library/dom` | `frontend/package.json` | CLAUDE.md says to ask before adding a dependency PLAN.md does not name. ESLint's base rules need the first; Testing Library for React requires the second. |
 | Create the GitHub repository, push `main`, push `feat/m0-repo-tooling` and open the pull request (text under "M0 status") | GitHub | CI, which M0's "done when" needs |
 | Fill in the PowerShell write-command list (`TODO(human)`) | `.claude/hooks/protect_human_files.py`, `POWERSHELL_WRITE_NAMES` | The protection hook to block PowerShell cmdlets such as `Set-Content`; 7 tests are `xfail` until then |
 | Decide: keep `httpx` or switch to `httpx2` | backend dev dependencies | Starlette's test client warns that `httpx` is deprecated |
@@ -127,6 +126,7 @@ Only Mirza changes a gate's status.
 | 2026-11-11 | Python 3.13 is managed by `uv`; no system Python is installed. | PLAN.md section 3 asks for Python 3.13+ and `uv`. |
 | 2026-11-12 | The M0 tooling decisions are recorded in `docs/adr/0007-m0-tooling.md` (TypeScript 6.0.x, LF endings, action pinning, pre-commit through `uv`, the `db` placeholder package and others). | One place for the reasons; the ten decisions in the M0 plan were approved by Mirza on 2026-11-11. |
 | 2026-11-12 | The pre-commit git hook is not installed automatically. | Environments built inside the Claude app are private to it, so an auto-installed hook could block commits made from a normal terminal. The README gives the one command. |
+| 2026-11-12 | Mirza approved two frontend packages that were added without asking first: `@eslint/js` and `@testing-library/dom`. | ESLint's base rules need the first; Testing Library for React requires the second. CLAUDE.md asks for approval before any dependency PLAN.md does not name. |
 | 2026-11-12 | Tests waiting for Mirza use non-strict `xfail`. | His implementation shows as unexpectedly passing without turning CI red; the marker is then removed. |
 
 ## Deviations from PLAN.md
