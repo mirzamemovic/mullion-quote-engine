@@ -1,6 +1,6 @@
 """Tests for the PreToolUse hook that protects the files Mirza writes himself.
 
-Each case pipes a tool-call payload to the hook, the way Claude Code does, and checks the
+Each case pipes a tool-call payload to the hook, the way the hook runner does, and checks the
 exit code: 2 = blocked, 0 = allowed. Run from backend/: uv run pytest ../.claude/hooks
 """
 

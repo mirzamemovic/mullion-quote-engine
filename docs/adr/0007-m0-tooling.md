@@ -1,6 +1,6 @@
 # 0007. Tooling decisions made in M0
 
-- Status: proposed (drafted by Claude, for Mirza's review)
+- Status: proposed, for Mirza's review
 - Date: 2026-11-12
 
 Numbers 0001 to 0006 are left free for the six decisions PLAN.md milestone M11 assigns to Mirza.
@@ -8,7 +8,7 @@ Numbers 0001 to 0006 are left free for the six decisions PLAN.md milestone M11 a
 ## Context
 
 M0 sets up the repository and its tooling. PLAN.md names the tools but leaves some choices open.
-The development machine also shaped a few of them: it runs Windows, has no Docker, and Claude's main shell there is PowerShell.
+The development machine also shaped a few of them: it runs Windows, has no Docker, and its main shell is PowerShell.
 
 ## Decisions
 

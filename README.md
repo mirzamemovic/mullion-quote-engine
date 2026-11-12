@@ -54,7 +54,7 @@ Then open <http://localhost:8000/api/v1/health>.
 | `backend/` | `uv run ruff check .` · `uv run ruff format --check .` · `uv run mypy` · `uv run lint-imports` · `uv run pytest --cov` |
 | `frontend/` | `npm run lint` · `npm run typecheck` · `npm test` · `npm run build` |
 
-CI runs the same commands on every pull request.
+CI runs the same commands on every pull request once the repository is on GitHub.
 To run the fast ones before each commit: `uv run --project backend pre-commit install`.
 
 ## Layout
@@ -64,12 +64,9 @@ backend/    FastAPI app and the calculation engine (src/quote_engine), tests
 frontend/   React app
 infra/      Dockerfile and deployment files
 docs/       PLAN.md (build spec), PROGRESS.md, architecture decisions (adr/)
-.claude/    Instructions, hooks and skills for Claude Code
 ```
 
-## How it is built
+## Who writes what
 
-The project is built with Claude Code, in the open about who wrote what:
-
-- Every pull request ends with an `AI use:` line stating what Claude wrote and what Mirza wrote.
-- The cutting optimizer (`engine/optimizer/ffd.py`) and the golden test jobs are written by Mirza only. A hook blocks Claude from editing them.
+- The cutting optimizer (`engine/optimizer/ffd.py`), the golden test jobs and the cut-rule formulas are written by Mirza. A local hook blocks every other edit to the first two.
+- Real prices, margins and client data never enter the repository.

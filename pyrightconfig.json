@@ -1,0 +1,6 @@
+{
+  "venvPath": "backend",
+  "venv": ".venv",
+  "pythonVersion": "3.13",
+  "exclude": ["**/node_modules", "**/.venv", "**/__pycache__", "frontend", "claude-config-update"]
+}
