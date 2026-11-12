@@ -33,8 +33,8 @@ WINDOWS = os.name == "nt"
 
 # Shell patterns that write, move, delete or overwrite files. Checked for both shells:
 # rm, mv, cp and tee are PowerShell aliases too, and git/python/node behave the same.
-WRITE_COMMANDS = re.compile(
-    r"(^|[\s;&|(`])("
+WRITE_COMMANDS_PATTERN = (
+    r"(^|[\s;&|({`])("
     r"rm|mv|cp|tee|truncate|dd|install|touch|ln|chmod|unlink|rsync"
     r"|sed\s+(-[a-zA-Z]*i|--in-place)"
     r"|perl\s+-[a-zA-Z]*i"
@@ -42,7 +42,16 @@ WRITE_COMMANDS = re.compile(
     r"|python3?\s+-c|uv\s+run\s+python\s+-c|node\s+-e"
     r")\b"
 )
-REDIRECT_TARGET = re.compile(r"(?<![0-9&])>{1,2}\s*['\"]?([^\s;&|'\"]+)")
+WRITE_COMMANDS = re.compile(WRITE_COMMANDS_PATTERN)
+# PowerShell ignores case in command names, and so does every shell on Windows.
+WRITE_COMMANDS_ANY_CASE = re.compile(WRITE_COMMANDS_PATTERN, re.IGNORECASE)
+
+# The file a `>` or `>>` writes to: quoted (may contain spaces) or bare. Covers `2>` and `&>`.
+# `2>&1` names no file and does not match.
+REDIRECT_TARGET = re.compile(r">{1,2}\s*(?:\"([^\"]+)\"|'([^']+)'|([^\s;&|'\"]+))")
+
+# Separators and brackets that end up glued to a path, as in `git checkout .; npm ci`.
+GLUED_PUNCTUATION = ";&|(){}"
 
 # PowerShell only: cmdlets and aliases that write, move, delete or overwrite files.
 # Each name is matched as a whole command word, ignoring case (PowerShell ignores case).
@@ -114,9 +123,10 @@ def touches_ancestor(command: str, root: Path, cwd: Path) -> str | None:
     except ValueError:
         tokens = command.split()
     for token in tokens:
-        if token.startswith("-") or any(ch in token for ch in "*?$=<>|;&"):
+        word = token.strip(GLUED_PUNCTUATION)
+        if not word or word.startswith("-") or any(ch in word for ch in "*?$=<>|;&"):
             continue
-        rel = to_repo_relative(token, root, cwd)
+        rel = to_repo_relative(word, root, cwd)
         if rel is None:
             continue
         rel = fold(rel)
@@ -127,7 +137,8 @@ def touches_ancestor(command: str, root: Path, cwd: Path) -> str | None:
 
 
 def is_write_command(tool: str, command: str) -> bool:
-    if WRITE_COMMANDS.search(command):
+    ignore_case = tool == "PowerShell" or WINDOWS
+    if (WRITE_COMMANDS_ANY_CASE if ignore_case else WRITE_COMMANDS).search(command):
         return True
     if tool != "PowerShell":
         return False
@@ -157,7 +168,8 @@ def main() -> None:
         if tool == "PowerShell":
             # Backslash separates path parts in PowerShell; its escape character is the backtick.
             command = command.replace("\\", "/")
-        for target in REDIRECT_TARGET.findall(command):
+        for groups in REDIRECT_TARGET.findall(command):
+            target = next(filter(None, groups))
             rel = to_repo_relative(target, root, cwd)
             hit = protected_match(rel) if rel else mentions_protected(target)
             if hit:

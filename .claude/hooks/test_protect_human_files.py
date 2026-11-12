@@ -76,8 +76,13 @@ def test_file_tools(tmp_path: Path, tool: str, key: str, path: str, expected: in
         pytest.param("rm -rf backend/tests", BLOCKED, id="rm-parent-folder"),
         pytest.param(f"mv draft.py {FFD}", BLOCKED, id="mv-onto-ffd"),
         pytest.param("git checkout .", BLOCKED, id="git-checkout-everything"),
+        pytest.param("git checkout .; npm ci", BLOCKED, id="git-checkout-then-chained"),
+        pytest.param("rm -rf backend/tests; echo ok", BLOCKED, id="rm-parent-then-chained"),
+        pytest.param(f"echo oops 2> {FFD}", BLOCKED, id="stderr-redirect-into-ffd"),
+        pytest.param(f"echo oops &> {FFD}", BLOCKED, id="both-streams-redirect-into-ffd"),
         pytest.param(f"cat {FFD}", ALLOWED, id="read-ffd"),
         pytest.param("uv run pytest tests/engine -q", ALLOWED, id="run-tests"),
+        pytest.param("uv run pytest tests/engine -q 2>&1", ALLOWED, id="run-tests-merging-streams"),
     ],
 )
 def test_bash(tmp_path: Path, command: str, expected: int) -> None:
@@ -90,9 +95,15 @@ def test_bash(tmp_path: Path, command: str, expected: int) -> None:
         pytest.param(f"echo '# hello' > {FFD_WIN}", BLOCKED, id="redirect-into-ffd"),
         pytest.param("rm backend\\tests -Recurse -Force", BLOCKED, id="rm-alias-parent-folder"),
         pytest.param("git checkout .", BLOCKED, id="git-checkout-everything"),
+        pytest.param("git checkout .; npm ci", BLOCKED, id="git-checkout-then-chained"),
+        pytest.param("Git Checkout .", BLOCKED, id="git-checkout-other-case"),
+        pytest.param(f"Rm {FFD_WIN}", BLOCKED, id="rm-alias-other-case"),
+        pytest.param("if ($true) {rm backend\\tests -Recurse}", BLOCKED, id="rm-inside-braces"),
+        pytest.param("(rm backend\\tests)", BLOCKED, id="rm-inside-parentheses"),
         pytest.param(f"[IO.File]::WriteAllText('{FFD}', '# hello')", BLOCKED, id="dotnet-write"),
         pytest.param(f"Get-Content {FFD_WIN}", ALLOWED, id="read-ffd"),
         pytest.param("uv run pytest tests/golden -q", ALLOWED, id="run-golden-tests"),
+        pytest.param("uv run pytest tests/golden -q 2>&1", ALLOWED, id="run-tests-merging-streams"),
         pytest.param("cd backend; npm ci", ALLOWED, id="npm-ci-is-not-copy-item"),
         pytest.param(f"Set-Content {FFD_WIN} '# hello'", BLOCKED, marks=WAITING, id="set-content"),
         pytest.param(f"set-content {FFD_WIN} '# hello'", BLOCKED, marks=WAITING, id="set-content-lower-case"),
@@ -105,6 +116,21 @@ def test_bash(tmp_path: Path, command: str, expected: int) -> None:
 )
 def test_powershell(tmp_path: Path, command: str, expected: int) -> None:
     assert run_hook(tmp_path, "PowerShell", {"command": command}).returncode == expected
+
+
+@pytest.mark.parametrize("tool", ["Bash", "PowerShell"])
+@pytest.mark.parametrize("quote", ['"', "'"])
+def test_redirect_into_a_quoted_path_with_spaces(tmp_path: Path, tool: str, quote: str) -> None:
+    # The real project folder has spaces in its name, so absolute paths must be quoted.
+    root = tmp_path / "PVC Quote Engine"
+    root.mkdir()
+    target = f"{root.as_posix()}/{FFD}"
+    if tool == "PowerShell":
+        target = target.replace("/", "\\")
+
+    result = run_hook(root, tool, {"command": f"echo oops > {quote}{target}{quote}"})
+
+    assert result.returncode == BLOCKED
 
 
 def test_blocked_message_names_the_protected_path(tmp_path: Path) -> None:
