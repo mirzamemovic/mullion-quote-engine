@@ -7,7 +7,7 @@ Statuses: todo / in progress / waiting for Mirza / blocked / done.
 
 | Milestone | Status | Branch | PR | Blockers / notes |
 |---|---|---|---|---|
-| M0 Repo and tooling | waiting for Mirza | `feat/m0-repo-tooling` | not opened (no remote yet) | Built and green locally. Needs the GitHub repository for CI. See "M0 status". |
+| M0 Repo and tooling | waiting for Mirza | `feat/m0-repo-tooling` | [#1](https://github.com/mirzamemovic/quote-engine/pull/1) | Built, pushed and open for review. Waiting for Mirza to review and merge. See "M0 status". |
 | M1 Requirements | waiting for Mirza | | | Human-led with the workshop owner. Claude never works on this. |
 | M2 Engine types and measuring | todo | | | Next for Claude. Branches from `main`, so it starts once M0 is merged there (it builds on the backend project). |
 | M3 Cut rules | todo | | | Formulas are Mirza's (section 13) |
@@ -22,7 +22,7 @@ Statuses: todo / in progress / waiting for Mirza / blocked / done.
 
 ## M0 status (2026-11-12)
 
-Everything M0 asks for is built, committed on `feat/m0-repo-tooling` and passes locally. M0's "done when" also needs CI green, and CI cannot run until the repository is on GitHub, so the status is "waiting for Mirza". `main` is untouched and nothing is pushed.
+Everything M0 asks for is built on `feat/m0-repo-tooling`, passes locally and passes in CI. The branch is pushed and open as pull request [#1](https://github.com/mirzamemovic/quote-engine/pull/1). The status stays "waiting for Mirza" until he has reviewed and merged it. `main` on GitHub holds the kit commit only.
 
 Checks run on 2026-11-12, all passing:
 
@@ -53,9 +53,9 @@ Fresh-context review (subagent, full diff against PLAN.md M0 and the CLAUDE.md h
 
 The review also flagged two packages added without asking first, `@eslint/js` and `@testing-library/dom`. Mirza approved both on 2026-11-12.
 
-Never run anywhere yet:
-- `compose.yaml` and `infra/Dockerfile`: no Docker on this machine. The review read them and found no fault.
-- `.github/workflows/ci.yml`: no remote. The review checked the action SHAs against their tags.
+First CI run (2026-11-12, pull request #1, commit `6386493`): all three jobs passed in 1m 14s (Backend 20s, Frontend 1m 10s, Local stack 30s). It was the first time `ci.yml`, `compose.yaml` and `infra/Dockerfile` ran anywhere, so M0's "done when" (the commands pass locally and in CI) is met. Docker is still not installed on the development machine, so the stack has not been run locally.
+
+Before the push, every commit on both branches was audited for secrets, private data, and workflow or billing risks. Nothing was found; the only match was the local-development database password default in `compose.yaml`, which is not a real credential.
 
 Other notes:
 - Starlette's test client warns that `httpx` is deprecated and suggests `httpx2`. PLAN.md names `httpx`, so nothing was changed.
@@ -65,7 +65,7 @@ Other notes:
 
 ### Pull request text
 
-No remote and no `gh` on this machine, so the text is kept here.
+Opened on 2026-11-12 as [#1](https://github.com/mirzamemovic/quote-engine/pull/1), through the browser because `gh` is not installed. The text below is the draft; the pull request itself holds the final wording.
 
 **Title:** M0: repository and tooling
 
