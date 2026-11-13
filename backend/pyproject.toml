@@ -37,8 +37,9 @@ select = [
 ]
 
 [tool.ruff.lint.per-file-ignores]
-# Tests use assert, and start the project's own interpreter in a subprocess.
-"tests/**" = ["S101", "S603"]
+# Tests use assert, start the project's own interpreter in a subprocess, and pickle their own
+# objects to prove they round-trip.
+"tests/**" = ["S101", "S301", "S603"]
 # MissingConstant, MissingPrice and InvalidInput are the names fixed by PLAN.md.
 "src/quote_engine/engine/errors.py" = ["N818"]
 

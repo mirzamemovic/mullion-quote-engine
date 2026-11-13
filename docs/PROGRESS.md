@@ -11,7 +11,7 @@ Git is local only. Each milestone has its own branch; a branch is merged into `m
 |---|---|---|---|
 | M0 Repo and tooling | waiting for Mirza | `feat/m0-repo-tooling` | Built. All checks pass locally; CI passed once on GitHub (2026-11-12). Review and merge. |
 | M1 Requirements | waiting for Mirza | | Mirza's work with the workshop owner. |
-| M2 Engine types and measuring | in progress | `feat/m2-engine-types` (on M0) | Built and green; review and wrap-up in progress. `installation_gap` is Mirza's. |
+| M2 Engine types and measuring | waiting for Mirza | `feat/m2-engine-types` (on M0) | Built, reviewed, green. `installation_gap` is Mirza's. Review and merge. |
 | M3 Cut rules | todo | | The formulas are Mirza's (section 13). |
 | M4 Optimizer | todo | | `ffd.py` and the decision part of `exact.py` are Mirza's. |
 | M5 Pricing, warnings, lists, golden tests | todo | | The golden job files and the decision parts of pricing are Mirza's. Ends at Gate 2. |
@@ -91,3 +91,9 @@ Open: Docker is not installed here, so the stack has not run locally. `npm audit
 Files (all under `backend/`): `engine/units.py` (`Mm`, `Mm2`, `Cents`, `Bp`; `pct`, `per_metre`, `per_m2`), `engine/errors.py` (`EngineError`, `MissingConstant`, `MissingPrice`, `InvalidInput`), `engine/model.py` (the section 4.1 data model), `engine/measuring.py` (`smallest_reading`, `spread`, `measure_opening`, and Mirza's `installation_gap`), with tests in `tests/engine/`.
 
 Mirza's part: `installation_gap` (the gap table in PLAN.md section 4.3). Its 14 table tests, 3 error tests and 2 end-to-end tests are `xfail` until it exists. The rest of measuring is tested with a stand-in gap of 10 mm.
+
+Status (2026-11-13): built and green. Full local check: ruff, format, mypy strict and import-linter pass; `pytest`: 110 passed, 19 xfailed; line and branch coverage 100% (engine floor 95%); pyright 0 errors.
+
+Reviews: `/code-review` found six gaps in the model (no whole-number checks, a fixed field allowed hardware, steel and profile lists not kept apart, deductions unchecked, empty positions allowed, `pct` missing area and basis-point overloads); all fixed with tests. A fresh-context review found no blocking gaps; its one real point, that the read-only mappings could not be copied or pickled, is fixed with `ReadOnlyDict`.
+
+Extra checks added during review, beyond the approved list (tell me if any is wrong): every size, quantity, angle and system-sheet value must be a whole number; a position needs a ref, a construction type and at least one field; deductions must be zero or more; a fixed field has no hardware set; steel pieces go only in the steel list.

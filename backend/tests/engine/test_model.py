@@ -1,6 +1,9 @@
 """The data model is frozen and refuses values the engine cannot work with."""
 
-from dataclasses import FrozenInstanceError, replace
+import copy
+import pickle
+from collections.abc import Callable
+from dataclasses import FrozenInstanceError, asdict, replace
 from typing import Any
 
 import pytest
@@ -92,6 +95,38 @@ def test_system_constants_do_not_follow_later_changes_to_the_source_dict(
     source["sample_sash_deduction"] = Mm(999)
 
     assert constants.deductions["sample_sash_deduction"] == 11
+
+
+def test_system_constants_can_be_copied_pickled_and_turned_into_data(
+    sample_constants: SystemConstants,
+) -> None:
+    assert pickle.loads(pickle.dumps(sample_constants)) == sample_constants
+    assert copy.deepcopy(sample_constants) == sample_constants
+    data = asdict(sample_constants)
+    assert data["deductions"] == {"sample_sash_deduction": 11}
+    copied: SystemConstants = pickle.loads(pickle.dumps(sample_constants))
+    with pytest.raises(TypeError):
+        copied.deductions["x"] = Mm(1)  # type: ignore[index]
+
+
+@pytest.mark.parametrize(
+    "change",
+    [
+        lambda d: d.clear(),
+        lambda d: d.pop("sample_sash_deduction"),
+        lambda d: d.popitem(),
+        lambda d: d.setdefault("x", 1),
+        lambda d: d.update({"x": 1}),
+        lambda d: d.__ior__({"x": 1}),
+        lambda d: d.__delitem__("sample_sash_deduction"),
+    ],
+)
+def test_every_way_to_change_a_mapping_is_refused(
+    sample_constants: SystemConstants, change: Callable[[Any], object]
+) -> None:
+    with pytest.raises(TypeError):
+        change(sample_constants.deductions)
+    assert sample_constants.deductions == {"sample_sash_deduction": 11}
 
 
 def test_system_constants_have_no_default_values() -> None:

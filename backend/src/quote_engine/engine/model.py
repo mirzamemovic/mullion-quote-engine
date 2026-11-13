@@ -7,7 +7,6 @@ few basics when it is built and raises ``InvalidInput`` instead of carrying a ba
 from collections.abc import Mapping
 from dataclasses import dataclass
 from enum import StrEnum
-from types import MappingProxyType
 
 from quote_engine.engine.errors import InvalidInput
 from quote_engine.engine.units import Mm
@@ -45,6 +44,29 @@ class Opening(StrEnum):
     TURN_RIGHT = "turn_right"
 
 
+class ReadOnlyDict[K, V](dict[K, V]):
+    """A dict that refuses changes after it is built.
+
+    Unlike ``MappingProxyType`` it can still be copied, pickled and turned into plain data with
+    ``dataclasses.asdict``, which snapshots and worker processes need.
+    """
+
+    def _refuse(self, *_args: object, **_kwargs: object) -> None:
+        raise TypeError("this mapping is read-only")
+
+    __setitem__ = _refuse
+    __delitem__ = _refuse
+    __ior__ = _refuse  # type: ignore[assignment]
+    clear = _refuse
+    pop = _refuse  # type: ignore[assignment]
+    popitem = _refuse  # type: ignore[assignment]
+    setdefault = _refuse  # type: ignore[assignment]
+    update = _refuse  # pyright: ignore[reportAssignmentType]
+
+    def __reduce__(self) -> tuple[type["ReadOnlyDict[K, V]"], tuple[dict[K, V]]]:
+        return (type(self), (dict(self),))
+
+
 def _require(condition: bool, message: str) -> None:
     if not condition:
         raise InvalidInput(message)
@@ -79,8 +101,8 @@ class SystemConstants:
     min_offcut_mm: Mm
 
     def __post_init__(self) -> None:
-        object.__setattr__(self, "bar_length_mm", MappingProxyType(dict(self.bar_length_mm)))
-        object.__setattr__(self, "deductions", MappingProxyType(dict(self.deductions)))
+        object.__setattr__(self, "bar_length_mm", ReadOnlyDict(self.bar_length_mm))
+        object.__setattr__(self, "deductions", ReadOnlyDict(self.deductions))
         _text(self.system_id, "system_id")
         for role, length in self.bar_length_mm.items():
             _whole(length, f"bar length for {role}", minimum=1)
