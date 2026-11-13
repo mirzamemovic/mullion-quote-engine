@@ -197,8 +197,20 @@ def allocate_largest_remainder(total: Cents, weights: Sequence[int]) -> list[Cen
 
     The tests are in ``tests/engine/test_pricing.py`` (``test_allocate_*``).
     """
-    # TODO(human): implement the largest-remainder split described above.
-    raise NotImplementedError("waiting for Mirza: pricing.allocate_largest_remainder")
+    # Ties between equal remainders go to the earlier item, so the result never depends on
+    # anything but the input order.
+    if type(total) is not int or total < 0:
+        raise InvalidInput(f"the amount to share must be whole cents, zero or more, got {total!r}")
+    if not weights or any(type(w) is not int or w < 0 for w in weights) or sum(weights) == 0:
+        raise InvalidInput("weights must be whole numbers, zero or more, and not all zero")
+    whole = sum(weights)
+    shares = [total * w // whole for w in weights]
+    remainders = [total * w % whole for w in weights]
+    left_over = total - sum(shares)
+    by_remainder = sorted(range(len(weights)), key=lambda i: (-remainders[i], i))
+    for i in by_remainder[:left_over]:
+        shares[i] += 1
+    return [Cents(share) for share in shares]
 
 
 def size_class(area_mm2: Mm2, thresholds: SizeThresholds) -> SizeClass:
@@ -210,8 +222,13 @@ def size_class(area_mm2: Mm2, thresholds: SizeThresholds) -> SizeClass:
 
     The tests are in ``tests/engine/test_pricing.py`` (``test_size_class_*``).
     """
-    # TODO(human): implement the size classes described above.
-    raise NotImplementedError("waiting for Mirza: pricing.size_class")
+    # A window exactly on a threshold belongs to the smaller class ("up to" includes the limit,
+    # as in the gap table).
+    if area_mm2 <= thresholds.small_max_mm2:
+        return SizeClass.SMALL
+    if area_mm2 <= thresholds.standard_max_mm2:
+        return SizeClass.STANDARD
+    return SizeClass.LARGE
 
 
 def _consumed_by_position(group: PieceGroup, kerf_mm: int, refs: Sequence[str]) -> list[int]:

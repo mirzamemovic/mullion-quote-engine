@@ -1,7 +1,7 @@
 """Pricing: every layer of PLAN.md section 4.5, worked out by hand on invented prices.
 
-The layer tests use stand-ins for Mirza's two decisions (``stand_in_pricing_decisions``). The
-tests of the decisions themselves are ``xfail`` until he writes them.
+The layer tests use stand-ins for the two pricing decisions (``stand_in_pricing_decisions``), so a
+change to either decision shows up in its own tests, not in every layer test.
 """
 
 from dataclasses import replace
@@ -41,12 +41,6 @@ from quote_engine.engine.pricing import (
 )
 from quote_engine.engine.units import Bp, Cents, Mm, Mm2
 
-WAITING_ALLOCATION = pytest.mark.xfail(
-    reason="waiting for Mirza: pricing.allocate_largest_remainder", raises=NotImplementedError
-)
-WAITING_SIZE_CLASS = pytest.mark.xfail(
-    reason="waiting for Mirza: pricing.size_class", raises=NotImplementedError
-)
 THRESHOLDS = SizeThresholds(Mm2(500_000), Mm2(2_000_000))
 SETTINGS = PricingSettings(
     margin_bp=Bp(2500),
@@ -372,7 +366,6 @@ def test_size_thresholds_must_increase() -> None:
 # --- Mirza's two decisions --------------------------------------------------------------------
 
 
-@WAITING_ALLOCATION
 @pytest.mark.parametrize(
     ("total", "weights"),
     [(100, [1, 1, 1]), (10_000, [4_008, 8_016]), (7, [3, 0, 5]), (1, [2, 2]), (0, [1, 2])],
@@ -390,21 +383,18 @@ def test_allocate_adds_up_exactly(total: int, weights: list[int]) -> None:
     )
 
 
-@WAITING_ALLOCATION
 def test_allocate_is_the_same_every_time() -> None:
     assert allocate_largest_remainder(Cents(100), [1, 1, 1]) == allocate_largest_remainder(
         Cents(100), [1, 1, 1]
     )
 
 
-@WAITING_ALLOCATION
 @pytest.mark.parametrize("weights", [[], [0, 0], [1, -1]])
 def test_allocate_refuses_impossible_weights(weights: list[int]) -> None:
     with pytest.raises(InvalidInput):
         allocate_largest_remainder(Cents(100), weights)
 
 
-@WAITING_SIZE_CLASS
 @pytest.mark.parametrize(
     ("area", "expected"),
     [(100_000, SizeClass.SMALL), (1_000_000, SizeClass.STANDARD), (3_000_000, SizeClass.LARGE)],
@@ -413,7 +403,6 @@ def test_size_class_away_from_the_thresholds(area: int, expected: SizeClass) -> 
     assert size_class(Mm2(area), THRESHOLDS) == expected
 
 
-@WAITING_SIZE_CLASS
 def test_size_class_puts_each_threshold_in_one_class() -> None:
     at_small = size_class(THRESHOLDS.small_max_mm2, THRESHOLDS)
     at_standard = size_class(THRESHOLDS.standard_max_mm2, THRESHOLDS)
