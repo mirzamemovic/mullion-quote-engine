@@ -237,9 +237,27 @@ def test_pieces_are_grouped_by_role_and_colour(sample_constants: SystemConstants
         ("frame/white", 6666),
         ("frame/foil_one_side", 6666),
         ("sash/white", 6666),
-        ("steel/white", 5555),
+        ("steel", 5555),
     ]
     assert groups[0].demands == (Demand("P1 frame top", Mm(802), 2),)
+
+
+def test_steel_of_every_colour_is_one_group(sample_constants: SystemConstants) -> None:
+    cut_list = CutList(
+        (),
+        (
+            a_piece("P1", Role.STEEL, "frame steel", 780),
+            a_piece("P2", Role.STEEL, "frame steel", 980),
+        ),
+        (),
+        (),
+        Mm(0),
+    )
+    positions = (a_position("P1", Colour.WHITE), a_position("P2", Colour.FOIL_BOTH_SIDES))
+
+    (steel,) = group_pieces(cut_list, positions, sample_constants)
+
+    assert (steel.name, steel.colour, len(steel.demands)) == ("steel", None, 2)
 
 
 def test_same_piece_twice_adds_up(sample_constants: SystemConstants) -> None:

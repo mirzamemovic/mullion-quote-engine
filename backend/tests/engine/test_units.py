@@ -8,11 +8,13 @@ from quote_engine.engine.units import (
     Cents,
     Mm,
     Mm2,
+    divide_half_up,
     pct,
     per_m2,
     per_metre,
     rate_per_m2,
     share_bp,
+    whole_metres_up,
 )
 
 
@@ -58,6 +60,23 @@ def test_pct_works_on_areas_and_basis_points() -> None:
 )
 def test_share_bp(part: int, whole: int, expected: int) -> None:
     assert share_bp(part, whole) == expected
+
+
+@pytest.mark.parametrize(
+    ("amount", "parts", "expected"), [(10_001, 2, 5_001), (10_000, 3, 3_333), (5, 2, 3), (7, 1, 7)]
+)
+def test_divide_half_up(amount: int, parts: int, expected: int) -> None:
+    assert divide_half_up(Cents(amount), parts) == expected
+
+
+def test_divide_into_no_parts_is_refused() -> None:
+    with pytest.raises(InvalidInput):
+        divide_half_up(Cents(1), 0)
+
+
+@pytest.mark.parametrize(("length", "metres"), [(0, 0), (1, 1), (1000, 1), (1001, 2), (12_600, 13)])
+def test_whole_metres_up(length: int, metres: int) -> None:
+    assert whole_metres_up(Mm(length)) == metres
 
 
 def test_rate_per_m2() -> None:

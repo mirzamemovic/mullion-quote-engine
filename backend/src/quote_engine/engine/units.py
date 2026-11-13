@@ -37,6 +37,18 @@ def pct(amount: int, bp: int) -> int:
     return (amount * bp + BP_PER_WHOLE // 2) // BP_PER_WHOLE
 
 
+def divide_half_up(amount: Cents, parts: int) -> Cents:
+    """``amount`` divided into ``parts``, rounded half up (a unit price from a line total)."""
+    if parts < 1:
+        raise InvalidInput(f"cannot divide into {parts} parts")
+    return Cents((amount + parts // 2) // parts)
+
+
+def whole_metres_up(length_mm: Mm) -> int:
+    """``length_mm`` in whole metres, rounded up (material is bought by the metre)."""
+    return -(-length_mm // MM_PER_M)
+
+
 def grams_for_area(area_mm2: Mm2, grams_per_m2: int) -> int:
     """Weight of ``area_mm2`` at ``grams_per_m2``, in whole grams, rounded half up."""
     return (area_mm2 * grams_per_m2 + MM2_PER_M2 // 2) // MM2_PER_M2

@@ -15,7 +15,7 @@ from quote_engine.engine.optimizer.groups import PieceGroup
 from quote_engine.engine.optimizer.plan import CuttingPlan
 from quote_engine.engine.prices import PriceBook, PriceKey, PriceUnit
 from quote_engine.engine.pricing import JobPrice
-from quote_engine.engine.units import Bp, Cents, Mm, pct
+from quote_engine.engine.units import Bp, Cents, Mm, pct, whole_metres_up
 
 
 @dataclass(frozen=True)
@@ -91,7 +91,7 @@ def purchase_list(
 
     gasket = sum(cl.gasket_mm + pct(Mm(cl.gasket_mm), gasket_extra_bp) for cl in cut_lists.values())
     if gasket:
-        wanted.append((PriceKey("gasket", "gasket"), PriceUnit.METRE, -(-gasket // 1000)))
+        wanted.append((PriceKey("gasket", "gasket"), PriceUnit.METRE, whole_metres_up(Mm(gasket))))
 
     sets: Counter[str] = Counter()
     for cut_list in cut_lists.values():

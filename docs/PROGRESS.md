@@ -14,7 +14,7 @@ Git is local only. Each milestone has its own branch; a branch is merged into `m
 | M2 Engine types and measuring | waiting for Mirza | `feat/m2-engine-types` (on M0) | Built, reviewed, green. `installation_gap` is Mirza's. Review and merge. |
 | M3 Cut rules | waiting for Mirza | `feat/m3-cut-rules` (on M2) | Built, reviewed, green. The five `cut()` formulas are Mirza's. |
 | M4 Optimizer | waiting for Mirza | `feat/m4-optimizer` (on M3) | Built, reviewed, green. `ffd.py` and `build_assignment_model` are Mirza's; the benchmark results wait for them. |
-| M5 Pricing, warnings, lists, golden tests | todo | | The golden job files and the decision parts of pricing are Mirza's. Ends at Gate 2. |
+| M5 Pricing, warnings, lists, golden tests | waiting for Mirza | `feat/m5-pricing` (on M4) | Built, reviewed, green. Two pricing decisions, the golden jobs, real system sheets and private price lists are Mirza's. Gate 2 needs all of Mirza's engine parts. |
 | M6 Database and API | blocked | | Gate 2. |
 | M7 PDFs and messages | blocked | | Gate 2. |
 | M8 Frontend | blocked | | Gate 1 and Gate 2. |
@@ -40,6 +40,8 @@ Only Mirza writes "Gate N passed" here.
 | Write the cut formulas: `cut(pos, c)` in `single_sash_tilt_turn.py`, `two_field_t_mullion.py`, `two_sash_false_mullion.py`, `fixed.py`, `balcony_door_tilt_turn.py` (one `TODO(human)` each). Add the deduction names you use to `tests/fixtures/sample_system.yaml` with fake values, and add hand-checked sash, bead and glass tests. | `backend/src/quote_engine/engine/rules/` | Cut lists; 45 contract tests are `xfail` until then |
 | Write `ffd(demands, bar_length_mm, kerf_mm, end_trim_mm) -> CuttingPlan` in a new file (signature in PLAN.md 4.4; use `plan.make_bar` and `plan.piece_sizes`) | `backend/src/quote_engine/engine/optimizer/ffd.py` | Quotes; 2 property tests and the benchmark wait for it |
 | Implement `build_assignment_model(sizes, capacity, max_bars)` (`TODO(human)`) | `backend/src/quote_engine/engine/optimizer/exact.py` | The exact solver; 4 tests are `xfail` |
+| Implement `allocate_largest_remainder(total, weights)` and `size_class(area_mm2, thresholds)` (one `TODO(human)` each; decide and document tie-breaking and which class a threshold value belongs to) | `backend/src/quote_engine/engine/pricing.py` | Pricing; 13 tests are `xfail` |
+| Write 5-10 anonymised golden jobs, the real system sheet of each profile system they use, and (on your machine only) the price list of each job's date | `backend/tests/golden/jobs/`, `backend/tests/golden/systems/`, `backend/tests/golden/private/` (git-ignored); formats in `backend/tests/golden/README.md` | Gate 2 |
 | Run the benchmark and fill in the results table | `backend/benchmarks/run.py`, `docs/optimizer.md` | PLAN.md definition of done, item 4 |
 | Fill in `POWERSHELL_WRITE_NAMES` (`TODO(human)`) | `.claude/hooks/protect_human_files.py` | The protection hook to block PowerShell cmdlets such as `Set-Content`; 7 tests are `xfail` |
 | Review and merge `feat/m0-repo-tooling`, then `feat/m2-engine-types` | local git | Later milestones start from `main` |
@@ -64,6 +66,9 @@ Only Mirza writes "Gate N passed" here.
 | 2026-11-12 | M2, approved with its plan: the gap is looked up by the opening size (smallest reading); both foil colours use the "coloured" column; `SystemConstants` has no default values; its mappings are read-only; a new area type `Mm2`; `CutList.hardware_sets` holds `HardwareNeed(position_ref, opening, qty)`; objects raise `InvalidInput` for zero sizes, zero quantities, angles other than 45 or 90 and blank formulas; typing the window size directly stays outside the engine; no new dependencies. | Open points in PLAN.md section 4. |
 
 | 2026-11-13 | Approved with the M3 to M9 plan: PyYAML and `types-PyYAML` as development dependencies; system sheets read by a pure `system_constants_from_mapping`; shared rule helpers in `engine/rules/common.py`; `CutList.gasket_mm` is the raw gasket length and the 5% extra is added in pricing; contract tests check only what PLAN.md fixes. | Open points in PLAN.md section 4.2. |
+| 2026-11-13 | Approved with the plan, for M5: prices enter the engine as a plain price book (missing price raises `MissingPrice`); weights are whole grams; `lists.py` returns structured data and the message text follows in M7; golden tests never hold real prices (they are read from the git-ignored `backend/tests/golden/private/`); real system sheets go in `backend/tests/golden/systems/`; golden tests skip cleanly while there are no jobs. | Open points in PLAN.md sections 4.5 to 4.7 and 10. |
+| 2026-11-13 | Price-book item keys are fixed in `engine/prices.py` (for example `profile/<role>/<colour>` per bar, `glass/<build>` per m²); the services map real profile codes and supplier items onto them in M6. Hardware warnings take the sash sizes from the caller. | The engine has no profile codes or supplier catalogue of its own. |
+| 2026-11-13 | A position's line total is its unit price x quantity; the unit price is the layers divided by the quantity, rounded half up, and the cent difference is kept as `rounding_cents`. Labour, installation and its switches are priced per window. Gasket is bought in whole metres, rounded up. | The client PDF shows unit price and line total, which must agree. |
 | 2026-11-13 | A position is checked against its type before its rule runs: the number of fields must match; a fixed window has only fixed fields; every other type has only opening fields. A rule's output must carry its own position ref. | Catches wrong input and rule bugs before they reach the optimizer. |
 
 ## Deviations from PLAN.md
@@ -77,6 +82,7 @@ Only Mirza writes "Gate N passed" here.
 | 2026-11-12 | `SystemConstants` has no defaults (PLAN.md section 4.1 lists them in comments). | Constants come only from the system sheet; the listed defaults become starting values in the admin form (M6). |
 | 2026-11-12 | `bar_length_mm` and `deductions` are read-only mappings, not `dict`. | A frozen object with a changeable dict inside is not frozen. |
 | 2026-11-12 | `feat/m2-engine-types` starts from `feat/m0-repo-tooling`, not from `main`. | M0 is not merged yet. |
+| 2026-11-13 | Steel reinforcement is one optimizer group per job, not one per role and colour as PLAN.md 4.4 says for profiles. | Steel has no colour; grouping it by window colour would buy and price steel twice. |
 
 ## Untested: needs GitHub
 
@@ -120,3 +126,13 @@ Files (under `backend/`): `engine/optimizer/plan.py` (demands, bars, plans, capa
 Mirza's parts: the FFD file (it does not exist; the hook blocks everyone else) and `build_assignment_model` in `exact.py`. Until the FFD file exists, `exact` uses the number of pieces as its upper bound. The exact solver is tested with a stand-in model; tests of the real model, the FFD property tests and the benchmark run wait for Mirza.
 
 Status (2026-11-13): built and green. Full local check passes; `pytest`: 219 passed, 67 xfailed; coverage 100%; pyright 0 errors. `/code-review` found four gaps (exact did not check its own plan, a broken FFD file could pass for a missing one, the plan checker trusted the plan's bar length, the benchmark worked out each bound twice). A fresh-context review found two more (the exact property test did not also wait for FFD; percentages were rounded outside `units.py`). All fixed with tests. Note: with a wall-clock time limit, a solver run that hits the limit may not repeat exactly.
+
+## M5 Pricing, warnings, lists, golden tests (plan approved 2026-11-13)
+
+Files (under `backend/`): `engine/prices.py` (price book), `engine/pricing.py` (every layer of PLAN.md 4.5), `engine/warnings.py` (PLAN.md 4.6), `engine/lists.py` (PLAN.md 4.7), `tests/golden/` (harness, loaders, README with the file formats), and tests in `tests/engine/`. `units.py` gained `rate_per_m2`, `share_bp` and two gram helpers. The private golden folder is git-ignored.
+
+Mirza's parts: `allocate_largest_remainder` and `size_class` in `pricing.py`; the golden jobs, real system sheets and private price lists. The price layers are tested with stand-ins for the two decisions and invented prices; every total in `test_every_layer_by_hand` is worked out in its comments.
+
+Gate 2 (all golden tests pass) needs every engine part of Mirza's: the gap table, the five cut formulas, the FFD file, the two pricing decisions and the golden jobs. Until it is passed, M6, M7 and M8 stay blocked.
+
+Status (2026-11-13): built and green. Full local check passes; `pytest`: 277 passed, 3 skipped (golden, no jobs yet), 80 xfailed; engine coverage 99%; pyright 0 errors. `/code-review` found four gaps (unit price x quantity could differ from the line total, a `ValueError` instead of `InvalidInput`, a bad role crashing a golden test, positions cut twice in the harness); all fixed. A fresh-context review found three more: the unit price and the gasket metres were still rounded outside `units.py` (now `divide_half_up` and `whole_metres_up`), and steel was grouped by window colour although it has none, so a job with two colours would have bought and priced steel twice. Steel is now one group per job (a change to the M4 grouping, made on this branch). Final check: `pytest` 288 passed, 3 skipped, 80 xfailed; coverage 99%; pyright 0 errors.

@@ -19,7 +19,17 @@ from quote_engine.engine.model import Colour, CutList, PositionSpec, Role
 from quote_engine.engine.optimizer.groups import PieceGroup, demand_key
 from quote_engine.engine.optimizer.plan import CuttingPlan
 from quote_engine.engine.prices import PriceBook, PriceKey, PriceUnit
-from quote_engine.engine.units import Bp, Cents, Mm, Mm2, pct, per_m2, per_metre, rate_per_m2
+from quote_engine.engine.units import (
+    Bp,
+    Cents,
+    Mm,
+    Mm2,
+    divide_half_up,
+    pct,
+    per_m2,
+    per_metre,
+    rate_per_m2,
+)
 
 INSTALLATION_SWITCHES = ("ral", "old_window_removal", "wall_repair")
 NO_CENTS = Cents(0)
@@ -304,7 +314,7 @@ def price_position(
     layers = material_cents + margin + labour + installation_cents
     # The client sees unit price x quantity, so that is the line: the unit price is the layers
     # divided by the quantity, rounded half up, and the cent difference is kept as rounding.
-    unit_price = Cents((layers + pos.qty // 2) // pos.qty)
+    unit_price = divide_half_up(Cents(layers), pos.qty)
     total = Cents(unit_price * pos.qty)
     return PositionPrice(
         ref=pos.ref,

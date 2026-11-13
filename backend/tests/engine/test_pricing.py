@@ -132,7 +132,7 @@ def test_every_layer_by_hand(sample_constants: SystemConstants, sample_book: Pri
     # hardware 3 000, glass 0.64 m2 x 2 500 = 1 600, consumables 700.
     assert [(line.label, line.cents) for line in p1.material] == [
         ("frame/white bars", 10_000),
-        ("steel/white bars", 5_000),
+        ("steel bars", 5_000),
         ("gasket", 840),
         ("hardware tilt_turn_right", 3_000),
         ("glass 4-16-4", 1_600),
