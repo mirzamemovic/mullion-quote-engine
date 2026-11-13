@@ -660,6 +660,81 @@
         "title": "MeOut",
         "type": "object"
       },
+      "MeasureIn": {
+        "additionalProperties": false,
+        "properties": {
+          "colour": {
+            "$ref": "#/components/schemas/Colour"
+          },
+          "readings": {
+            "$ref": "#/components/schemas/Readings"
+          }
+        },
+        "required": [
+          "readings",
+          "colour"
+        ],
+        "title": "MeasureIn",
+        "type": "object"
+      },
+      "MeasureOut": {
+        "additionalProperties": false,
+        "description": "The window size from the opening readings, with how it was worked out.",
+        "properties": {
+          "formula_height": {
+            "title": "Formula Height",
+            "type": "string"
+          },
+          "formula_width": {
+            "title": "Formula Width",
+            "type": "string"
+          },
+          "gap_height_mm": {
+            "title": "Gap Height Mm",
+            "type": "integer"
+          },
+          "gap_width_mm": {
+            "title": "Gap Width Mm",
+            "type": "integer"
+          },
+          "height_mm": {
+            "title": "Height Mm",
+            "type": "integer"
+          },
+          "opening_height_mm": {
+            "title": "Opening Height Mm",
+            "type": "integer"
+          },
+          "opening_width_mm": {
+            "title": "Opening Width Mm",
+            "type": "integer"
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Warnings",
+            "type": "array"
+          },
+          "width_mm": {
+            "title": "Width Mm",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "opening_width_mm",
+          "opening_height_mm",
+          "gap_width_mm",
+          "gap_height_mm",
+          "width_mm",
+          "height_mm",
+          "formula_width",
+          "formula_height",
+          "warnings"
+        ],
+        "title": "MeasureOut",
+        "type": "object"
+      },
       "Opening": {
         "description": "How one field of a window opens, seen from inside.",
         "enum": [
@@ -2692,6 +2767,48 @@
         "summary": "Set Construction Type",
         "tags": [
           "admin"
+        ]
+      }
+    },
+    "/api/v1/engine/measure": {
+      "post": {
+        "description": "Window size from three widths and three heights, live while the owner measures.",
+        "operationId": "measure_api_v1_engine_measure_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MeasureIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MeasureOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Measure",
+        "tags": [
+          "quotes"
         ]
       }
     },

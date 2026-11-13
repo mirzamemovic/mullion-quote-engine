@@ -9,6 +9,8 @@ from sqlalchemy import or_
 
 from quote_engine.api.deps import LoggedIn
 from quote_engine.api.schemas import (
+    MeasureIn,
+    MeasureOut,
     PaymentIn,
     PaymentOut,
     PreviewIn,
@@ -178,6 +180,25 @@ def add_payment(quote_id: uuid.UUID, body: PaymentIn, a: LoggedIn) -> PaymentOut
         a.db, quote, body.kind, body.amount_cents, body.received_on, a.user.id
     )
     return PaymentOut.model_validate(payment)
+
+
+@router.post("/engine/measure")
+def measure(body: MeasureIn, a: LoggedIn) -> MeasureOut:
+    """Window size from three widths and three heights, live while the owner measures."""
+    m = measure_opening(
+        [Mm(v) for v in body.readings.widths], [Mm(v) for v in body.readings.heights], body.colour
+    )
+    return MeasureOut(
+        opening_width_mm=m.opening_width_mm,
+        opening_height_mm=m.opening_height_mm,
+        gap_width_mm=m.gap_width_mm,
+        gap_height_mm=m.gap_height_mm,
+        width_mm=m.width_mm,
+        height_mm=m.height_mm,
+        formula_width=m.formula_width,
+        formula_height=m.formula_height,
+        warnings=[w.dimension.value for w in m.warnings],
+    )
 
 
 @router.post("/engine/preview")

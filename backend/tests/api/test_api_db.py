@@ -500,6 +500,22 @@ def test_payments_only_on_accepted_quotes(api: TestClient, shop_a: SampleWorksho
     assert api.post(f"{API}/quotes/{quote['id']}/payments", json=payment).status_code == 409
 
 
+def test_measure_returns_the_window_size_and_its_formula(
+    api: TestClient, shop_a: SampleWorkshop
+) -> None:
+    log_in(api, shop_a.email)
+    readings = {"widths": [830, 832, 831], "heights": [1430, 1431, 1470]}
+
+    response = api.post(f"{API}/engine/measure", json={"readings": readings, "colour": "white"})
+
+    assert response.status_code == 200, response.text
+    body = response.json()
+    assert (body["opening_width_mm"], body["width_mm"]) == (830, 810)  # 830 - 2 x 10
+    assert (body["opening_height_mm"], body["height_mm"]) == (1430, 1410)
+    assert body["formula_width"].endswith("= 810")
+    assert body["warnings"] == ["height"]  # 1430 to 1470 is more than 10 mm apart
+
+
 def test_preview_cuts_one_position(api: TestClient, shop_a: SampleWorkshop) -> None:
     log_in(api, shop_a.email)
     position = revision_body()["positions"][0]

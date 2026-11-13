@@ -207,6 +207,25 @@ class PreviewIn(Model):
     position: PositionIn
 
 
+class MeasureIn(Model):
+    readings: Readings
+    colour: Colour
+
+
+class MeasureOut(Model):
+    """The window size from the opening readings, with how it was worked out."""
+
+    opening_width_mm: int
+    opening_height_mm: int
+    gap_width_mm: int
+    gap_height_mm: int
+    width_mm: int
+    height_mm: int
+    formula_width: str
+    formula_height: str
+    warnings: list[str]
+
+
 # --- admin --------------------------------------------------------------------------------------
 
 
