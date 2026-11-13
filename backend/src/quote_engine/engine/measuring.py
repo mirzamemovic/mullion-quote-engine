@@ -13,6 +13,13 @@ from quote_engine.engine.model import Colour
 from quote_engine.engine.units import Mm
 
 READINGS_PER_DIMENSION = 3
+
+# Installation gap per side (PLAN.md 4.3): up to this side length, white gap, coloured gap.
+GAP_TABLE: tuple[tuple[Mm, Mm, Mm], ...] = (
+    (Mm(1500), Mm(10), Mm(15)),
+    (Mm(2500), Mm(15), Mm(20)),
+    (Mm(3500), Mm(20), Mm(25)),
+)
 SPREAD_WARNING_ABOVE_MM = Mm(10)
 
 
@@ -97,8 +104,15 @@ def installation_gap(side_length_mm: Mm, colour: Colour) -> Mm:
 
     The tests are in ``tests/engine/test_measuring.py`` (``test_installation_gap_*``).
     """
-    # TODO(human): implement the table above.
-    raise NotImplementedError("waiting for Mirza: installation_gap")
+    if side_length_mm <= 0:
+        raise InvalidInput(f"side length must be above zero, got {side_length_mm}")
+    coloured = colour is not Colour.WHITE
+    for up_to_mm, white_gap, coloured_gap in GAP_TABLE:
+        if side_length_mm <= up_to_mm:
+            return coloured_gap if coloured else white_gap
+    raise InvalidInput(
+        f"a side of {side_length_mm} mm is outside the gap table (up to {GAP_TABLE[-1][0]} mm)"
+    )
 
 
 def measure_opening(

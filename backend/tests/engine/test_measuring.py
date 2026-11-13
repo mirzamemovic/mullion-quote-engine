@@ -15,10 +15,6 @@ from quote_engine.engine.measuring import (
 from quote_engine.engine.model import Colour
 from quote_engine.engine.units import Mm
 
-WAITING_FOR_GAP_TABLE = pytest.mark.xfail(
-    reason="waiting for Mirza: measuring.installation_gap", raises=NotImplementedError
-)
-
 
 def mm(*values: int) -> tuple[Mm, ...]:
     return tuple(Mm(value) for value in values)
@@ -74,7 +70,6 @@ def test_bad_readings_are_refused(readings: tuple[Mm, ...]) -> None:
 # --- the gap table (Mirza's function) -------------------------------------------------------
 
 
-@WAITING_FOR_GAP_TABLE
 @pytest.mark.parametrize(
     ("side_length_mm", "colour", "expected"),
     [
@@ -100,7 +95,6 @@ def test_installation_gap_follows_the_table(
     assert installation_gap(Mm(side_length_mm), colour) == expected
 
 
-@WAITING_FOR_GAP_TABLE
 @pytest.mark.parametrize("colour", list(Colour))
 def test_installation_gap_above_3500_is_an_error_not_a_guess(colour: Colour) -> None:
     with pytest.raises(InvalidInput):
@@ -175,14 +169,12 @@ def test_bad_readings_are_refused_when_measuring() -> None:
 # --- end to end, with the real gap table ----------------------------------------------------
 
 
-@WAITING_FOR_GAP_TABLE
 def test_white_opening_end_to_end() -> None:
     result = measure_opening(mm(1210, 1205, 1208), mm(1400, 1402, 1401), Colour.WHITE)
 
     assert (result.width_mm, result.height_mm) == (1185, 1380)
 
 
-@WAITING_FOR_GAP_TABLE
 def test_gap_row_is_chosen_by_the_opening_not_by_the_finished_window() -> None:
     # A white opening of 1510 mm is in the "up to 2500" row: gap 15, window 1480.
     result = measure_opening(mm(1510, 1512, 1511), mm(1400, 1400, 1400), Colour.WHITE)
