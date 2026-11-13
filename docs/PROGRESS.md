@@ -3,22 +3,22 @@
 Status of each milestone in `docs/PLAN.md` section 14. Updated at the end of every task.
 Statuses: todo / in progress / waiting for Mirza / blocked / done.
 
-Git is local only. Each milestone has its own branch; a branch is merged into `main` only when Mirza says so. Until M0 is merged, later branches are stacked on top of the previous one.
+Git is local only. Each milestone has its own branch; a branch is merged into `main` only when Mirza says so. M0, M2, M3, M4, M5 and M9 were merged into `main` on 2026-11-13 (fast-forward, no merge commit); new work branches from `main`.
 
 ## Milestones
 
 | Milestone | Status | Branch | Notes |
 |---|---|---|---|
-| M0 Repo and tooling | waiting for Mirza | `feat/m0-repo-tooling` | Built. All checks pass locally; CI passed once on GitHub (2026-11-12). Review and merge. |
+| M0 Repo and tooling | done | merged into `main` | All checks pass locally; CI passed once on GitHub (2026-11-12). |
 | M1 Requirements | waiting for Mirza | | Mirza's work with the workshop owner. |
-| M2 Engine types and measuring | waiting for Mirza | `feat/m2-engine-types` (on M0) | Built, reviewed, green. `installation_gap` is Mirza's. Review and merge. |
-| M3 Cut rules | waiting for Mirza | `feat/m3-cut-rules` (on M2) | Built, reviewed, green. The five `cut()` formulas are Mirza's. |
-| M4 Optimizer | waiting for Mirza | `feat/m4-optimizer` (on M3) | Built, reviewed, green. `ffd.py` and `build_assignment_model` are Mirza's; the benchmark results wait for them. |
-| M5 Pricing, warnings, lists, golden tests | waiting for Mirza | `feat/m5-pricing` (on M4) | Built, reviewed, green. Two pricing decisions, the golden jobs, real system sheets and private price lists are Mirza's. Gate 2 needs all of Mirza's engine parts. |
+| M2 Engine types and measuring | waiting for Mirza | merged into `main` | Built, reviewed, green. `installation_gap` is Mirza's. |
+| M3 Cut rules | waiting for Mirza | merged into `main` | Built, reviewed, green. The five `cut()` formulas are Mirza's. |
+| M4 Optimizer | waiting for Mirza | merged into `main` | Built, reviewed, green. `ffd.py` and `build_assignment_model` are Mirza's; the benchmark results wait for them. |
+| M5 Pricing, warnings, lists, golden tests | waiting for Mirza | merged into `main` | Built, reviewed, green. Two pricing decisions, the golden jobs, real system sheets and private price lists are Mirza's. Gate 2 needs all of Mirza's engine parts. |
 | M6 Database and API | blocked | | Gate 2. |
 | M7 PDFs and messages | blocked | | Gate 2. |
 | M8 Frontend | blocked | | Gate 1 and Gate 2. |
-| M9 Deploy and operations | waiting for Mirza | `feat/m9-deploy` (on M5) | Files written and reviewed; nothing has run on a server or on GitHub. Needs a server, a domain and the GitHub repository. Retention jobs, demo wipe and Sentry wait for M6. |
+| M9 Deploy and operations | waiting for Mirza | merged into `main` | Files written and reviewed; nothing has run on a server or on GitHub. Needs a server, a domain and the GitHub repository. Retention jobs, demo wipe and Sentry wait for M6. |
 | M10 Shadow mode and live use | waiting for Mirza | | Mirza's work with the workshop owner. |
 | M11 Docs and presentation | todo | | The case study, ADR decisions and video are Mirza's. |
 
@@ -44,7 +44,6 @@ Only Mirza writes "Gate N passed" here.
 | Write 5-10 anonymised golden jobs, the real system sheet of each profile system they use, and (on your machine only) the price list of each job's date | `backend/tests/golden/jobs/`, `backend/tests/golden/systems/`, `backend/tests/golden/private/` (git-ignored); formats in `backend/tests/golden/README.md` | Gate 2 |
 | Run the benchmark and fill in the results table | `backend/benchmarks/run.py`, `docs/optimizer.md` | PLAN.md definition of done, item 4 |
 | Fill in `POWERSHELL_WRITE_NAMES` (`TODO(human)`) | `.claude/hooks/protect_human_files.py` | The protection hook to block PowerShell cmdlets such as `Set-Content`; 7 tests are `xfail` |
-| Review and merge `feat/m0-repo-tooling`, then `feat/m2-engine-types` | local git | Later milestones start from `main` |
 | Decide: keep `httpx` or switch to `httpx2` | backend dev dependencies | Starlette's test client warns that `httpx` is deprecated |
 | Review `docs/adr/0007-m0-tooling.md` (status: proposed) | docs | ADR decisions are Mirza's (PLAN.md section 13) |
 | Install Docker Desktop | this machine | Running `docker compose up` locally |
@@ -83,7 +82,7 @@ Only Mirza writes "Gate N passed" here.
 | 2026-11-12 | The health endpoint has no database check yet. | There is no database layer until M6. |
 | 2026-11-12 | `SystemConstants` has no defaults (PLAN.md section 4.1 lists them in comments). | Constants come only from the system sheet; the listed defaults become starting values in the admin form (M6). |
 | 2026-11-12 | `bar_length_mm` and `deductions` are read-only mappings, not `dict`. | A frozen object with a changeable dict inside is not frozen. |
-| 2026-11-12 | `feat/m2-engine-types` starts from `feat/m0-repo-tooling`, not from `main`. | M0 is not merged yet. |
+| 2026-11-12 | `feat/m2-engine-types` started from `feat/m0-repo-tooling`, not from `main`, and each later milestone branch from the one before. All were merged into `main` together on 2026-11-13 at Mirza's request. | M0 was not merged when M2 started. |
 | 2026-11-13 | Steel reinforcement is one optimizer group per job, not one per role and colour as PLAN.md 4.4 says for profiles. | Steel has no colour; grouping it by window colour would buy and price steel twice. |
 
 ## Untested: needs GitHub
