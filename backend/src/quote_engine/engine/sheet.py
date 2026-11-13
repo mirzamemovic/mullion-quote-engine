@@ -22,7 +22,9 @@ MAPPING_KEYS = ("bar_length_mm", "deductions")
 ALL_KEYS = frozenset(("system_id", *LENGTH_KEYS, *MAPPING_KEYS))
 
 
-def _length(value: object, what: str) -> Mm:
+def _length(value: object, what: str, system_id: str) -> Mm:
+    if value is None:
+        raise MissingConstant(system_id, what)
     if isinstance(value, bool) or not isinstance(value, int):
         raise InvalidInput(f"{what} must be a whole number of millimetres, got {value!r}")
     return Mm(value)
@@ -48,7 +50,7 @@ def system_constants_from_mapping(data: Mapping[str, object]) -> SystemConstants
     if unknown:
         raise InvalidInput(f"system sheet '{system_id}' has unknown keys: {', '.join(unknown)}")
     for key in (*LENGTH_KEYS, *MAPPING_KEYS):
-        if key not in data:
+        if data.get(key) is None:
             raise MissingConstant(system_id, key)
 
     bar_lengths: dict[Role, Mm] = {}
@@ -59,13 +61,13 @@ def system_constants_from_mapping(data: Mapping[str, object]) -> SystemConstants
             raise InvalidInput(
                 f"system sheet '{system_id}': unknown role '{role_name}' in bar_length_mm"
             ) from None
-        bar_lengths[role] = _length(length, f"bar_length_mm.{role_name}")
+        bar_lengths[role] = _length(length, f"bar_length_mm.{role_name}", system_id)
 
     deductions = {
-        str(name): _length(value, f"deductions.{name}")
+        str(name): _length(value, f"deductions.{name}", system_id)
         for name, value in _mapping(data["deductions"], "deductions").items()
     }
-    lengths = {key: _length(data[key], key) for key in LENGTH_KEYS}
+    lengths = {key: _length(data[key], key, system_id) for key in LENGTH_KEYS}
 
     return SystemConstants(
         system_id=system_id,

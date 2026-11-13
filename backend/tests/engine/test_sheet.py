@@ -34,6 +34,26 @@ def test_missing_value_raises_missing_constant(sample_sheet_data: dict[str, Any]
 
 
 @pytest.mark.parametrize(
+    ("key", "value", "name"),
+    [
+        pytest.param("kerf_mm", None, "kerf_mm", id="blank-constant"),
+        pytest.param("deductions", None, "deductions", id="blank-deductions"),
+        pytest.param("deductions", {"sash": None}, "deductions.sash", id="blank-deduction"),
+        pytest.param("bar_length_mm", {"frame": None}, "bar_length_mm.frame", id="blank-bar"),
+    ],
+)
+def test_blank_value_is_a_missing_constant(
+    sample_sheet_data: dict[str, Any], key: str, value: object, name: str
+) -> None:
+    # A blank YAML entry (``kerf_mm:``) loads as None: the value is missing, not wrong.
+    sample_sheet_data[key] = value
+
+    with pytest.raises(MissingConstant) as error:
+        system_constants_from_mapping(sample_sheet_data)
+    assert error.value.name == name
+
+
+@pytest.mark.parametrize(
     ("key", "value"),
     [
         pytest.param("system_id", "", id="blank-system-id"),
