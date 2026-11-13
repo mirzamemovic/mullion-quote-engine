@@ -244,9 +244,9 @@ def test_demo_prices_cover_every_type_and_colour(key: str, colour: Colour) -> No
         kerf_mm=constants.kerf_mm,
         installation={"P1": Installation(ral=True, old_window_removal=True, wall_repair=True)},
         extras=(
-            Extra(ExtraKind.SILL, "demo-sill", 1, length_mm=Mm(1200), colour=Colour.WHITE),
-            Extra(ExtraKind.SHUTTER, "demo-shutter", 1, area_mm2=Mm2(1_680_000)),
-            Extra(ExtraKind.SCREEN, "demo-screen", 1, area_mm2=Mm2(1_680_000)),
+            Extra(ExtraKind.SILL, "200 mm", 1, length_mm=Mm(1200), colour=Colour.WHITE),
+            Extra(ExtraKind.SHUTTER, "standard", 1, area_mm2=Mm2(1_680_000)),
+            Extra(ExtraKind.SCREEN, "standard", 1, area_mm2=Mm2(1_680_000)),
         ),
         transport_km=40,
         discount=Discount(Cents(0), Bp(0)),
@@ -267,6 +267,6 @@ def test_demo_prices_cover_every_type_and_colour(key: str, colour: Colour) -> No
 
 
 def test_demo_data_is_marked_as_sample() -> None:
-    assert "sample" in demo.DEMO_NAME.lower()
+    assert "izmišljeni" in demo.DEMO_NAME
     assert demo.DEMO_EMAIL.endswith(".invalid")
     assert demo.DEMO_SHEET["system_id"] == "sample-not-real"

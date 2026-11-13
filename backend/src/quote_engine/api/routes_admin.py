@@ -261,7 +261,7 @@ def bump_price_list(list_id: uuid.UUID, body: BumpIn, a: StepUp) -> PriceListOut
             }
         )
     sign = "+" if body.bp >= 0 else "-"
-    note = f"{sign}{abs(body.bp) / 100:g}% from {supplier.name}"[:200]
+    note = f"{sign}{abs(body.bp) / 100:g}% · {supplier.name}"[:200]
     version = _new_price_list(a.db, body.valid_from, note, entries)
     svc.audit(
         a.db, a.user.id, "bump", "price_list", version.id, {"from": str(source.id), "bp": body.bp}

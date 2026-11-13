@@ -28,7 +28,7 @@ from quote_engine.engine.rules.registry import TYPES
 from quote_engine.services import auth
 from quote_engine.services.workshops import create_user, create_workshop
 
-DEMO_NAME = "Demo workshop (sample data)"
+DEMO_NAME = "Probna radionica (izmišljeni podaci)"
 DEMO_EMAIL = "demo@example.invalid"
 DEMO_SMALL_MAX_MM2 = 1_000_000  # invented
 DEMO_STANDARD_MAX_MM2 = 2_500_000  # invented
@@ -102,9 +102,9 @@ def demo_prices(profile: str, glass: str, other: str) -> list[dict[str, object]]
         entry("consumables", "window", "piece", 300, other),
         entry("transport", "flat", "job", 1000, other),
         entry("transport", "km", "km", 50, other),
-        entry("sill", "demo-sill", "m", 1800, other, Colour.WHITE.value),
-        entry("shutter", "demo-shutter", "m2", 6000, other),
-        entry("screen", "demo-screen", "m2", 2500, other),
+        entry("sill", "200 mm", "m", 1800, other, Colour.WHITE.value),
+        entry("shutter", "standard", "m2", 6000, other),
+        entry("screen", "standard", "m2", 2500, other),
     ]
     rows += [
         entry("hardware", opening.value, "set", 3500, other)
@@ -151,24 +151,26 @@ def seed_demo(
         db.flush()
         return row
 
-    profile = add(Supplier(name="Sample profile supplier", kind="profile"))
-    glass = add(Supplier(name="Sample glass supplier", kind="glass"))
-    other = add(Supplier(name="Sample hardware supplier", kind="hardware"))
+    profile = add(Supplier(name="Probni dobavljač profila", kind="profile"))
+    glass = add(Supplier(name="Probni dobavljač stakla", kind="glass"))
+    other = add(Supplier(name="Probni dobavljač okova", kind="hardware"))
     system = add(
-        ProfileSystem(key="sample", brand="Sample", series="Not real", depth_mm=70, enabled=True)
+        ProfileSystem(
+            key="sample", brand="Probni profil", series="70 (izmišljeni)", depth_mm=70, enabled=True
+        )
     )
     add(
         SystemSheetVersion(
             profile_system_id=system.id,
             version=1,
             constants=DEMO_SHEET,
-            source_pages={"all": "invented for the demo"},
+            source_pages={"all": "izmišljeno za demo"},
         )
     )
     for opening in (Opening.TILT_TURN_LEFT, Opening.TILT_TURN_RIGHT):
         add(
             HardwareSet(
-                name=f"Sample set {opening.value}",
+                name=f"Probni okov {opening.value}",
                 opening_type=opening.value,
                 max_width_mm=1300,
                 max_height_mm=2400,
@@ -176,7 +178,7 @@ def seed_demo(
                 max_weight_g=100_000,
             )
         )
-    prices = add(PriceListVersion(valid_from=today, note="Sample prices, not real"))
+    prices = add(PriceListVersion(valid_from=today, note="Probne cijene, nisu stvarne"))
     ids = {"profile": profile.id, "glass": glass.id, "other": other.id}
     for row in demo_prices("profile", "glass", "other"):
         supplier = ids[str(row.pop("supplier_id"))]
@@ -185,7 +187,7 @@ def seed_demo(
                 price_list_version_id=prices.id, supplier_id=supplier, quoted_on=today, **row
             )
         )
-    add(Client(name="Sample client", phone="", place="Sample town"))
+    add(Client(name="Probni klijent", phone="", place="Probno mjesto"))
     return workshop, password
 
 

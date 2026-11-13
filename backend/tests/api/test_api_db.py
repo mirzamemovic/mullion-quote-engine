@@ -82,7 +82,7 @@ def revision_body(**changes: Any) -> dict[str, Any]:
             },
         ],
         "extras": [
-            {"kind": "sill", "ref": "demo-sill", "qty": 1, "colour": "white", "length_mm": 800}
+            {"kind": "sill", "ref": "200 mm", "qty": 1, "colour": "white", "length_mm": 800}
         ],
     }
     return {**body, **changes}
@@ -575,7 +575,7 @@ def test_a_supplier_bump_makes_a_new_version(
     assert response.status_code == 201, response.text
     new = response.json()
     assert new["id"] != source["id"]
-    assert "+4% from Sample glass supplier" in new["note"]
+    assert "+4% · Probni dobavljač stakla" in new["note"]
     before = {(e["item_kind"], e["item_ref"], e["colour"]): e for e in source["entries"]}
     for entry in new["entries"]:
         old = before[(entry["item_kind"], entry["item_ref"], entry["colour"])]
