@@ -48,8 +48,9 @@ compose up -d db
 compose run --rm --no-deps app /app/.venv/bin/alembic upgrade head
 
 echo "== starting $NEW_IMAGE"
-start "$NEW_IMAGE"
-if healthy; then
+# `compose up` itself fails when the app never becomes healthy (Caddy waits for it), so a failed
+# start must lead to the rollback below, not end the script under `set -e`.
+if start "$NEW_IMAGE" && healthy; then
     echo "$NEW_IMAGE" > "$CURRENT_FILE"
     echo "== deployed $NEW_IMAGE"
     exit 0
@@ -59,7 +60,6 @@ echo "== $NEW_IMAGE is not healthy after ${HEALTH_WAIT_S}s" >&2
 compose logs --no-color --tail 100 app >&2 || true
 if [[ -n "$PREVIOUS_IMAGE" ]]; then
     echo "== rolling back to $PREVIOUS_IMAGE" >&2
-    start "$PREVIOUS_IMAGE"
-    healthy || echo "== the previous image is not healthy either" >&2
+    { start "$PREVIOUS_IMAGE" && healthy; } || echo "== the previous image is not healthy either" >&2
 fi
 exit 1

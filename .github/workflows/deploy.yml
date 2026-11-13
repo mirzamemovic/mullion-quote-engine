@@ -3,7 +3,8 @@ name: Deploy
 # After CI passes on main (PLAN.md section 11): build the ARM64 image, push it to GHCR, deploy it
 # to the server over SSH (deploy.sh rolls back on failure), and create a release.
 #
-# Repository secrets needed:
+# Secrets of the `production` environment (not repository secrets, which every branch can read);
+# restrict that environment to the `main` branch in the repository settings:
 #   DEPLOY_HOST          server address
 #   DEPLOY_USER          the deploy user created by infra/setup-server.sh
 #   DEPLOY_SSH_KEY       private key of a key pair used only for deploys
@@ -25,7 +26,10 @@ concurrency:
 jobs:
   image:
     name: Build and push the image
-    if: github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push'
+    if: >-
+      github.event.workflow_run.conclusion == 'success'
+      && github.event.workflow_run.event == 'push'
+      && github.event.workflow_run.head_repository.full_name == github.repository
     runs-on: ubuntu-24.04-arm
     permissions:
       contents: read

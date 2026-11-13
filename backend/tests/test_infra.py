@@ -84,3 +84,21 @@ def test_deploy_runs_only_after_ci_passes_on_main() -> None:
     condition = workflow["jobs"]["image"]["if"]
     assert "conclusion == 'success'" in condition
     assert "event == 'push'" in condition
+    assert "head_repository.full_name == github.repository" in condition
+
+
+@pytest.mark.parametrize("script", ["deploy.sh", "backup.sh", "restore.sh"])
+def test_scripts_set_the_image_before_using_compose(script: str) -> None:
+    # compose.prod.yaml refuses to load without APP_IMAGE, even for `exec`.
+    text = (INFRA / script).read_text(encoding="utf-8")
+
+    assert "export APP_IMAGE" in text
+    assert text.index("export APP_IMAGE") < text.index(
+        "compose ", text.index("export APP_IMAGE") - 1
+    )
+
+
+def test_dockerignore_keeps_env_files_out_everywhere() -> None:
+    lines = (ROOT / ".dockerignore").read_text(encoding="utf-8").splitlines()
+
+    assert {"**/.env", "**/.env.*"} <= set(lines)

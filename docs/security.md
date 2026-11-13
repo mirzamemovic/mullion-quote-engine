@@ -18,7 +18,7 @@ The security design of the PVC Quote Engine (PLAN.md section 9), mapped to OWASP
 | Transport | HTTPS only, HSTS | `infra/Caddyfile` | written |
 | Headers | `Content-Security-Policy: default-src 'self'; frame-ancestors 'none'`, `X-Content-Type-Options: nosniff`, `Referrer-Policy: same-origin` | `infra/Caddyfile` | written |
 | PDFs | WeasyPrint with a `url_fetcher` that only serves bundled fonts and images; autoescaped templates | pdf service | M7 |
-| Secrets | GitHub encrypted secrets and the root-only `/etc/quote-engine/app.env`; nothing in git | deploy workflow, server | written |
+| Secrets | Deploy secrets as GitHub `production` environment secrets limited to `main`; on the server `/etc/quote-engine/app.env`, readable by root and the deploy group only (the deploy user can run Docker, which is root-equivalent, so it is a trusted account); nothing in git | deploy workflow, server | written |
 | Containers | App runs as a non-root user; only Caddy publishes ports | `infra/Dockerfile`, `compose.prod.yaml` | written |
 | Server | SSH keys only, firewall for 22/80/443, unattended security upgrades | `infra/setup-server.sh` | written |
 | Backups | Encrypted with age; the private key is never on the server | `infra/backup.sh` | written |

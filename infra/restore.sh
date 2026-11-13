@@ -19,6 +19,9 @@ rclone copyto "$BACKUP" "$WORK/backup.dump.age"
 age --decrypt --identity "$KEY" --output "$WORK/backup.dump" "$WORK/backup.dump.age"
 
 cd "$APP_DIR"
+# compose.prod.yaml needs APP_IMAGE to load, even for `exec`: use the image that is running.
+APP_IMAGE="$(cat "$APP_DIR/current-image")"
+export APP_IMAGE
 db() {
     docker compose --env-file "$ENV_FILE" -f compose.prod.yaml exec -T db "$@"
 }
@@ -26,8 +29,11 @@ db dropdb --if-exists --username quote_engine "$SCRATCH_DB"
 db createdb --username quote_engine "$SCRATCH_DB"
 db pg_restore --username quote_engine --dbname "$SCRATCH_DB" --no-owner < "$WORK/backup.dump"
 
-echo "== tables restored into $SCRATCH_DB:"
-db psql --username quote_engine --dbname "$SCRATCH_DB" --tuples-only --command \
-    "select count(*) from information_schema.tables where table_schema = 'public'"
+TABLES="$(db psql --username quote_engine --dbname "$SCRATCH_DB" --tuples-only --no-align --command \
+    "select count(*) from information_schema.tables where table_schema = 'public'")"
 db dropdb --username quote_engine "$SCRATCH_DB"
-echo "== restore drill passed for $BACKUP"
+if [[ "${TABLES//[[:space:]]/}" -lt 1 ]]; then
+    echo "== restore drill FAILED: no tables restored from $BACKUP" >&2
+    exit 1
+fi
+echo "== restore drill passed for $BACKUP: $TABLES tables"

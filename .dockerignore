@@ -4,8 +4,8 @@
 .github
 docs
 
-.env
-.env.*
+**/.env
+**/.env.*
 infra/secrets
 
 **/.venv

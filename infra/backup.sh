@@ -26,6 +26,9 @@ trap 'rm -rf "$WORK"' EXIT
 FILE="$WORK/quote-engine-$STAMP.dump.age"
 
 cd "$APP_DIR"
+# compose.prod.yaml needs APP_IMAGE to load, even for `exec`: use the image that is running.
+APP_IMAGE="$(cat "$APP_DIR/current-image")"
+export APP_IMAGE
 docker compose --env-file "$ENV_FILE" -f compose.prod.yaml exec -T db \
     pg_dump --format=custom --username quote_engine quote_engine \
     | age --recipient "$BACKUP_AGE_RECIPIENT" --output "$FILE"

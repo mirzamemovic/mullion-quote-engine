@@ -1,6 +1,6 @@
 # Production stack on the server (PLAN.md section 12): Caddy (HTTPS), the app, PostgreSQL.
-# Started by infra/deploy.sh from /opt/quote-engine. Secrets come from the root-only env file
-# /etc/quote-engine/app.env, never from this repository.
+# Started by infra/deploy.sh from /opt/quote-engine. Secrets come from /etc/quote-engine/app.env
+# (root and the deploy group only), never from this repository.
 #   APP_IMAGE=ghcr.io/<owner>/quote-engine:<git-sha> docker compose -f compose.prod.yaml up -d
 name: quote-engine
 

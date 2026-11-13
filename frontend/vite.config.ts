@@ -4,6 +4,11 @@ import { defineConfig } from "vitest/config";
 
 export default defineConfig({
   plugins: [react(), tailwindcss()],
+  build: {
+    // Emit every asset as a file: inlined data: URIs would be blocked by the
+    // Content-Security-Policy (default-src 'self') set in infra/Caddyfile.
+    assetsInlineLimit: 0,
+  },
   server: {
     // In production FastAPI serves the built app and the API from one origin.
     // The dev server forwards API calls so the browser sees the same shape.
