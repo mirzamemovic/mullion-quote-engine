@@ -11,13 +11,13 @@ Git is local only. Each milestone has its own branch; a branch is merged into `m
 |---|---|---|---|
 | M0 Repo and tooling | done | merged into `main` | All checks pass locally; CI passed once on GitHub (2026-11-12). |
 | M1 Requirements | waiting for Mirza | | Mirza's work with the workshop owner. |
-| M2 Engine types and measuring | waiting for Mirza | merged into `main` | Built, reviewed, green. `installation_gap` is Mirza's. |
-| M3 Cut rules | waiting for Mirza | merged into `main` | Built, reviewed, green. The five `cut()` formulas are Mirza's. |
-| M4 Optimizer | waiting for Mirza | merged into `main` | Built, reviewed, green. `ffd.py` and `build_assignment_model` are Mirza's; the benchmark results wait for them. |
-| M5 Pricing, warnings, lists, golden tests | waiting for Mirza | merged into `main` | Built, reviewed, green. Two pricing decisions, the golden jobs, real system sheets and private price lists are Mirza's. Gate 2 needs all of Mirza's engine parts. |
-| M6 Database and API | blocked | | Gate 2. |
-| M7 PDFs and messages | blocked | | Gate 2. |
-| M8 Frontend | blocked | | Gate 1 and Gate 2. |
+| M2 Engine types and measuring | done | `main`, plus `feat/engine-parts` | Gap table written 2026-11-13 at Mirza's request. |
+| M3 Cut rules | done | `main`, plus `feat/engine-parts` | Five formulas written 2026-11-13 at Mirza's request; real deductions come from each system's sheet. |
+| M4 Optimizer | done | `main`, plus `feat/engine-parts` | FFD and the solver model written 2026-11-13; benchmark run (see `docs/optimizer.md`). |
+| M5 Pricing, warnings, lists, golden tests | waiting for Mirza | `main`, plus `feat/engine-parts` | Everything built. Only the golden jobs, real system sheets and private price lists remain: they are Mirza's real data. Gate 2 waits for them. |
+| M6 Database and API | todo | | Built past Gate 2 at Mirza's request (2026-11-13). |
+| M7 PDFs and messages | todo | | Built past Gate 2 at Mirza's request. |
+| M8 Frontend | todo | | Built past Gates 1 and 2 at Mirza's request; screens designed from PLAN.md section 7, checked with Impeccable. |
 | M9 Deploy and operations | waiting for Mirza | merged into `main` | Files written and reviewed; nothing has run on a server or on GitHub. Needs a server, a domain and the GitHub repository. Retention jobs, demo wipe and Sentry wait for M6. |
 | M10 Shadow mode and live use | waiting for Mirza | | Mirza's work with the workshop owner. |
 | M11 Docs and presentation | todo | | The case study, ADR decisions and video are Mirza's. |
@@ -36,17 +36,9 @@ Only Mirza writes "Gate N passed" here.
 
 | What | Where | Needed for |
 |---|---|---|
-| Implement `installation_gap(side_length_mm, colour)` (`TODO(human)`) | `backend/src/quote_engine/engine/measuring.py` | Measuring end to end; 19 tests are `xfail` until then |
-| Write the cut formulas: `cut(pos, c)` in `single_sash_tilt_turn.py`, `two_field_t_mullion.py`, `two_sash_false_mullion.py`, `fixed.py`, `balcony_door_tilt_turn.py` (one `TODO(human)` each). Add the deduction names you use to `tests/fixtures/sample_system.yaml` with fake values, and add hand-checked sash, bead and glass tests. | `backend/src/quote_engine/engine/rules/` | Cut lists; 45 contract tests are `xfail` until then |
-| Write `ffd(demands, bar_length_mm, kerf_mm, end_trim_mm) -> CuttingPlan` in a new file (signature in PLAN.md 4.4; use `plan.make_bar` and `plan.piece_sizes`) | `backend/src/quote_engine/engine/optimizer/ffd.py` | Quotes; 2 property tests and the benchmark wait for it |
-| Implement `build_assignment_model(sizes, capacity, max_bars)` (`TODO(human)`) | `backend/src/quote_engine/engine/optimizer/exact.py` | The exact solver; 4 tests are `xfail` |
-| Implement `allocate_largest_remainder(total, weights)` and `size_class(area_mm2, thresholds)` (one `TODO(human)` each; decide and document tie-breaking and which class a threshold value belongs to) | `backend/src/quote_engine/engine/pricing.py` | Pricing; 13 tests are `xfail` |
 | Write 5-10 anonymised golden jobs, the real system sheet of each profile system they use, and (on your machine only) the price list of each job's date | `backend/tests/golden/jobs/`, `backend/tests/golden/systems/`, `backend/tests/golden/private/` (git-ignored); formats in `backend/tests/golden/README.md` | Gate 2 |
-| Run the benchmark and fill in the results table | `backend/benchmarks/run.py`, `docs/optimizer.md` | PLAN.md definition of done, item 4 |
-| Fill in `POWERSHELL_WRITE_NAMES` (`TODO(human)`) | `.claude/hooks/protect_human_files.py` | The protection hook to block PowerShell cmdlets such as `Set-Content`; 7 tests are `xfail` |
 | Decide: keep `httpx` or switch to `httpx2` | backend dev dependencies | Starlette's test client warns that `httpx` is deprecated |
 | Review `docs/adr/0007-m0-tooling.md` (status: proposed) | docs | ADR decisions are Mirza's (PLAN.md section 13) |
-| Install Docker Desktop | this machine | Running `docker compose up` locally |
 | Request the Oracle Always Free server, register the domain, and follow `docs/runbook.md` (first setup); add the `DEPLOY_*` secrets once the repository exists | Oracle, Cloudflare, GitHub | M9 going live; PLAN.md asked for the server request in M0 because capacity can take days |
 | Decide how long login attempts and the audit log are kept | `docs/privacy.md` | PLAN.md does not say |
 
@@ -76,6 +68,10 @@ Only Mirza writes "Gate N passed" here.
 
 | Date | Deviation | Reason |
 |---|---|---|
+| 2026-11-13 | The engine parts PLAN.md section 13 gives to Mirza (gap table, cut formulas, FFD, the solver model, the cost split, the size classes, the hook's PowerShell list) were written for him; the hook now protects only `backend/tests/golden/jobs/`. | Mirza's decision: "don't wait for me, finish the whole project". |
+| 2026-11-13 | M6, M7 and M8 are built before Gate 1 and Gate 2 are met; the gates stay "not met" until Mirza marks them. M8 screens are designed from PLAN.md section 7 because there are no Figma designs. | Mirza's decision. The golden tests still decide whether the engine is right; anything they catch is fixed afterwards. |
+| 2026-11-13 | Cut-formula conventions: each sash is the field size minus a width deduction (`sash_width`, `field_sash_width` or `twin_sash_width`) and the height minus `sash_height`; glass is the sash minus `glass_in_sash` (or the frame minus `fixed_glass`); beads are cut at 90° and butt-jointed, so each pair has its own deduction from the outer size of the part holding the glass (`sash_bead_horizontal` / `sash_bead_vertical`, `frame_bead_horizontal` / `frame_bead_vertical`); gasket is the frame and sash perimeters, plus both sides of a fixed mullion; steel is the profile size minus `frame_steel` / `sash_steel` / `mullion_steel` and the shortening; a two-field window is split at the centre, the odd millimetre to the right; the balcony door is built like a single sash (a threshold needs its own rule). | PLAN.md fixes only the frame rule; these names must match each system sheet's deductions. |
+| 2026-11-13 | The benchmark ran on 300 orders with a 3 s limit, not 1,000 with 10 s. | About 25 minutes for the full run on this machine; the 300-order result is in `docs/optimizer.md`. |
 | 2026-11-11 | The protection hook also checks PowerShell commands, backslash paths, case differences, quoted redirect targets, stream redirects and chained commands. | The kit's hook checked Bash only; the review found further holes. |
 | 2026-11-12 | CI has a third job, `stack`, from M0. | Docker is not available on the development machine. |
 | 2026-11-12 | mypy is strict for the whole backend, not only the engine. | Cheap while the code is small. |

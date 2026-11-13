@@ -22,7 +22,10 @@ deductions:
   sash_width: 44
   sash_height: 44
   glass_in_sash: 88
-  bead_over_glass: 2
+  sash_bead_horizontal: 86
+  sash_bead_vertical: 120
+  frame_bead_horizontal: 97
+  frame_bead_vertical: 131
   frame_steel: 66
   sash_steel: 55
   fixed_glass: 99

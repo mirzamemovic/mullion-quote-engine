@@ -1,9 +1,10 @@
 """Hand-checked cut lists for each construction type, on the invented sample sheet.
 
 Sample values (tests/fixtures/sample_system.yaml, SAMPLE - NOT REAL): weld allowance a = 1,
-steel shortening s = 4, sash_width 44, sash_height 44, glass_in_sash 88, bead_over_glass 2,
-frame_steel 66, sash_steel 55, fixed_glass 99, field_sash_width 33, twin_sash_width 22,
-mullion 77, mullion_steel 11, false_mullion 50.
+steel shortening s = 4, sash_width 44, sash_height 44, glass_in_sash 88, sash_bead_horizontal 86,
+sash_bead_vertical 120, frame_bead_horizontal 97, frame_bead_vertical 131, frame_steel 66,
+sash_steel 55, fixed_glass 99, field_sash_width 33, twin_sash_width 22, mullion 77,
+mullion_steel 11, false_mullion 50.
 """
 
 import pytest
@@ -30,7 +31,8 @@ def test_single_sash(sample_constants: SystemConstants) -> None:
     assert pieces["frame top"] == (802, 2)  # 800 + 2a
     assert pieces["sash top"] == (758, 2)  # 800 - 44 + 2
     assert pieces["sash left"] == (1358, 2)  # 1400 - 44 + 2
-    assert pieces["sash bead horizontal"] == (670, 4)  # 800 - 44 - 88 + 2
+    assert pieces["sash bead horizontal"] == (670, 4)  # 800 - 44 - 86
+    assert pieces["sash bead vertical"] == (1236, 4)  # 1400 - 44 - 120: the pairs differ
     assert pieces["frame steel horizontal"] == (730, 4)  # 800 - 66 - 4
     assert pieces["sash steel vertical"] == (1297, 4)  # 1400 - 44 - 55 - 4
     (pane,) = result.glass
@@ -45,8 +47,8 @@ def test_fixed(sample_constants: SystemConstants) -> None:
 
     (pane,) = result.glass
     assert (pane.width_mm, pane.height_mm, pane.qty) == (501, 801, 3)  # 600 - 99, 900 - 99
-    assert pieces["frame bead horizontal"] == (503, 6)  # 501 + 2
-    assert pieces["frame bead vertical"] == (803, 6)
+    assert pieces["frame bead horizontal"] == (503, 6)  # 600 - 97
+    assert pieces["frame bead vertical"] == (769, 6)  # 900 - 131
     assert result.hardware_sets == ()
     assert result.gasket_mm == 3 * 3000  # 2 x (600 + 900) per window
 
@@ -67,7 +69,12 @@ def test_two_fields_split_an_odd_width(sample_constants: SystemConstants) -> Non
     assert pieces["mullion steel"] == (1308, 1)  # 1400 - 77 - 11 - 4
     assert pieces["left sash top"] == (669, 1)  # 700 - 33 + 2
     assert pieces["right sash top"] == (670, 1)  # 701 - 33 + 2: the extra mm goes right
+    right_top = next(p for p in result.pieces if p.label == "right sash top")
+    assert right_top.formula == "W - W/2 - field_sash_width + 2a = 1401 - 700 - 33 + 2 = 670"
     assert [(g.width_mm, g.height_mm) for g in result.glass] == [(579, 1268), (580, 1268)]
+    # Gasket: frame 2 x (1401 + 1400) + sashes 2 x (667 + 1356) and 2 x (668 + 1356)
+    # + both sides of the mullion 2 x 1323.
+    assert result.gasket_mm == 5602 + 4046 + 4048 + 2646
 
 
 def test_two_sashes_with_a_false_mullion(sample_constants: SystemConstants) -> None:

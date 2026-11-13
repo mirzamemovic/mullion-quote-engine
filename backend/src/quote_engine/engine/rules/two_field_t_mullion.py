@@ -1,7 +1,13 @@
 """Two fields with a fixed T-mullion: tilt-and-turn plus turn (PLAN.md 4.2, typical 1400 x 1400)."""
 
 from quote_engine.engine.model import CutList, PositionSpec, Role, SystemConstants
-from quote_engine.engine.rules.common import Term, less, mechanical_piece, steel_piece
+from quote_engine.engine.rules.common import (
+    Term,
+    length_from,
+    less,
+    mechanical_piece,
+    steel_piece,
+)
 from quote_engine.engine.rules.sashes import cut_list, halves, sash_in_field
 
 KEY = "two_field_t_mullion"
@@ -12,9 +18,11 @@ def cut(pos: PositionSpec, c: SystemConstants) -> CutList:
     """Frame, a fixed mullion at the centre (``H - mullion``, 90°), one sash in each field.
 
     Each sash is half the width minus ``field_sash_width`` (the mullion takes part of each field).
+    Both sashes close against the mullion, so it carries gasket on both sides.
     """
     left, right = halves(pos)
     mullion = [Term("H", pos.height_mm), less(c, "mullion")]
+    mullion_mm, _ = length_from(mullion)
     return cut_list(
         pos,
         c,
@@ -24,4 +32,5 @@ def cut(pos: PositionSpec, c: SystemConstants) -> CutList:
         ],
         pieces=[mechanical_piece(pos, Role.MULLION, "mullion", mullion, pos.qty)],
         steel=[steel_piece(pos, "mullion steel", [*mullion, less(c, "mullion_steel")], c, pos.qty)],
+        extra_gasket_mm=2 * mullion_mm,
     )

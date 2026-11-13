@@ -188,19 +188,25 @@ def steel_pair(
 def beads(
     pos: PositionSpec,
     label: str,
-    glass_width_terms: Sequence[Term],
-    glass_height_terms: Sequence[Term],
-    extra: Term,
+    holder: str,
+    width_terms: Sequence[Term],
+    height_terms: Sequence[Term],
+    c: SystemConstants,
     qty: int,
 ) -> tuple[Piece, ...]:
-    """Glazing beads around one pane: two horizontal and two vertical per window, cut at 90°."""
+    """Glazing beads around one pane: two horizontal and two vertical per window, cut at 90°.
+
+    Beads are butt-jointed, so one pair runs through and the other fits between it: the two
+    pairs need their own deductions. Each is taken from the outer size of the part that holds
+    the glass (``holder`` is ``sash`` or ``frame``): ``<holder>_bead_horizontal`` from its width
+    and ``<holder>_bead_vertical`` from its height. Which pair runs through is the catalogue's
+    choice and shows up only in those two numbers.
+    """
+    horizontal = [*width_terms, less(c, f"{holder}_bead_horizontal")]
+    vertical = [*height_terms, less(c, f"{holder}_bead_vertical")]
     return (
-        mechanical_piece(
-            pos, Role.BEAD, f"{label} bead horizontal", [*glass_width_terms, extra], 2 * qty
-        ),
-        mechanical_piece(
-            pos, Role.BEAD, f"{label} bead vertical", [*glass_height_terms, extra], 2 * qty
-        ),
+        mechanical_piece(pos, Role.BEAD, f"{label} bead horizontal", horizontal, 2 * qty),
+        mechanical_piece(pos, Role.BEAD, f"{label} bead vertical", vertical, 2 * qty),
     )
 
 

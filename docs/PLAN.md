@@ -470,7 +470,7 @@ Migrations are backward compatible (expand, then contract in a later release), s
 
 | Part | Author |
 |---|---|
-| `engine/optimizer/ffd.py` | **Mirza only, AI off.** Hook-protected. |
+| `engine/optimizer/ffd.py` | **Mirza only, AI off.** Hook-protected. (Changed 2026-11-13: Mirza chose to have it written; see PROGRESS.md.) |
 | `tests/golden/jobs/*.yaml` | **Mirza only**, from the owner's real jobs. Hook-protected. |
 | Cut-rule formulas in `engine/rules/*.py` | Mirza, using the Learning output style (`TODO(human)`) or by hand |
 | `exact.py`, `pricing.py`, `measuring.py`, auth/session code | Claude with the Learning output style: Mirza writes the decision parts |

@@ -81,6 +81,15 @@ def test_file_tools(tmp_path: Path, tool: str, key: str, path: str, expected: in
         pytest.param(f"cat {JOB_FILE}", ALLOWED, id="read-ffd"),
         pytest.param("uv run pytest tests/engine -q", ALLOWED, id="run-tests"),
         pytest.param("uv run pytest tests/engine -q 2>&1", ALLOWED, id="run-tests-merging-streams"),
+        pytest.param(f"powershell -Command Set-Content {JOB_FILE} x", BLOCKED, id="bash-to-powershell"),
+        pytest.param(f"pwsh -c Remove-Item {JOBS} -Recurse", BLOCKED, id="bash-to-pwsh"),
+        pytest.param(f"py -c \"open('{JOB_FILE}', 'w')\"", BLOCKED, id="windows-python-launcher"),
+        pytest.param(f"py -3.13 -c \"open('{JOB_FILE}', 'w')\"", BLOCKED, id="launcher-with-version"),
+        pytest.param("git clean -fdx backend/tests", BLOCKED, id="git-clean-parent-folder"),
+        pytest.param(f"git reset --hard -- {JOB_FILE}", BLOCKED, id="git-reset-a-golden-job"),
+        pytest.param(f"robocopy empty {JOBS} /MIR", BLOCKED, id="robocopy-mirror"),
+        pytest.param("git switch feat/m6-database-api", ALLOWED, id="switching-branches"),
+        pytest.param("powershell -Command Get-ChildItem", ALLOWED, id="powershell-read-only"),
     ],
 )
 def test_bash(tmp_path: Path, command: str, expected: int) -> None:
@@ -119,6 +128,10 @@ def test_bash(tmp_path: Path, command: str, expected: int) -> None:
         pytest.param(f"Copy-Item draft.py {JOB_FILE_WIN}", BLOCKED, id="copy-item"),
         pytest.param(f"Remove-Item {JOBS_WIN} -Recurse", BLOCKED, id="remove-item"),
         pytest.param("Move-Item backend\\tests old-tests", BLOCKED, id="move-item-parent-folder"),
+        pytest.param(f"robocopy empty {JOBS_WIN} /MIR", BLOCKED, id="robocopy-mirror"),
+        pytest.param(f"xcopy draft.yaml {JOB_FILE_WIN}", BLOCKED, id="xcopy"),
+        pytest.param(f"Start-Transcript -Path {JOB_FILE_WIN}", BLOCKED, id="transcript-into-a-job"),
+        pytest.param(f"py -c \"open('{JOB_FILE}', 'w')\"", BLOCKED, id="windows-python-launcher"),
     ],
 )
 def test_powershell(tmp_path: Path, command: str, expected: int) -> None:

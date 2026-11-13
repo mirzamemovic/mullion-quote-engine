@@ -36,8 +36,9 @@ WRITE_COMMANDS_PATTERN = (
     r"rm|mv|cp|tee|truncate|dd|install|touch|ln|chmod|unlink|rsync"
     r"|sed\s+(-[a-zA-Z]*i|--in-place)"
     r"|perl\s+-[a-zA-Z]*i"
-    r"|git\s+(checkout|restore|rm|mv|apply|stash\s+pop)"
-    r"|python3?\s+-c|uv\s+run\s+python\s+-c|node\s+-e"
+    r"|git\s+(checkout|restore|rm|mv|apply|stash\s+pop|clean|reset|switch)"
+    r"|python3?\s+-c|uv\s+run\s+python\s+-c|node\s+-e|py(\s+-3[\d.]*)?\s+-c"
+    r"|robocopy|xcopy"
     r")\b"
 )
 WRITE_COMMANDS = re.compile(WRITE_COMMANDS_PATTERN)
@@ -69,7 +70,12 @@ POWERSHELL_WRITE_NAMES: tuple[str, ...] = (
     # archives and downloads that write files
     "Expand-Archive", "Compress-Archive",
     "Invoke-WebRequest", "iwr", "Invoke-RestMethod", "irm", "Start-BitsTransfer",
+    # logs
+    "Start-Transcript",
 )
+
+# A Bash command that starts PowerShell gets the PowerShell checks too.
+CALLS_POWERSHELL = re.compile(r"(^|[\s;&|({`])(powershell|pwsh)(\.exe)?\b", re.IGNORECASE)
 
 # PowerShell only: a .NET static call such as [IO.File]::WriteAllText(...) can write anything.
 DOTNET_CALL = re.compile(r"\]\s*::")
@@ -152,7 +158,7 @@ def is_write_command(tool: str, command: str) -> bool:
     ignore_case = tool == "PowerShell" or WINDOWS
     if (WRITE_COMMANDS_ANY_CASE if ignore_case else WRITE_COMMANDS).search(command):
         return True
-    if tool != "PowerShell":
+    if tool != "PowerShell" and not CALLS_POWERSHELL.search(command):
         return False
     if DOTNET_CALL.search(command):
         return True

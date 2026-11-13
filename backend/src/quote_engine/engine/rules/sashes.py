@@ -5,12 +5,13 @@ the system sheet, so a formula reads like the catalogue: ``W - sash_width + 2a``
 
 Deductions used (each one a total over both sides, whole millimetres, from the catalogue):
 
-==================  ===================================================================
-``sash_height``     frame outer height minus sash outer height
-``glass_in_sash``   sash outer size minus glass size, both directions
-``bead_over_glass`` how much longer a glazing bead is than the glass edge it holds
-``sash_steel``      sash outer size minus the sash profile's inner (steel) length
-==================  ===================================================================
+========================  ==============================================================
+``sash_height``           frame outer height minus sash outer height
+``glass_in_sash``         sash outer size minus glass size, both directions
+``sash_bead_horizontal``  sash outer width minus the horizontal glazing bead
+``sash_bead_vertical``    sash outer height minus the vertical glazing bead
+``sash_steel``            sash outer size minus the sash profile's inner (steel) length
+========================  ==============================================================
 
 The width deduction differs per type (``sash_width``, ``field_sash_width``,
 ``twin_sash_width``) and is passed in.
@@ -35,8 +36,8 @@ from quote_engine.engine.rules.common import (
     hardware_for,
     length_from,
     less,
+    minus,
     perimeter,
-    plus,
     steel_pair,
     welded_ring,
 )
@@ -70,7 +71,7 @@ def sash_in_field(
     return Sash(
         pieces=(
             *welded_ring(pos, Role.SASH, f"{label}", width, height, c, pos.qty),
-            *beads(pos, label, glass_width, glass_height, plus(c, "bead_over_glass"), pos.qty),
+            *beads(pos, label, "sash", width, height, c, pos.qty),
         ),
         steel=steel_pair(pos, label, width, height, less(c, "sash_steel"), c, pos.qty),
         glass=pane,
@@ -80,12 +81,13 @@ def sash_in_field(
 
 
 def halves(pos: PositionSpec) -> tuple[list[Term], list[Term]]:
-    """The two field widths of a two-field window, split at the centre: ``W/2`` each.
+    """The two field widths of a two-field window, split at the centre.
 
-    An odd width gives the extra millimetre to the right field.
+    The left field is ``W/2`` rounded down; the right field is printed as ``W - W/2``, so an odd
+    width visibly gives its extra millimetre to the right: ``1401 - 700 = 701``.
     """
-    left = pos.width_mm // 2
-    return [Term("W/2", left)], [Term("W/2", pos.width_mm - left)]
+    half = Term("W/2", pos.width_mm // 2)
+    return [half], [Term("W", pos.width_mm), minus(half.symbol, half.value)]
 
 
 def frame_steel(pos: PositionSpec, c: SystemConstants) -> tuple[Piece, ...]:
@@ -100,13 +102,18 @@ def cut_list(
     sashes: Sequence[Sash],
     pieces: Sequence[Piece] = (),
     steel: Sequence[Piece] = (),
+    extra_gasket_mm: int = 0,
 ) -> CutList:
     """Frame, frame steel, the sashes and any extra pieces of one position.
 
-    Gasket (raw, before the extra in pricing): the frame's perimeter plus each sash's, per window.
+    Gasket (raw, before the extra in pricing), per window: the frame's perimeter, each sash's,
+    and ``extra_gasket_mm`` for other profiles a sash closes against (both sides of a fixed
+    mullion).
     """
-    gasket = perimeter(pos.width_mm, pos.height_mm) + sum(
-        perimeter(sash.outer_width_mm, sash.outer_height_mm) for sash in sashes
+    gasket = (
+        perimeter(pos.width_mm, pos.height_mm)
+        + sum(perimeter(sash.outer_width_mm, sash.outer_height_mm) for sash in sashes)
+        + extra_gasket_mm
     )
     return CutList(
         pieces=(*frame_pieces(pos, c), *pieces, *(p for sash in sashes for p in sash.pieces)),
