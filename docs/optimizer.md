@@ -45,4 +45,20 @@ It writes `backend/benchmarks/results.csv` with one row per order and method.
 
 ## Results
 
-Not available yet. The benchmark needs `engine/optimizer/ffd.py` and `build_assignment_model` in `engine/optimizer/exact.py`, both written by Mirza. Until they exist it reports what is missing and writes nothing. This section will hold the summary table (bars, waste, scrap and runtime for FFD, exact and the lower bound, on 1,000 random orders and on every golden job).
+Run on 2026-11-13: `uv run python -m benchmarks.run --orders 300 --seed 7 --time-limit 3` (300 random orders of 2 to 40 pieces between 300 and 2500 mm, 6000 mm bars, 4 mm kerf, 10 mm end trim, offcuts kept from 500 mm). Raw rows: `backend/benchmarks/results.csv`.
+
+| | Lower bound | FFD | Exact (CP-SAT) |
+|---|---|---|---|
+| Bars, all orders | 1,146 | 1,181 | 1,162 |
+| Orders at the lower bound | | 265 (88%) | 284 (95%) |
+| Waste, mean (median) | | 19.2% (16.7%) | 18.1% (15.3%) |
+| Scrap, mean | | 2.1% | 1.4% |
+| Runtime, median (max) | | under 1 ms | 695 ms (3,014 ms) |
+
+- The exact solver proved the fewest bars on all 300 orders.
+- FFD used as few bars as the proven optimum on 281 orders (94%); on the other 19 it needed exactly one bar more, never two.
+- Waste includes kerf, end trim and kept offcuts; scrap excludes offcuts long enough to keep.
+
+This supports PLAN.md's choice: quotes use FFD (instant, at most one bar off on these orders), and the exact solver stays in the benchmark and the admin "compare" button.
+
+Not yet run: the full 1,000 orders with the 10 s limit from PLAN.md (about 25 minutes on this machine), and the golden jobs, which need Mirza's real past jobs.
