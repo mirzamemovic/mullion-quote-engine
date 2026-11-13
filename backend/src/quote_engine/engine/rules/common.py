@@ -141,6 +141,69 @@ def hardware_for(pos: PositionSpec) -> tuple[HardwareNeed, ...]:
     )
 
 
+def less(c: SystemConstants, name: str) -> Term:
+    """A deduction from the system sheet as a subtracted term, printed under its own name."""
+    return minus(name, deduction(c, name))
+
+
+def plus(c: SystemConstants, name: str) -> Term:
+    """A system-sheet value as an added term, printed under its own name."""
+    return Term(name, deduction(c, name))
+
+
+def welded_ring(
+    pos: PositionSpec,
+    role: Role,
+    label: str,
+    width_terms: Sequence[Term],
+    height_terms: Sequence[Term],
+    c: SystemConstants,
+    qty: int,
+) -> tuple[Piece, ...]:
+    """The four 45° welded pieces of a frame or sash: top, bottom, left, right."""
+    return (
+        welded_piece(pos, role, f"{label} top", width_terms, c, qty),
+        welded_piece(pos, role, f"{label} bottom", width_terms, c, qty),
+        welded_piece(pos, role, f"{label} left", height_terms, c, qty),
+        welded_piece(pos, role, f"{label} right", height_terms, c, qty),
+    )
+
+
+def steel_pair(
+    pos: PositionSpec,
+    label: str,
+    width_terms: Sequence[Term],
+    height_terms: Sequence[Term],
+    inner: Term,
+    c: SystemConstants,
+    qty: int,
+) -> tuple[Piece, ...]:
+    """Steel for a welded ring: two horizontal and two vertical pieces per window."""
+    return (
+        steel_piece(pos, f"{label} steel horizontal", [*width_terms, inner], c, 2 * qty),
+        steel_piece(pos, f"{label} steel vertical", [*height_terms, inner], c, 2 * qty),
+    )
+
+
+def beads(
+    pos: PositionSpec,
+    label: str,
+    glass_width_terms: Sequence[Term],
+    glass_height_terms: Sequence[Term],
+    extra: Term,
+    qty: int,
+) -> tuple[Piece, ...]:
+    """Glazing beads around one pane: two horizontal and two vertical per window, cut at 90°."""
+    return (
+        mechanical_piece(
+            pos, Role.BEAD, f"{label} bead horizontal", [*glass_width_terms, extra], 2 * qty
+        ),
+        mechanical_piece(
+            pos, Role.BEAD, f"{label} bead vertical", [*glass_height_terms, extra], 2 * qty
+        ),
+    )
+
+
 def perimeter(width_mm: int, height_mm: int) -> Mm:
     """Twice the width plus twice the height."""
     return Mm(2 * (width_mm + height_mm))

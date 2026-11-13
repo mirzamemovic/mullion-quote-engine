@@ -1,10 +1,9 @@
 """What every construction type's cut rule must produce (PLAN.md section 4.2).
 
 These tests check the rules PLAN.md fixes, not Mirza's formulas: frame pieces, angles, printable
-formulas, glass and hardware counts, and never guessing a deduction. They are ``xfail`` until the
-formulas exist. When a formula needs a deduction, add it (with an obviously fake value) to
-``tests/fixtures/sample_system.yaml``; the hand-checked sash, bead and glass numbers belong in a
-test of their own next to these.
+formulas, glass and hardware counts, and never guessing a deduction. The deductions the formulas
+use have obviously fake values in ``tests/fixtures/sample_system.yaml``; hand-checked numbers for
+each type are in ``tests/engine/test_rules_types.py``.
 """
 
 from dataclasses import replace
@@ -15,10 +14,6 @@ from quote_engine.engine.errors import MissingConstant
 from quote_engine.engine.model import Colour, CutList, Opening, PositionSpec, Role, SystemConstants
 from quote_engine.engine.rules import registry
 from quote_engine.engine.rules.common import hardware_for
-
-WAITING = pytest.mark.xfail(
-    reason="waiting for Mirza: the cut() formulas in engine/rules/", raises=NotImplementedError
-)
 
 POSITIONS = {
     "single_sash_tilt_turn": (800, 1400, 2, (Opening.TILT_TURN_RIGHT,)),
@@ -42,7 +37,6 @@ def cut(key: str, c: SystemConstants) -> tuple[PositionSpec, CutList]:
     return pos, registry.cut_position(pos, c)
 
 
-@WAITING
 @pytest.mark.parametrize("key", TYPES)
 def test_frame_is_size_plus_two_weld_allowances(
     key: str, sample_constants: SystemConstants
@@ -57,7 +51,6 @@ def test_frame_is_size_plus_two_weld_allowances(
     assert all(p.qty == pos.qty for p in frame.values())
 
 
-@WAITING
 @pytest.mark.parametrize("key", TYPES)
 def test_angles_follow_the_role(key: str, sample_constants: SystemConstants) -> None:
     _, result = cut(key, sample_constants)
@@ -67,7 +60,6 @@ def test_angles_follow_the_role(key: str, sample_constants: SystemConstants) -> 
             assert (piece.angle_left, piece.angle_right) == (ANGLES[piece.role],) * 2, piece.label
 
 
-@WAITING
 @pytest.mark.parametrize("key", TYPES)
 def test_every_formula_ends_in_its_length(key: str, sample_constants: SystemConstants) -> None:
     _, result = cut(key, sample_constants)
@@ -79,7 +71,6 @@ def test_every_formula_ends_in_its_length(key: str, sample_constants: SystemCons
         assert pane.formula_h.endswith(f"= {pane.height_mm}")
 
 
-@WAITING
 @pytest.mark.parametrize("key", TYPES)
 def test_one_glass_pane_per_field(key: str, sample_constants: SystemConstants) -> None:
     pos, result = cut(key, sample_constants)
@@ -88,7 +79,6 @@ def test_one_glass_pane_per_field(key: str, sample_constants: SystemConstants) -
     assert all(pane.build == pos.glass_build for pane in result.glass)
 
 
-@WAITING
 @pytest.mark.parametrize("key", TYPES)
 def test_one_hardware_set_per_opening_sash(key: str, sample_constants: SystemConstants) -> None:
     pos, result = cut(key, sample_constants)
@@ -96,7 +86,6 @@ def test_one_hardware_set_per_opening_sash(key: str, sample_constants: SystemCon
     assert result.hardware_sets == hardware_for(pos)
 
 
-@WAITING
 @pytest.mark.parametrize("key", TYPES)
 def test_every_piece_fits_on_its_bar(key: str, sample_constants: SystemConstants) -> None:
     _, result = cut(key, sample_constants)
@@ -110,7 +99,6 @@ def test_every_piece_fits_on_its_bar(key: str, sample_constants: SystemConstants
         assert piece.length_mm + sample_constants.kerf_mm <= usable[piece.role], piece.label
 
 
-@WAITING
 @pytest.mark.parametrize("key", TYPES)
 def test_there_is_gasket(key: str, sample_constants: SystemConstants) -> None:
     _, result = cut(key, sample_constants)
@@ -118,7 +106,6 @@ def test_there_is_gasket(key: str, sample_constants: SystemConstants) -> None:
     assert result.gasket_mm > 0
 
 
-@WAITING
 @pytest.mark.parametrize(
     ("key", "role"),
     [("two_field_t_mullion", Role.MULLION), ("two_sash_false_mullion", Role.FALSE_MULLION)],
@@ -131,7 +118,6 @@ def test_two_field_types_have_their_mullion(
     assert sum(p.qty for p in result.pieces if p.role is role) == pos.qty
 
 
-@WAITING
 @pytest.mark.parametrize("key", TYPES)
 def test_a_missing_deduction_is_never_guessed(key: str, sample_constants: SystemConstants) -> None:
     without_deductions = replace(sample_constants, deductions={})

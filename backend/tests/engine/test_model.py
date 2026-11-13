@@ -103,7 +103,8 @@ def test_system_constants_can_be_copied_pickled_and_turned_into_data(
     assert pickle.loads(pickle.dumps(sample_constants)) == sample_constants
     assert copy.deepcopy(sample_constants) == sample_constants
     data = asdict(sample_constants)
-    assert data["deductions"] == {"sample_deduction_a": 11, "sample_deduction_b": 22}
+    assert data["deductions"] == dict(sample_constants.deductions)
+    assert type(data["deductions"]["sample_deduction_a"]) is int
     copied: SystemConstants = pickle.loads(pickle.dumps(sample_constants))
     with pytest.raises(TypeError):
         copied.deductions["x"] = Mm(1)  # type: ignore[index]
@@ -124,9 +125,10 @@ def test_system_constants_can_be_copied_pickled_and_turned_into_data(
 def test_every_way_to_change_a_mapping_is_refused(
     sample_constants: SystemConstants, change: Callable[[Any], object]
 ) -> None:
+    before = dict(sample_constants.deductions)
     with pytest.raises(TypeError):
         change(sample_constants.deductions)
-    assert sample_constants.deductions == {"sample_deduction_a": 11, "sample_deduction_b": 22}
+    assert sample_constants.deductions == before
 
 
 def test_system_constants_have_no_default_values() -> None:

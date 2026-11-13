@@ -18,3 +18,16 @@ min_offcut_mm: 555
 deductions:
   sample_deduction_a: 11
   sample_deduction_b: 22
+  # Used by the cut rules; every value invented.
+  sash_width: 44
+  sash_height: 44
+  glass_in_sash: 88
+  bead_over_glass: 2
+  frame_steel: 66
+  sash_steel: 55
+  fixed_glass: 99
+  field_sash_width: 33
+  twin_sash_width: 22
+  mullion: 77
+  mullion_steel: 11
+  false_mullion: 50

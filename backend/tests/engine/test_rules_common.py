@@ -80,8 +80,8 @@ def test_deduction_and_bar_length_come_from_the_sheet(sample_constants: SystemCo
 
 def test_missing_deduction_is_never_guessed(sample_constants: SystemConstants) -> None:
     with pytest.raises(MissingConstant) as error:
-        deduction(sample_constants, "sash_width")
-    assert error.value.name == "deductions.sash_width"
+        deduction(sample_constants, "not_in_any_sheet")
+    assert error.value.name == "deductions.not_in_any_sheet"
 
 
 def test_missing_bar_length_is_never_guessed(sample_constants: SystemConstants) -> None:
