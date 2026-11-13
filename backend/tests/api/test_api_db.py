@@ -239,7 +239,6 @@ def test_the_admin_needs_a_totp_code(api: TestClient, db: Session, shop_a: Sampl
     log_in(api, "admin@example.invalid")
 
     assert api.get(f"{API}/clients").status_code == 401
-    assert api.post(f"{API}/auth/totp", json={"code": "123456"}).status_code in (200, 401)
     secret = created.user.totp_secret
     assert secret is not None
     assert api.post(f"{API}/auth/totp", json={"code": pyotp.TOTP(secret).now()}).status_code == 200
@@ -287,6 +286,41 @@ def test_reauth_with_a_wrong_password_is_401(api: TestClient, shop_a: SampleWork
     log_in(api, shop_a.email)
 
     assert api.post(f"{API}/auth/reauth", json={"password": "nope"}).status_code == 401
+
+
+def test_guessing_the_step_up_password_ends_the_session(
+    api: TestClient, shop_a: SampleWorkshop
+) -> None:
+    log_in(api, shop_a.email)
+    answers = [
+        api.post(f"{API}/auth/reauth", json={"password": "nope"}).status_code for _ in range(5)
+    ]
+
+    assert answers == [401, 401, 401, 401, 429]
+    assert api.get(f"{API}/auth/me").status_code == 401
+    login = api.post(f"{API}/auth/login", json={"email": shop_a.email, "password": PASSWORD})
+    assert login.status_code == 429
+
+
+def test_guessing_totp_codes_ends_the_session(
+    api: TestClient, db: Session, shop_a: SampleWorkshop
+) -> None:
+    created = workshops.create_user(
+        db, shop_a.workshop.id, "admin@example.invalid", PASSWORD, auth.ROLE_ADMIN
+    )
+    db.commit()
+    secret = created.user.totp_secret
+    assert secret is not None
+    log_in(api, "admin@example.invalid")
+    current = pyotp.TOTP(secret)
+    wrong = next(
+        code for code in ("000000", "111111", "222222") if not current.verify(code, valid_window=1)
+    )
+
+    answers = [api.post(f"{API}/auth/totp", json={"code": wrong}).status_code for _ in range(5)]
+
+    assert answers == [401, 401, 401, 401, 429]
+    assert api.post(f"{API}/auth/totp", json={"code": current.now()}).status_code == 401
 
 
 # --- tenancy ------------------------------------------------------------------------------------

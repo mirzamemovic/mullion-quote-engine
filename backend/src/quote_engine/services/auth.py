@@ -97,17 +97,37 @@ def _recent_failures(
     return int(db.scalar(query) or 0)
 
 
+def locked_out(db: DbSession, username: str, ip: str, at: datetime) -> bool:
+    """Too many recent failures for this username or this IP address."""
+    since = at - RATE_WINDOW
+    return (
+        _recent_failures(db, LoginAttempt.username, username, since) >= MAX_FAILURES_PER_USERNAME
+        or _recent_failures(db, LoginAttempt.ip, ip, since) >= MAX_FAILURES_PER_IP
+    )
+
+
+def _fail_inside_session(db: DbSession, row: Session, user: User, ip: str) -> None:
+    """A wrong TOTP code or step-up password counts as a failed login for that user.
+
+    Once the limit is reached the session is deleted, so guessing needs the password again, and
+    the password itself is then locked out too.
+    """
+    at = now()
+    db.add(LoginAttempt(username=user.email, ip=ip, at=at, success=False))
+    db.flush()
+    if locked_out(db, user.email, ip, at):
+        db.delete(row)
+        db.flush()
+        raise RateLimitedError("too many wrong attempts, log in again in 15 minutes")
+
+
 def login(
     db: DbSession, email: str, password: str, ip: str, user_agent: str, at: datetime | None = None
 ) -> NewSession:
     """Check the password and open a new session, or raise ``AuthError``."""
     at = at or now()
     username = email.strip().lower()
-    since = at - RATE_WINDOW
-    if (
-        _recent_failures(db, LoginAttempt.username, username, since) >= MAX_FAILURES_PER_USERNAME
-        or _recent_failures(db, LoginAttempt.ip, ip, since) >= MAX_FAILURES_PER_IP
-    ):
+    if locked_out(db, username, ip, at):
         raise RateLimitedError("too many failed logins, try again in 15 minutes")
 
     user = db.scalars(select(User).where(func.lower(User.email) == username)).one_or_none()
@@ -161,8 +181,10 @@ def csrf_matches(row: Session, header: str | None) -> bool:
     return header is not None and hmac.compare_digest(row.csrf_token, header)
 
 
-def confirm_totp(db: DbSession, row: Session, user: User, code: str) -> bool:
+def confirm_totp(db: DbSession, row: Session, user: User, code: str, ip: str) -> bool:
+    """Mark the session as past its TOTP step. Wrong codes count towards the login limit."""
     if user.totp_secret is None or not totp_ok(user.totp_secret, code):
+        _fail_inside_session(db, row, user, ip)
         return False
     row.totp_ok = True
     db.flush()
@@ -170,9 +192,11 @@ def confirm_totp(db: DbSession, row: Session, user: User, code: str) -> bool:
 
 
 def reauthenticate(
-    db: DbSession, row: Session, user: User, password: str, at: datetime | None = None
+    db: DbSession, row: Session, user: User, password: str, ip: str, at: datetime | None = None
 ) -> bool:
+    """Record a fresh password check (step-up). Wrong passwords count towards the login limit."""
     if not verify_password(user.password_hash, password):
+        _fail_inside_session(db, row, user, ip)
         return False
     row.reauth_at = at or now()
     db.flush()

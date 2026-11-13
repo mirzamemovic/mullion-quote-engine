@@ -50,10 +50,13 @@ def login(
     body: LoginIn, request: Request, response: Response, db: DB, settings: AppSettings
 ) -> MeOut:
     """Check email and password and open a new session (a new token on every login)."""
-    ip = request.client.host if request.client else "unknown"
     try:
         opened = auth.login(
-            db, body.email, body.password, ip, request.headers.get("user-agent", "")
+            db,
+            body.email,
+            body.password,
+            _client_ip(request),
+            request.headers.get("user-agent", ""),
         )
     finally:
         db.commit()  # the login attempt is recorded even when the login fails
@@ -61,18 +64,32 @@ def login(
     return _me(db, opened.user, opened.row)
 
 
+def _client_ip(request: Request) -> str:
+    return request.client.host if request.client else "unknown"
+
+
 @router.post("/totp")
-def totp(body: CodeIn, a: Partial) -> MeOut:
+def totp(body: CodeIn, request: Request, a: Partial) -> MeOut:
     """The admin's second step: a 6-digit code from the authenticator app."""
-    if not auth.confirm_totp(a.db.session, a.session, a.user, body.code):
+    try:
+        ok = auth.confirm_totp(a.db.session, a.session, a.user, body.code, _client_ip(request))
+    finally:
+        a.db.session.commit()  # a wrong code is recorded even though the request fails
+    if not ok:
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, "wrong code")
     return _me(a.db.session, a.user, a.session)
 
 
 @router.post("/reauth")
-def reauth(body: PasswordIn, a: Partial) -> MeOut:
+def reauth(body: PasswordIn, request: Request, a: Partial) -> MeOut:
     """Confirm the password again before a sensitive action (valid 15 minutes)."""
-    if not auth.reauthenticate(a.db.session, a.session, a.user, body.password):
+    try:
+        ok = auth.reauthenticate(
+            a.db.session, a.session, a.user, body.password, _client_ip(request)
+        )
+    finally:
+        a.db.session.commit()  # a wrong password is recorded even though the request fails
+    if not ok:
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, "wrong password")
     return _me(a.db.session, a.user, a.session)
 
