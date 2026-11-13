@@ -18,7 +18,7 @@ Git is local only. Each milestone has its own branch; a branch is merged into `m
 | M6 Database and API | blocked | | Gate 2. |
 | M7 PDFs and messages | blocked | | Gate 2. |
 | M8 Frontend | blocked | | Gate 1 and Gate 2. |
-| M9 Deploy and operations | todo | | Files only. No real server. |
+| M9 Deploy and operations | waiting for Mirza | `feat/m9-deploy` (on M5) | Files written and reviewed; nothing has run on a server or on GitHub. Needs a server, a domain and the GitHub repository. Retention jobs, demo wipe and Sentry wait for M6. |
 | M10 Shadow mode and live use | waiting for Mirza | | Mirza's work with the workshop owner. |
 | M11 Docs and presentation | todo | | The case study, ADR decisions and video are Mirza's. |
 
@@ -48,6 +48,8 @@ Only Mirza writes "Gate N passed" here.
 | Decide: keep `httpx` or switch to `httpx2` | backend dev dependencies | Starlette's test client warns that `httpx` is deprecated |
 | Review `docs/adr/0007-m0-tooling.md` (status: proposed) | docs | ADR decisions are Mirza's (PLAN.md section 13) |
 | Install Docker Desktop | this machine | Running `docker compose up` locally |
+| Request the Oracle Always Free server, register the domain, and follow `docs/runbook.md` (first setup); add the `DEPLOY_*` secrets once the repository exists | Oracle, Cloudflare, GitHub | M9 going live; PLAN.md asked for the server request in M0 because capacity can take days |
+| Decide how long login attempts and the audit log are kept | `docs/privacy.md` | PLAN.md does not say |
 
 ## Decisions
 
@@ -90,6 +92,9 @@ Only Mirza writes "Gate N passed" here.
 |---|---|
 | `.github/workflows/ci.yml` | Ran once on GitHub on 2026-11-12 for the M0 branch: all three jobs passed. Later changes have only run locally. |
 | `.github/dependabot.yml` | Never run. |
+| `.github/workflows/deploy.yml` | Never run. Needs the four `DEPLOY_*` secrets and a `production` environment. |
+| `.github/workflows/codeql.yml` | Never run. The CodeQL action uses the `v3` tag; pin it to a commit SHA once the repository is on GitHub. |
+| `infra/Dockerfile` (multi-stage), `compose.prod.yaml`, `Caddyfile`, `setup-server.sh`, `deploy.sh`, `backup.sh`, `restore.sh`, `systemd/` | Never run: no Docker here and no server. Shell scripts pass `bash -n`; YAML parses; `tests/test_infra.py` checks what can be checked offline. The CI `stack` job will build the new Dockerfile on the first push. |
 
 ## M0 Repo and tooling (built 2026-11-11 to 2026-11-12)
 
@@ -136,3 +141,11 @@ Mirza's parts: `allocate_largest_remainder` and `size_class` in `pricing.py`; th
 Gate 2 (all golden tests pass) needs every engine part of Mirza's: the gap table, the five cut formulas, the FFD file, the two pricing decisions and the golden jobs. Until it is passed, M6, M7 and M8 stay blocked.
 
 Status (2026-11-13): built and green. Full local check passes; `pytest`: 277 passed, 3 skipped (golden, no jobs yet), 80 xfailed; engine coverage 99%; pyright 0 errors. `/code-review` found four gaps (unit price x quantity could differ from the line total, a `ValueError` instead of `InvalidInput`, a bad role crashing a golden test, positions cut twice in the harness); all fixed. A fresh-context review found three more: the unit price and the gasket metres were still rounded outside `units.py` (now `divide_half_up` and `whole_metres_up`), and steel was grouped by window colour although it has none, so a job with two colours would have bought and priced steel twice. Steel is now one group per job (a change to the M4 grouping, made on this branch). Final check: `pytest` 288 passed, 3 skipped, 80 xfailed; coverage 99%; pyright 0 errors.
+
+## M9 Deploy and operations (plan approved 2026-11-13)
+
+Files: `infra/Dockerfile` (frontend build, then the Python runtime with the WeasyPrint libraries, non-root, health check), `infra/compose.prod.yaml` (Caddy, app, PostgreSQL 18; secrets only from `/etc/quote-engine/app.env`), `infra/Caddyfile` (HTTPS and the PLAN.md section 9 headers), `infra/setup-server.sh`, `infra/deploy.sh` (migrate, start, health check, roll back), `infra/backup.sh` and `infra/restore.sh` (age-encrypted dumps, two remotes, rotation, restore drill), `infra/systemd/`, `.github/workflows/deploy.yml`, `.github/workflows/codeql.yml`, `docs/runbook.md`, `docs/security.md`, `docs/privacy.md`. The app now serves the built frontend from the same origin, with `index.html` for client-side routes. `compose.yaml` builds the same image.
+
+Not done (needs M6): Sentry wiring, the retention jobs, the nightly demo wipe; `deploy.sh` runs `alembic upgrade head`, which exists only after M6. CI's planned pip-audit, npm audit, Gitleaks and Trivy jobs are not added yet.
+
+Status (2026-11-13): written and checked offline. `pytest`: 304 passed, 3 skipped, 80 xfailed; coverage 99%; pyright 0 errors; shell scripts pass `bash -n`. `/code-review` found three gaps (the deploy health check could never pass, so every deploy would have rolled back; client-side routes returned 404 on a reload; the backup script ran the env file as a script); all fixed.
