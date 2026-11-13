@@ -35,6 +35,13 @@ def pct(amount: int, bp: int) -> int:
     return (amount * bp + BP_PER_WHOLE // 2) // BP_PER_WHOLE
 
 
+def share_bp(part: int, whole: int) -> Bp:
+    """Return ``part`` as basis points of ``whole``, rounded half up. A zero whole gives 0."""
+    if whole == 0:
+        return Bp(0)
+    return Bp((part * BP_PER_WHOLE + whole // 2) // whole)
+
+
 def per_metre(length_mm: Mm, cents_per_m: Cents) -> Cents:
     """Return the price of ``length_mm`` at ``cents_per_m`` per metre, rounded half up."""
     return Cents((length_mm * cents_per_m + MM_PER_M // 2) // MM_PER_M)

@@ -8,9 +8,7 @@ from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass
 
 from quote_engine.engine.errors import InvalidInput
-from quote_engine.engine.units import Bp, Mm
-
-BP_PER_WHOLE = 10_000
+from quote_engine.engine.units import Bp, Mm, share_bp
 
 
 @dataclass(frozen=True)
@@ -111,10 +109,6 @@ class PlanStats:
     scrap_bp: Bp
 
 
-def _share(part: int, whole: int) -> Bp:
-    return Bp((part * BP_PER_WHOLE + whole // 2) // whole) if whole else Bp(0)
-
-
 def plan_stats(plan: CuttingPlan, demands: Sequence[Demand], min_offcut_mm: int) -> PlanStats:
     """Waste is every millimetre bought but not delivered as a piece (kerf, trim and offcuts).
     Offcuts of at least ``min_offcut_mm`` are kept; the rest of the waste is scrap.
@@ -126,8 +120,8 @@ def plan_stats(plan: CuttingPlan, demands: Sequence[Demand], min_offcut_mm: int)
     return PlanStats(
         bars=len(plan.bars),
         waste_mm=Mm(waste),
-        waste_bp=_share(waste, bought),
+        waste_bp=share_bp(waste, bought),
         kept_offcuts_mm=kept,
         scrap_mm=Mm(scrap),
-        scrap_bp=_share(scrap, bought),
+        scrap_bp=share_bp(scrap, bought),
     )

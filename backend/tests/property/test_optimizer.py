@@ -114,7 +114,8 @@ def test_ffd_is_deterministic(order: Order) -> None:
 
 @pytest.mark.slow
 @pytest.mark.xfail(
-    reason="waiting for Mirza: exact.build_assignment_model", raises=NotImplementedError
+    reason="waiting for Mirza: exact.build_assignment_model and ffd.py",
+    raises=(NotImplementedError, ModuleNotFoundError),
 )
 @settings(max_examples=30, deadline=None)
 @given(orders(max_demands=4))

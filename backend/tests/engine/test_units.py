@@ -2,7 +2,7 @@
 
 import pytest
 
-from quote_engine.engine.units import Bp, Cents, Mm, Mm2, pct, per_m2, per_metre
+from quote_engine.engine.units import Bp, Cents, Mm, Mm2, pct, per_m2, per_metre, share_bp
 
 
 @pytest.mark.parametrize(
@@ -33,6 +33,20 @@ def test_pct_keeps_the_unit_for_lengths() -> None:
 def test_pct_works_on_areas_and_basis_points() -> None:
     assert pct(Mm2(300_000), Bp(1000)) == 30_000
     assert pct(Bp(2500), Bp(5000)) == 1250
+
+
+@pytest.mark.parametrize(
+    ("part", "whole", "expected"),
+    [
+        pytest.param(776, 6000, 1293, id="1293.3-goes-down"),
+        pytest.param(1, 8, 1250, id="exact"),
+        pytest.param(1, 20_000, 1, id="exact-half-goes-up"),
+        pytest.param(1, 20_001, 0, id="just-under-half-goes-down"),
+        pytest.param(5, 0, 0, id="zero-whole"),
+    ],
+)
+def test_share_bp(part: int, whole: int, expected: int) -> None:
+    assert share_bp(part, whole) == expected
 
 
 @pytest.mark.parametrize(

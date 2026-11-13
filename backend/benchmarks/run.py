@@ -55,7 +55,7 @@ ExactFunction = Callable[..., ExactResult]
 
 
 def random_orders(count: int, seed: int) -> Iterator[Order]:
-    """Window-like random orders: 2 to 30 pieces between 300 and 2500 mm on a 6000 mm bar."""
+    """Window-like random orders: 2 to 40 pieces between 300 and 2500 mm on a 6000 mm bar."""
     rng = random.Random(seed)  # noqa: S311 - benchmark data, not security
     for number in range(1, count + 1):
         demands = tuple(

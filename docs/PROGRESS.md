@@ -13,7 +13,7 @@ Git is local only. Each milestone has its own branch; a branch is merged into `m
 | M1 Requirements | waiting for Mirza | | Mirza's work with the workshop owner. |
 | M2 Engine types and measuring | waiting for Mirza | `feat/m2-engine-types` (on M0) | Built, reviewed, green. `installation_gap` is Mirza's. Review and merge. |
 | M3 Cut rules | waiting for Mirza | `feat/m3-cut-rules` (on M2) | Built, reviewed, green. The five `cut()` formulas are Mirza's. |
-| M4 Optimizer | todo | | `ffd.py` and the decision part of `exact.py` are Mirza's. |
+| M4 Optimizer | waiting for Mirza | `feat/m4-optimizer` (on M3) | Built, reviewed, green. `ffd.py` and `build_assignment_model` are Mirza's; the benchmark results wait for them. |
 | M5 Pricing, warnings, lists, golden tests | todo | | The golden job files and the decision parts of pricing are Mirza's. Ends at Gate 2. |
 | M6 Database and API | blocked | | Gate 2. |
 | M7 PDFs and messages | blocked | | Gate 2. |
@@ -38,6 +38,9 @@ Only Mirza writes "Gate N passed" here.
 |---|---|---|
 | Implement `installation_gap(side_length_mm, colour)` (`TODO(human)`) | `backend/src/quote_engine/engine/measuring.py` | Measuring end to end; 19 tests are `xfail` until then |
 | Write the cut formulas: `cut(pos, c)` in `single_sash_tilt_turn.py`, `two_field_t_mullion.py`, `two_sash_false_mullion.py`, `fixed.py`, `balcony_door_tilt_turn.py` (one `TODO(human)` each). Add the deduction names you use to `tests/fixtures/sample_system.yaml` with fake values, and add hand-checked sash, bead and glass tests. | `backend/src/quote_engine/engine/rules/` | Cut lists; 45 contract tests are `xfail` until then |
+| Write `ffd(demands, bar_length_mm, kerf_mm, end_trim_mm) -> CuttingPlan` in a new file (signature in PLAN.md 4.4; use `plan.make_bar` and `plan.piece_sizes`) | `backend/src/quote_engine/engine/optimizer/ffd.py` | Quotes; 2 property tests and the benchmark wait for it |
+| Implement `build_assignment_model(sizes, capacity, max_bars)` (`TODO(human)`) | `backend/src/quote_engine/engine/optimizer/exact.py` | The exact solver; 4 tests are `xfail` |
+| Run the benchmark and fill in the results table | `backend/benchmarks/run.py`, `docs/optimizer.md` | PLAN.md definition of done, item 4 |
 | Fill in `POWERSHELL_WRITE_NAMES` (`TODO(human)`) | `.claude/hooks/protect_human_files.py` | The protection hook to block PowerShell cmdlets such as `Set-Content`; 7 tests are `xfail` |
 | Review and merge `feat/m0-repo-tooling`, then `feat/m2-engine-types` | local git | Later milestones start from `main` |
 | Decide: keep `httpx` or switch to `httpx2` | backend dev dependencies | Starlette's test client warns that `httpx` is deprecated |
@@ -108,4 +111,12 @@ Files (under `backend/`): `engine/sheet.py` (system sheet from plain data), `eng
 
 Mirza's part: the five `cut(pos, c)` functions. Contract tests for every type (frame = size + 2a, angles by role, formulas end in their length, one pane per field, one hardware set per opening sash, every piece fits its bar, gasket present, mullions, no guessed deduction) are `xfail` until they exist.
 
-Status (2026-11-13): built and green. Full local check passes; `pytest`: 162 passed, 61 xfailed; coverage 100%; pyright 0 errors. `/code-review` found five gaps (float formula terms, unchecked rule signatures, rule output not tied to its position, a crash on mixed unknown keys, an unclear bar-fit test); all fixed with tests.
+Status (2026-11-13): built and green. Full local check passes; `pytest`: 162 passed, 61 xfailed; coverage 100%; pyright 0 errors. `/code-review` found five gaps (float formula terms, unchecked rule signatures, rule output not tied to its position, a crash on mixed unknown keys, an unclear bar-fit test); all fixed with tests. A fresh-context review found that a blank sheet value raised `InvalidInput` instead of `MissingConstant`; fixed.
+
+## M4 Optimizer (plan approved 2026-11-13)
+
+Files (under `backend/`): `engine/optimizer/plan.py` (demands, bars, plans, capacity arithmetic, waste and scrap), `bounds.py` (lower bound), `validate.py` (plan checker), `groups.py` (pieces grouped by role and colour), `exact.py` (CP-SAT, two phases), `benchmarks/run.py`, `tests/property/test_optimizer.py` (Hypothesis), and `docs/optimizer.md`. OR-Tools and Hypothesis added. A second import-linter contract keeps OR-Tools out of every engine module except `exact.py`.
+
+Mirza's parts: the FFD file (it does not exist; the hook blocks everyone else) and `build_assignment_model` in `exact.py`. Until the FFD file exists, `exact` uses the number of pieces as its upper bound. The exact solver is tested with a stand-in model; tests of the real model, the FFD property tests and the benchmark run wait for Mirza.
+
+Status (2026-11-13): built and green. Full local check passes; `pytest`: 219 passed, 67 xfailed; coverage 100%; pyright 0 errors. `/code-review` found four gaps (exact did not check its own plan, a broken FFD file could pass for a missing one, the plan checker trusted the plan's bar length, the benchmark worked out each bound twice). A fresh-context review found two more (the exact property test did not also wait for FFD; percentages were rounded outside `units.py`). All fixed with tests. Note: with a wall-clock time limit, a solver run that hits the limit may not repeat exactly.
