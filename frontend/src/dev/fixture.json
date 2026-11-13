@@ -1,0 +1,1971 @@
+{
+ "positions": [
+  {
+   "ref": "Kuhinja",
+   "construction_type": "single_sash_tilt_turn",
+   "width_mm": 1010,
+   "height_mm": 1218,
+   "qty": 1,
+   "colour": "white",
+   "glass_build": "4-16-4",
+   "openings": [
+    "tilt_turn_left"
+   ],
+   "readings": {
+    "widths": [
+     1032,
+     1030,
+     1031
+    ],
+    "heights": [
+     1240,
+     1238,
+     1241
+    ]
+   },
+   "installation": {
+    "install": true,
+    "ral": false,
+    "old_window_removal": true,
+    "wall_repair": false
+   }
+  },
+  {
+   "ref": "Dnevna",
+   "construction_type": "two_field_t_mullion",
+   "width_mm": 1429,
+   "height_mm": 1419,
+   "qty": 1,
+   "colour": "white",
+   "glass_build": "4-16-4",
+   "openings": [
+    "turn_left",
+    "tilt_turn_right"
+   ],
+   "readings": {
+    "widths": [
+     1452,
+     1450,
+     1449
+    ],
+    "heights": [
+     1440,
+     1441,
+     1439
+    ]
+   },
+   "installation": {
+    "install": true,
+    "ral": false,
+    "old_window_removal": true,
+    "wall_repair": false
+   }
+  },
+  {
+   "ref": "Balkon",
+   "construction_type": "balcony_door_tilt_turn",
+   "width_mm": 818,
+   "height_mm": 2204,
+   "qty": 1,
+   "colour": "white",
+   "glass_build": "4-16-4",
+   "openings": [
+    "tilt_turn_right"
+   ],
+   "readings": {
+    "widths": [
+     840,
+     838,
+     839
+    ],
+    "heights": [
+     2235,
+     2234,
+     2236
+    ]
+   },
+   "installation": {
+    "install": true,
+    "ral": true,
+    "old_window_removal": false,
+    "wall_repair": false
+   }
+  },
+  {
+   "ref": "Kupatilo",
+   "construction_type": "fixed",
+   "width_mm": 600,
+   "height_mm": 620,
+   "qty": 2,
+   "colour": "white",
+   "glass_build": "4-16-4",
+   "openings": [
+    "fixed"
+   ],
+   "readings": {
+    "widths": [
+     620,
+     622,
+     621
+    ],
+    "heights": [
+     640,
+     641,
+     640
+    ]
+   },
+   "installation": {
+    "install": true,
+    "ral": false,
+    "old_window_removal": false,
+    "wall_repair": false
+   }
+  }
+ ],
+ "extras": [
+  {
+   "kind": "sill",
+   "ref": "200 mm",
+   "qty": 1,
+   "colour": "white",
+   "length_mm": 1100,
+   "area_mm2": null,
+   "manual_price_cents": null,
+   "description": ""
+  }
+ ],
+ "calculation": {
+  "cut_lists": {
+   "Kuhinja": {
+    "pieces": [
+     {
+      "position_ref": "Kuhinja",
+      "role": "frame",
+      "label": "frame top",
+      "length_mm": 1012,
+      "angle_left": 45,
+      "angle_right": 45,
+      "qty": 1,
+      "formula": "W + 2a = 1010 + 2 = 1012"
+     },
+     {
+      "position_ref": "Kuhinja",
+      "role": "frame",
+      "label": "frame bottom",
+      "length_mm": 1012,
+      "angle_left": 45,
+      "angle_right": 45,
+      "qty": 1,
+      "formula": "W + 2a = 1010 + 2 = 1012"
+     },
+     {
+      "position_ref": "Kuhinja",
+      "role": "frame",
+      "label": "frame left",
+      "length_mm": 1220,
+      "angle_left": 45,
+      "angle_right": 45,
+      "qty": 1,
+      "formula": "H + 2a = 1218 + 2 = 1220"
+     },
+     {
+      "position_ref": "Kuhinja",
+      "role": "frame",
+      "label": "frame right",
+      "length_mm": 1220,
+      "angle_left": 45,
+      "angle_right": 45,
+      "qty": 1,
+      "formula": "H + 2a = 1218 + 2 = 1220"
+     },
+     {
+      "position_ref": "Kuhinja",
+      "role": "sash",
+      "label": "sash top",
+      "length_mm": 968,
+      "angle_left": 45,
+      "angle_right": 45,
+      "qty": 1,
+      "formula": "W - sash_width + 2a = 1010 - 44 + 2 = 968"
+     },
+     {
+      "position_ref": "Kuhinja",
+      "role": "sash",
+      "label": "sash bottom",
+      "length_mm": 968,
+      "angle_left": 45,
+      "angle_right": 45,
+      "qty": 1,
+      "formula": "W - sash_width + 2a = 1010 - 44 + 2 = 968"
+     },
+     {
+      "position_ref": "Kuhinja",
+      "role": "sash",
+      "label": "sash left",
+      "length_mm": 1176,
+      "angle_left": 45,
+      "angle_right": 45,
+      "qty": 1,
+      "formula": "H - sash_height + 2a = 1218 - 44 + 2 = 1176"
+     },
+     {
+      "position_ref": "Kuhinja",
+      "role": "sash",
+      "label": "sash right",
+      "length_mm": 1176,
+      "angle_left": 45,
+      "angle_right": 45,
+      "qty": 1,
+      "formula": "H - sash_height + 2a = 1218 - 44 + 2 = 1176"
+     },
+     {
+      "position_ref": "Kuhinja",
+      "role": "bead",
+      "label": "sash bead horizontal",
+      "length_mm": 880,
+      "angle_left": 90,
+      "angle_right": 90,
+      "qty": 2,
+      "formula": "W - sash_width - sash_bead_horizontal = 1010 - 44 - 86 = 880"
+     },
+     {
+      "position_ref": "Kuhinja",
+      "role": "bead",
+      "label": "sash bead vertical",
+      "length_mm": 1054,
+      "angle_left": 90,
+      "angle_right": 90,
+      "qty": 2,
+      "formula": "H - sash_height - sash_bead_vertical = 1218 - 44 - 120 = 1054"
+     }
+    ],
+    "steel": [
+     {
+      "position_ref": "Kuhinja",
+      "role": "steel",
+      "label": "frame steel horizontal",
+      "length_mm": 940,
+      "angle_left": 90,
+      "angle_right": 90,
+      "qty": 2,
+      "formula": "W - frame_steel - s = 1010 - 66 - 4 = 940"
+     },
+     {
+      "position_ref": "Kuhinja",
+      "role": "steel",
+      "label": "frame steel vertical",
+      "length_mm": 1148,
+      "angle_left": 90,
+      "angle_right": 90,
+      "qty": 2,
+      "formula": "H - frame_steel - s = 1218 - 66 - 4 = 1148"
+     },
+     {
+      "position_ref": "Kuhinja",
+      "role": "steel",
+      "label": "sash steel horizontal",
+      "length_mm": 907,
+      "angle_left": 90,
+      "angle_right": 90,
+      "qty": 2,
+      "formula": "W - sash_width - sash_steel - s = 1010 - 44 - 55 - 4 = 907"
+     },
+     {
+      "position_ref": "Kuhinja",
+      "role": "steel",
+      "label": "sash steel vertical",
+      "length_mm": 1115,
+      "angle_left": 90,
+      "angle_right": 90,
+      "qty": 2,
+      "formula": "H - sash_height - sash_steel - s = 1218 - 44 - 55 - 4 = 1115"
+     }
+    ],
+    "glass": [
+     {
+      "position_ref": "Kuhinja",
+      "width_mm": 878,
+      "height_mm": 1086,
+      "qty": 1,
+      "build": "4-16-4",
+      "formula_w": "W - sash_width - glass_in_sash = 1010 - 44 - 88 = 878",
+      "formula_h": "H - sash_height - glass_in_sash = 1218 - 44 - 88 = 1086"
+     }
+    ],
+    "hardware_sets": [
+     {
+      "position_ref": "Kuhinja",
+      "opening": "tilt_turn_left",
+      "qty": 1
+     }
+    ],
+    "gasket_mm": 8736
+   },
+   "Dnevna": {
+    "pieces": [
+     {
+      "position_ref": "Dnevna",
+      "role": "frame",
+      "label": "frame top",
+      "length_mm": 1431,
+      "angle_left": 45,
+      "angle_right": 45,
+      "qty": 1,
+      "formula": "W + 2a = 1429 + 2 = 1431"
+     },
+     {
+      "position_ref": "Dnevna",
+      "role": "frame",
+      "label": "frame bottom",
+      "length_mm": 1431,
+      "angle_left": 45,
+      "angle_right": 45,
+      "qty": 1,
+      "formula": "W + 2a = 1429 + 2 = 1431"
+     },
+     {
+      "position_ref": "Dnevna",
+      "role": "frame",
+      "label": "frame left",
+      "length_mm": 1421,
+      "angle_left": 45,
+      "angle_right": 45,
+      "qty": 1,
+      "formula": "H + 2a = 1419 + 2 = 1421"
+     },
+     {
+      "position_ref": "Dnevna",
+      "role": "frame",
+      "label": "frame right",
+      "length_mm": 1421,
+      "angle_left": 45,
+      "angle_right": 45,
+      "qty": 1,
+      "formula": "H + 2a = 1419 + 2 = 1421"
+     },
+     {
+      "position_ref": "Dnevna",
+      "role": "mullion",
+      "label": "mullion",
+      "length_mm": 1342,
+      "angle_left": 90,
+      "angle_right": 90,
+      "qty": 1,
+      "formula": "H - mullion = 1419 - 77 = 1342"
+     },
+     {
+      "position_ref": "Dnevna",
+      "role": "sash",
+      "label": "left sash top",
+      "length_mm": 683,
+      "angle_left": 45,
+      "angle_right": 45,
+      "qty": 1,
+      "formula": "W/2 - field_sash_width + 2a = 714 - 33 + 2 = 683"
+     },
+     {
+      "position_ref": "Dnevna",
+      "role": "sash",
+      "label": "left sash bottom",
+      "length_mm": 683,
+      "angle_left": 45,
+      "angle_right": 45,
+      "qty": 1,
+      "formula": "W/2 - field_sash_width + 2a = 714 - 33 + 2 = 683"
+     },
+     {
+      "position_ref": "Dnevna",
+      "role": "sash",
+      "label": "left sash left",
+      "length_mm": 1377,
+      "angle_left": 45,
+      "angle_right": 45,
+      "qty": 1,
+      "formula": "H - sash_height + 2a = 1419 - 44 + 2 = 1377"
+     },
+     {
+      "position_ref": "Dnevna",
+      "role": "sash",
+      "label": "left sash right",
+      "length_mm": 1377,
+      "angle_left": 45,
+      "angle_right": 45,
+      "qty": 1,
+      "formula": "H - sash_height + 2a = 1419 - 44 + 2 = 1377"
+     },
+     {
+      "position_ref": "Dnevna",
+      "role": "bead",
+      "label": "left sash bead horizontal",
+      "length_mm": 595,
+      "angle_left": 90,
+      "angle_right": 90,
+      "qty": 2,
+      "formula": "W/2 - field_sash_width - sash_bead_horizontal = 714 - 33 - 86 = 595"
+     },
+     {
+      "position_ref": "Dnevna",
+      "role": "bead",
+      "label": "left sash bead vertical",
+      "length_mm": 1255,
+      "angle_left": 90,
+      "angle_right": 90,
+      "qty": 2,
+      "formula": "H - sash_height - sash_bead_vertical = 1419 - 44 - 120 = 1255"
+     },
+     {
+      "position_ref": "Dnevna",
+      "role": "sash",
+      "label": "right sash top",
+      "length_mm": 684,
+      "angle_left": 45,
+      "angle_right": 45,
+      "qty": 1,
+      "formula": "W - W/2 - field_sash_width + 2a = 1429 - 714 - 33 + 2 = 684"
+     },
+     {
+      "position_ref": "Dnevna",
+      "role": "sash",
+      "label": "right sash bottom",
+      "length_mm": 684,
+      "angle_left": 45,
+      "angle_right": 45,
+      "qty": 1,
+      "formula": "W - W/2 - field_sash_width + 2a = 1429 - 714 - 33 + 2 = 684"
+     },
+     {
+      "position_ref": "Dnevna",
+      "role": "sash",
+      "label": "right sash left",
+      "length_mm": 1377,
+      "angle_left": 45,
+      "angle_right": 45,
+      "qty": 1,
+      "formula": "H - sash_height + 2a = 1419 - 44 + 2 = 1377"
+     },
+     {
+      "position_ref": "Dnevna",
+      "role": "sash",
+      "label": "right sash right",
+      "length_mm": 1377,
+      "angle_left": 45,
+      "angle_right": 45,
+      "qty": 1,
+      "formula": "H - sash_height + 2a = 1419 - 44 + 2 = 1377"
+     },
+     {
+      "position_ref": "Dnevna",
+      "role": "bead",
+      "label": "right sash bead horizontal",
+      "length_mm": 596,
+      "angle_left": 90,
+      "angle_right": 90,
+      "qty": 2,
+      "formula": "W - W/2 - field_sash_width - sash_bead_horizontal = 1429 - 714 - 33 - 86 = 596"
+     },
+     {
+      "position_ref": "Dnevna",
+      "role": "bead",
+      "label": "right sash bead vertical",
+      "length_mm": 1255,
+      "angle_left": 90,
+      "angle_right": 90,
+      "qty": 2,
+      "formula": "H - sash_height - sash_bead_vertical = 1419 - 44 - 120 = 1255"
+     }
+    ],
+    "steel": [
+     {
+      "position_ref": "Dnevna",
+      "role": "steel",
+      "label": "frame steel horizontal",
+      "length_mm": 1359,
+      "angle_left": 90,
+      "angle_right": 90,
+      "qty": 2,
+      "formula": "W - frame_steel - s = 1429 - 66 - 4 = 1359"
+     },
+     {
+      "position_ref": "Dnevna",
+      "role": "steel",
+      "label": "frame steel vertical",
+      "length_mm": 1349,
+      "angle_left": 90,
+      "angle_right": 90,
+      "qty": 2,
+      "formula": "H - frame_steel - s = 1419 - 66 - 4 = 1349"
+     },
+     {
+      "position_ref": "Dnevna",
+      "role": "steel",
+      "label": "mullion steel",
+      "length_mm": 1327,
+      "angle_left": 90,
+      "angle_right": 90,
+      "qty": 1,
+      "formula": "H - mullion - mullion_steel - s = 1419 - 77 - 11 - 4 = 1327"
+     },
+     {
+      "position_ref": "Dnevna",
+      "role": "steel",
+      "label": "left sash steel horizontal",
+      "length_mm": 622,
+      "angle_left": 90,
+      "angle_right": 90,
+      "qty": 2,
+      "formula": "W/2 - field_sash_width - sash_steel - s = 714 - 33 - 55 - 4 = 622"
+     },
+     {
+      "position_ref": "Dnevna",
+      "role": "steel",
+      "label": "left sash steel vertical",
+      "length_mm": 1316,
+      "angle_left": 90,
+      "angle_right": 90,
+      "qty": 2,
+      "formula": "H - sash_height - sash_steel - s = 1419 - 44 - 55 - 4 = 1316"
+     },
+     {
+      "position_ref": "Dnevna",
+      "role": "steel",
+      "label": "right sash steel horizontal",
+      "length_mm": 623,
+      "angle_left": 90,
+      "angle_right": 90,
+      "qty": 2,
+      "formula": "W - W/2 - field_sash_width - sash_steel - s = 1429 - 714 - 33 - 55 - 4 = 623"
+     },
+     {
+      "position_ref": "Dnevna",
+      "role": "steel",
+      "label": "right sash steel vertical",
+      "length_mm": 1316,
+      "angle_left": 90,
+      "angle_right": 90,
+      "qty": 2,
+      "formula": "H - sash_height - sash_steel - s = 1419 - 44 - 55 - 4 = 1316"
+     }
+    ],
+    "glass": [
+     {
+      "position_ref": "Dnevna",
+      "width_mm": 593,
+      "height_mm": 1287,
+      "qty": 1,
+      "build": "4-16-4",
+      "formula_w": "W/2 - field_sash_width - glass_in_sash = 714 - 33 - 88 = 593",
+      "formula_h": "H - sash_height - glass_in_sash = 1419 - 44 - 88 = 1287"
+     },
+     {
+      "position_ref": "Dnevna",
+      "width_mm": 594,
+      "height_mm": 1287,
+      "qty": 1,
+      "build": "4-16-4",
+      "formula_w": "W - W/2 - field_sash_width - glass_in_sash = 1429 - 714 - 33 - 88 = 594",
+      "formula_h": "H - sash_height - glass_in_sash = 1419 - 44 - 88 = 1287"
+     }
+    ],
+    "hardware_sets": [
+     {
+      "position_ref": "Dnevna",
+      "opening": "tilt_turn_right",
+      "qty": 1
+     },
+     {
+      "position_ref": "Dnevna",
+      "opening": "turn_left",
+      "qty": 1
+     }
+    ],
+    "gasket_mm": 16606
+   },
+   "Balkon": {
+    "pieces": [
+     {
+      "position_ref": "Balkon",
+      "role": "frame",
+      "label": "frame top",
+      "length_mm": 820,
+      "angle_left": 45,
+      "angle_right": 45,
+      "qty": 1,
+      "formula": "W + 2a = 818 + 2 = 820"
+     },
+     {
+      "position_ref": "Balkon",
+      "role": "frame",
+      "label": "frame bottom",
+      "length_mm": 820,
+      "angle_left": 45,
+      "angle_right": 45,
+      "qty": 1,
+      "formula": "W + 2a = 818 + 2 = 820"
+     },
+     {
+      "position_ref": "Balkon",
+      "role": "frame",
+      "label": "frame left",
+      "length_mm": 2206,
+      "angle_left": 45,
+      "angle_right": 45,
+      "qty": 1,
+      "formula": "H + 2a = 2204 + 2 = 2206"
+     },
+     {
+      "position_ref": "Balkon",
+      "role": "frame",
+      "label": "frame right",
+      "length_mm": 2206,
+      "angle_left": 45,
+      "angle_right": 45,
+      "qty": 1,
+      "formula": "H + 2a = 2204 + 2 = 2206"
+     },
+     {
+      "position_ref": "Balkon",
+      "role": "sash",
+      "label": "door sash top",
+      "length_mm": 776,
+      "angle_left": 45,
+      "angle_right": 45,
+      "qty": 1,
+      "formula": "W - sash_width + 2a = 818 - 44 + 2 = 776"
+     },
+     {
+      "position_ref": "Balkon",
+      "role": "sash",
+      "label": "door sash bottom",
+      "length_mm": 776,
+      "angle_left": 45,
+      "angle_right": 45,
+      "qty": 1,
+      "formula": "W - sash_width + 2a = 818 - 44 + 2 = 776"
+     },
+     {
+      "position_ref": "Balkon",
+      "role": "sash",
+      "label": "door sash left",
+      "length_mm": 2162,
+      "angle_left": 45,
+      "angle_right": 45,
+      "qty": 1,
+      "formula": "H - sash_height + 2a = 2204 - 44 + 2 = 2162"
+     },
+     {
+      "position_ref": "Balkon",
+      "role": "sash",
+      "label": "door sash right",
+      "length_mm": 2162,
+      "angle_left": 45,
+      "angle_right": 45,
+      "qty": 1,
+      "formula": "H - sash_height + 2a = 2204 - 44 + 2 = 2162"
+     },
+     {
+      "position_ref": "Balkon",
+      "role": "bead",
+      "label": "door sash bead horizontal",
+      "length_mm": 688,
+      "angle_left": 90,
+      "angle_right": 90,
+      "qty": 2,
+      "formula": "W - sash_width - sash_bead_horizontal = 818 - 44 - 86 = 688"
+     },
+     {
+      "position_ref": "Balkon",
+      "role": "bead",
+      "label": "door sash bead vertical",
+      "length_mm": 2040,
+      "angle_left": 90,
+      "angle_right": 90,
+      "qty": 2,
+      "formula": "H - sash_height - sash_bead_vertical = 2204 - 44 - 120 = 2040"
+     }
+    ],
+    "steel": [
+     {
+      "position_ref": "Balkon",
+      "role": "steel",
+      "label": "frame steel horizontal",
+      "length_mm": 748,
+      "angle_left": 90,
+      "angle_right": 90,
+      "qty": 2,
+      "formula": "W - frame_steel - s = 818 - 66 - 4 = 748"
+     },
+     {
+      "position_ref": "Balkon",
+      "role": "steel",
+      "label": "frame steel vertical",
+      "length_mm": 2134,
+      "angle_left": 90,
+      "angle_right": 90,
+      "qty": 2,
+      "formula": "H - frame_steel - s = 2204 - 66 - 4 = 2134"
+     },
+     {
+      "position_ref": "Balkon",
+      "role": "steel",
+      "label": "door sash steel horizontal",
+      "length_mm": 715,
+      "angle_left": 90,
+      "angle_right": 90,
+      "qty": 2,
+      "formula": "W - sash_width - sash_steel - s = 818 - 44 - 55 - 4 = 715"
+     },
+     {
+      "position_ref": "Balkon",
+      "role": "steel",
+      "label": "door sash steel vertical",
+      "length_mm": 2101,
+      "angle_left": 90,
+      "angle_right": 90,
+      "qty": 2,
+      "formula": "H - sash_height - sash_steel - s = 2204 - 44 - 55 - 4 = 2101"
+     }
+    ],
+    "glass": [
+     {
+      "position_ref": "Balkon",
+      "width_mm": 686,
+      "height_mm": 2072,
+      "qty": 1,
+      "build": "4-16-4",
+      "formula_w": "W - sash_width - glass_in_sash = 818 - 44 - 88 = 686",
+      "formula_h": "H - sash_height - glass_in_sash = 2204 - 44 - 88 = 2072"
+     }
+    ],
+    "hardware_sets": [
+     {
+      "position_ref": "Balkon",
+      "opening": "tilt_turn_right",
+      "qty": 1
+     }
+    ],
+    "gasket_mm": 11912
+   },
+   "Kupatilo": {
+    "pieces": [
+     {
+      "position_ref": "Kupatilo",
+      "role": "frame",
+      "label": "frame top",
+      "length_mm": 602,
+      "angle_left": 45,
+      "angle_right": 45,
+      "qty": 2,
+      "formula": "W + 2a = 600 + 2 = 602"
+     },
+     {
+      "position_ref": "Kupatilo",
+      "role": "frame",
+      "label": "frame bottom",
+      "length_mm": 602,
+      "angle_left": 45,
+      "angle_right": 45,
+      "qty": 2,
+      "formula": "W + 2a = 600 + 2 = 602"
+     },
+     {
+      "position_ref": "Kupatilo",
+      "role": "frame",
+      "label": "frame left",
+      "length_mm": 622,
+      "angle_left": 45,
+      "angle_right": 45,
+      "qty": 2,
+      "formula": "H + 2a = 620 + 2 = 622"
+     },
+     {
+      "position_ref": "Kupatilo",
+      "role": "frame",
+      "label": "frame right",
+      "length_mm": 622,
+      "angle_left": 45,
+      "angle_right": 45,
+      "qty": 2,
+      "formula": "H + 2a = 620 + 2 = 622"
+     },
+     {
+      "position_ref": "Kupatilo",
+      "role": "bead",
+      "label": "frame bead horizontal",
+      "length_mm": 503,
+      "angle_left": 90,
+      "angle_right": 90,
+      "qty": 4,
+      "formula": "W - frame_bead_horizontal = 600 - 97 = 503"
+     },
+     {
+      "position_ref": "Kupatilo",
+      "role": "bead",
+      "label": "frame bead vertical",
+      "length_mm": 489,
+      "angle_left": 90,
+      "angle_right": 90,
+      "qty": 4,
+      "formula": "H - frame_bead_vertical = 620 - 131 = 489"
+     }
+    ],
+    "steel": [
+     {
+      "position_ref": "Kupatilo",
+      "role": "steel",
+      "label": "frame steel horizontal",
+      "length_mm": 530,
+      "angle_left": 90,
+      "angle_right": 90,
+      "qty": 4,
+      "formula": "W - frame_steel - s = 600 - 66 - 4 = 530"
+     },
+     {
+      "position_ref": "Kupatilo",
+      "role": "steel",
+      "label": "frame steel vertical",
+      "length_mm": 550,
+      "angle_left": 90,
+      "angle_right": 90,
+      "qty": 4,
+      "formula": "H - frame_steel - s = 620 - 66 - 4 = 550"
+     }
+    ],
+    "glass": [
+     {
+      "position_ref": "Kupatilo",
+      "width_mm": 501,
+      "height_mm": 521,
+      "qty": 2,
+      "build": "4-16-4",
+      "formula_w": "W - fixed_glass = 600 - 99 = 501",
+      "formula_h": "H - fixed_glass = 620 - 99 = 521"
+     }
+    ],
+    "hardware_sets": [],
+    "gasket_mm": 4880
+   }
+  },
+  "plans": {
+   "frame/white": {
+    "plan": {
+     "bar_length_mm": 6666,
+     "bars": [
+      {
+       "cuts": [
+        "Balkon frame left",
+        "Balkon frame right",
+        "Dnevna frame bottom",
+        "Kupatilo frame left"
+       ],
+       "used_mm": 6473,
+       "offcut_mm": 190
+      },
+      {
+       "cuts": [
+        "Dnevna frame top",
+        "Dnevna frame left",
+        "Dnevna frame right",
+        "Kuhinja frame left",
+        "Kuhinja frame bottom"
+       ],
+       "used_mm": 6515,
+       "offcut_mm": 148
+      },
+      {
+       "cuts": [
+        "Kuhinja frame right",
+        "Kuhinja frame top",
+        "Balkon frame bottom",
+        "Balkon frame top",
+        "Kupatilo frame left",
+        "Kupatilo frame right",
+        "Kupatilo frame right",
+        "Kupatilo frame bottom"
+       ],
+       "used_mm": 6356,
+       "offcut_mm": 307
+      },
+      {
+       "cuts": [
+        "Kupatilo frame bottom",
+        "Kupatilo frame top",
+        "Kupatilo frame top"
+       ],
+       "used_mm": 1812,
+       "offcut_mm": 4851
+      }
+     ]
+    },
+    "stats": {
+     "bars": 4,
+     "waste_mm": 5548,
+     "waste_bp": 2081,
+     "kept_offcuts_mm": [
+      4851
+     ],
+     "scrap_mm": 697,
+     "scrap_bp": 261
+    }
+   },
+   "sash/white": {
+    "plan": {
+     "bar_length_mm": 6666,
+     "bars": [
+      {
+       "cuts": [
+        "Balkon door sash left",
+        "Balkon door sash right",
+        "Dnevna left sash left",
+        "Balkon door sash bottom"
+       ],
+       "used_mm": 6485,
+       "offcut_mm": 178
+      },
+      {
+       "cuts": [
+        "Dnevna left sash right",
+        "Dnevna right sash left",
+        "Dnevna right sash right",
+        "Kuhinja sash left",
+        "Kuhinja sash right"
+       ],
+       "used_mm": 6493,
+       "offcut_mm": 170
+      },
+      {
+       "cuts": [
+        "Kuhinja sash bottom",
+        "Kuhinja sash top",
+        "Balkon door sash top",
+        "Dnevna right sash bottom",
+        "Dnevna right sash top",
+        "Dnevna left sash bottom",
+        "Dnevna left sash top"
+       ],
+       "used_mm": 5460,
+       "offcut_mm": 1203
+      }
+     ]
+    },
+    "stats": {
+     "bars": 3,
+     "waste_mm": 1592,
+     "waste_bp": 796,
+     "kept_offcuts_mm": [
+      1203
+     ],
+     "scrap_mm": 389,
+     "scrap_bp": 195
+    }
+   },
+   "mullion/white": {
+    "plan": {
+     "bar_length_mm": 6666,
+     "bars": [
+      {
+       "cuts": [
+        "Dnevna mullion"
+       ],
+       "used_mm": 1344,
+       "offcut_mm": 5319
+      }
+     ]
+    },
+    "stats": {
+     "bars": 1,
+     "waste_mm": 5324,
+     "waste_bp": 7987,
+     "kept_offcuts_mm": [
+      5319
+     ],
+     "scrap_mm": 5,
+     "scrap_bp": 8
+    }
+   },
+   "bead/white": {
+    "plan": {
+     "bar_length_mm": 6666,
+     "bars": [
+      {
+       "cuts": [
+        "Balkon door sash bead vertical",
+        "Balkon door sash bead vertical",
+        "Dnevna left sash bead vertical",
+        "Dnevna left sash bead vertical"
+       ],
+       "used_mm": 6598,
+       "offcut_mm": 65
+      },
+      {
+       "cuts": [
+        "Dnevna right sash bead vertical",
+        "Dnevna right sash bead vertical",
+        "Kuhinja sash bead vertical",
+        "Kuhinja sash bead vertical",
+        "Kuhinja sash bead horizontal",
+        "Kuhinja sash bead horizontal"
+       ],
+       "used_mm": 6390,
+       "offcut_mm": 273
+      },
+      {
+       "cuts": [
+        "Balkon door sash bead horizontal",
+        "Balkon door sash bead horizontal",
+        "Dnevna right sash bead horizontal",
+        "Dnevna right sash bead horizontal",
+        "Dnevna left sash bead horizontal",
+        "Dnevna left sash bead horizontal",
+        "Kupatilo frame bead horizontal",
+        "Kupatilo frame bead horizontal",
+        "Kupatilo frame bead horizontal",
+        "Kupatilo frame bead horizontal",
+        "Kupatilo frame bead vertical"
+       ],
+       "used_mm": 6281,
+       "offcut_mm": 382
+      },
+      {
+       "cuts": [
+        "Kupatilo frame bead vertical",
+        "Kupatilo frame bead vertical",
+        "Kupatilo frame bead vertical"
+       ],
+       "used_mm": 1473,
+       "offcut_mm": 5190
+      }
+     ]
+    },
+    "stats": {
+     "bars": 4,
+     "waste_mm": 5970,
+     "waste_bp": 2239,
+     "kept_offcuts_mm": [
+      5190
+     ],
+     "scrap_mm": 780,
+     "scrap_bp": 293
+    }
+   },
+   "steel": {
+    "plan": {
+     "bar_length_mm": 5555,
+     "bars": [
+      {
+       "cuts": [
+        "Balkon frame steel vertical",
+        "Balkon frame steel vertical",
+        "Kuhinja frame steel vertical"
+       ],
+       "used_mm": 5422,
+       "offcut_mm": 130
+      },
+      {
+       "cuts": [
+        "Balkon door sash steel vertical",
+        "Balkon door sash steel vertical",
+        "Dnevna mullion steel"
+       ],
+       "used_mm": 5535,
+       "offcut_mm": 17
+      },
+      {
+       "cuts": [
+        "Dnevna frame steel horizontal",
+        "Dnevna frame steel horizontal",
+        "Dnevna frame steel vertical",
+        "Dnevna frame steel vertical"
+       ],
+       "used_mm": 5424,
+       "offcut_mm": 128
+      },
+      {
+       "cuts": [
+        "Dnevna left sash steel vertical",
+        "Dnevna left sash steel vertical",
+        "Dnevna right sash steel vertical",
+        "Dnevna right sash steel vertical"
+       ],
+       "used_mm": 5272,
+       "offcut_mm": 280
+      },
+      {
+       "cuts": [
+        "Kuhinja frame steel vertical",
+        "Kuhinja sash steel vertical",
+        "Kuhinja sash steel vertical",
+        "Kuhinja frame steel horizontal",
+        "Kuhinja frame steel horizontal"
+       ],
+       "used_mm": 5268,
+       "offcut_mm": 284
+      },
+      {
+       "cuts": [
+        "Kuhinja sash steel horizontal",
+        "Kuhinja sash steel horizontal",
+        "Balkon frame steel horizontal",
+        "Balkon frame steel horizontal",
+        "Balkon door sash steel horizontal",
+        "Balkon door sash steel horizontal",
+        "Dnevna right sash steel horizontal"
+       ],
+       "used_mm": 5377,
+       "offcut_mm": 175
+      },
+      {
+       "cuts": [
+        "Dnevna right sash steel horizontal",
+        "Dnevna left sash steel horizontal",
+        "Dnevna left sash steel horizontal",
+        "Kupatilo frame steel vertical",
+        "Kupatilo frame steel vertical",
+        "Kupatilo frame steel vertical",
+        "Kupatilo frame steel vertical",
+        "Kupatilo frame steel horizontal",
+        "Kupatilo frame steel horizontal"
+       ],
+       "used_mm": 5145,
+       "offcut_mm": 407
+      },
+      {
+       "cuts": [
+        "Kupatilo frame steel horizontal",
+        "Kupatilo frame steel horizontal"
+       ],
+       "used_mm": 1064,
+       "offcut_mm": 4488
+      }
+     ]
+    },
+    "stats": {
+     "bars": 8,
+     "waste_mm": 6007,
+     "waste_bp": 1352,
+     "kept_offcuts_mm": [
+      4488
+     ],
+     "scrap_mm": 1519,
+     "scrap_bp": 342
+    }
+   }
+  },
+  "price": {
+   "positions": [
+    {
+     "ref": "Kuhinja",
+     "material": [
+      {
+       "label": "frame/white bars",
+       "cents": 1691
+      },
+      {
+       "label": "sash/white bars",
+       "cents": 1398
+      },
+      {
+       "label": "bead/white bars",
+       "cents": 1495
+      },
+      {
+       "label": "steel bars",
+       "cents": 1540
+      },
+      {
+       "label": "gasket",
+       "cents": 1101
+      },
+      {
+       "label": "hardware tilt_turn_left",
+       "cents": 3500
+      },
+      {
+       "label": "glass 4-16-4",
+       "cents": 2384
+      },
+      {
+       "label": "consumables",
+       "cents": 300
+      }
+     ],
+     "material_cents": 13409,
+     "margin_cents": 3352,
+     "labour_cents": 2500,
+     "installation": [
+      {
+       "label": "installation standard",
+       "cents": 3000
+      },
+      {
+       "label": "old window removal",
+       "cents": 1000
+      }
+     ],
+     "installation_cents": 4000,
+     "rounding_cents": 0,
+     "total_cents": 23261,
+     "unit_price_cents": 23261,
+     "area_mm2": 1230180,
+     "cents_per_m2": 18909
+    },
+    {
+     "ref": "Dnevna",
+     "material": [
+      {
+       "label": "frame/white bars",
+       "cents": 2160
+      },
+      {
+       "label": "sash/white bars",
+       "cents": 2687
+      },
+      {
+       "label": "mullion/white bars",
+       "cents": 2000
+      },
+      {
+       "label": "bead/white bars",
+       "cents": 2861
+      },
+      {
+       "label": "steel bars",
+       "cents": 2715
+      },
+      {
+       "label": "gasket",
+       "cents": 2092
+      },
+      {
+       "label": "hardware tilt_turn_right",
+       "cents": 3500
+      },
+      {
+       "label": "hardware turn_left",
+       "cents": 3500
+      },
+      {
+       "label": "glass 4-16-4",
+       "cents": 1908
+      },
+      {
+       "label": "glass 4-16-4",
+       "cents": 1911
+      },
+      {
+       "label": "consumables",
+       "cents": 300
+      }
+     ],
+     "material_cents": 25634,
+     "margin_cents": 6409,
+     "labour_cents": 2500,
+     "installation": [
+      {
+       "label": "installation standard",
+       "cents": 3000
+      },
+      {
+       "label": "old window removal",
+       "cents": 1000
+      }
+     ],
+     "installation_cents": 4000,
+     "rounding_cents": 0,
+     "total_cents": 38543,
+     "unit_price_cents": 38543,
+     "area_mm2": 2027751,
+     "cents_per_m2": 19008
+    },
+    {
+     "ref": "Balkon",
+     "material": [
+      {
+       "label": "frame/white bars",
+       "cents": 2292
+      },
+      {
+       "label": "sash/white bars",
+       "cents": 1915
+      },
+      {
+       "label": "bead/white bars",
+       "cents": 2107
+      },
+      {
+       "label": "steel bars",
+       "cents": 2134
+      },
+      {
+       "label": "gasket",
+       "cents": 1501
+      },
+      {
+       "label": "hardware tilt_turn_right",
+       "cents": 3500
+      },
+      {
+       "label": "glass 4-16-4",
+       "cents": 3553
+      },
+      {
+       "label": "consumables",
+       "cents": 300
+      }
+     ],
+     "material_cents": 17302,
+     "margin_cents": 4326,
+     "labour_cents": 2500,
+     "installation": [
+      {
+       "label": "installation standard",
+       "cents": 3000
+      },
+      {
+       "label": "ral",
+       "cents": 1000
+      }
+     ],
+     "installation_cents": 4000,
+     "rounding_cents": 0,
+     "total_cents": 28128,
+     "unit_price_cents": 28128,
+     "area_mm2": 1802872,
+     "cents_per_m2": 15602
+    },
+    {
+     "ref": "Kupatilo",
+     "material": [
+      {
+       "label": "frame/white bars",
+       "cents": 1857
+      },
+      {
+       "label": "bead/white bars",
+       "cents": 1537
+      },
+      {
+       "label": "steel bars",
+       "cents": 811
+      },
+      {
+       "label": "gasket",
+       "cents": 615
+      },
+      {
+       "label": "glass 4-16-4",
+       "cents": 1500
+      },
+      {
+       "label": "consumables",
+       "cents": 600
+      }
+     ],
+     "material_cents": 6920,
+     "margin_cents": 1730,
+     "labour_cents": 3000,
+     "installation": [
+      {
+       "label": "installation small",
+       "cents": 4000
+      }
+     ],
+     "installation_cents": 4000,
+     "rounding_cents": 0,
+     "total_cents": 15650,
+     "unit_price_cents": 7825,
+     "area_mm2": 372000,
+     "cents_per_m2": 21035
+    }
+   ],
+   "extras": [
+    {
+     "label": "sill 200 mm",
+     "cents": 2475
+    }
+   ],
+   "transport_cents": 1600,
+   "subtotal_cents": 109657,
+   "discount_cents": 0,
+   "net_cents": 109657,
+   "vat_cents": 0,
+   "total_cents": 109657,
+   "advance_cents": 54829,
+   "balance_cents": 54828
+  },
+  "warnings": [],
+  "versions": {
+   "system_sheet": "a06351c9-41fa-4b03-9382-7a9f6a477c35",
+   "price_list": "779ea69a-35df-4ef8-b0a3-b99c27048b04"
+  }
+ },
+ "priceList": {
+  "id": "779ea69a-35df-4ef8-b0a3-b99c27048b04",
+  "valid_from": "2026-11-13",
+  "locked": false,
+  "note": "Probne cijene, nisu stvarne",
+  "entries": [
+   {
+    "id": "0e04f3c0-c606-4e6c-ab1f-e65fc31c458c",
+    "item_kind": "profile",
+    "item_ref": "frame",
+    "colour": "white",
+    "supplier_id": "781e0257-52c3-4259-8537-3434b08ac841",
+    "unit": "bar",
+    "amount_cents": 2000,
+    "quoted_on": "2026-11-13"
+   },
+   {
+    "id": "96dd3dd1-86f6-4c05-9455-88e41fd8547a",
+    "item_kind": "profile",
+    "item_ref": "frame",
+    "colour": "foil_one_side",
+    "supplier_id": "781e0257-52c3-4259-8537-3434b08ac841",
+    "unit": "bar",
+    "amount_cents": 3000,
+    "quoted_on": "2026-11-13"
+   },
+   {
+    "id": "50410e24-0b26-4f71-abf3-ad18c781982b",
+    "item_kind": "profile",
+    "item_ref": "frame",
+    "colour": "foil_both_sides",
+    "supplier_id": "781e0257-52c3-4259-8537-3434b08ac841",
+    "unit": "bar",
+    "amount_cents": 3600,
+    "quoted_on": "2026-11-13"
+   },
+   {
+    "id": "7abc809c-b68c-42ca-baaa-ab406830e266",
+    "item_kind": "profile",
+    "item_ref": "sash",
+    "colour": "white",
+    "supplier_id": "781e0257-52c3-4259-8537-3434b08ac841",
+    "unit": "bar",
+    "amount_cents": 2000,
+    "quoted_on": "2026-11-13"
+   },
+   {
+    "id": "91c5a875-a0d5-4d73-bdae-6cb85ba9a809",
+    "item_kind": "profile",
+    "item_ref": "sash",
+    "colour": "foil_one_side",
+    "supplier_id": "781e0257-52c3-4259-8537-3434b08ac841",
+    "unit": "bar",
+    "amount_cents": 3000,
+    "quoted_on": "2026-11-13"
+   },
+   {
+    "id": "abd69ab1-04f0-4fed-9941-00d2470fcf83",
+    "item_kind": "profile",
+    "item_ref": "sash",
+    "colour": "foil_both_sides",
+    "supplier_id": "781e0257-52c3-4259-8537-3434b08ac841",
+    "unit": "bar",
+    "amount_cents": 3600,
+    "quoted_on": "2026-11-13"
+   },
+   {
+    "id": "096c79e2-b649-4e1d-9935-94c485ee7d1e",
+    "item_kind": "profile",
+    "item_ref": "mullion",
+    "colour": "white",
+    "supplier_id": "781e0257-52c3-4259-8537-3434b08ac841",
+    "unit": "bar",
+    "amount_cents": 2000,
+    "quoted_on": "2026-11-13"
+   },
+   {
+    "id": "09a82a09-f893-41ad-9447-0c6b5f92e0fc",
+    "item_kind": "profile",
+    "item_ref": "mullion",
+    "colour": "foil_one_side",
+    "supplier_id": "781e0257-52c3-4259-8537-3434b08ac841",
+    "unit": "bar",
+    "amount_cents": 3000,
+    "quoted_on": "2026-11-13"
+   },
+   {
+    "id": "c9363f75-d09c-46ff-85f9-1e3e5c5cd834",
+    "item_kind": "profile",
+    "item_ref": "mullion",
+    "colour": "foil_both_sides",
+    "supplier_id": "781e0257-52c3-4259-8537-3434b08ac841",
+    "unit": "bar",
+    "amount_cents": 3600,
+    "quoted_on": "2026-11-13"
+   },
+   {
+    "id": "f6b84110-9602-4f40-8033-d8b4616a130c",
+    "item_kind": "profile",
+    "item_ref": "false_mullion",
+    "colour": "white",
+    "supplier_id": "781e0257-52c3-4259-8537-3434b08ac841",
+    "unit": "bar",
+    "amount_cents": 2000,
+    "quoted_on": "2026-11-13"
+   },
+   {
+    "id": "5644a60b-fe97-4b44-9e8e-bf4ebef2bc68",
+    "item_kind": "profile",
+    "item_ref": "false_mullion",
+    "colour": "foil_one_side",
+    "supplier_id": "781e0257-52c3-4259-8537-3434b08ac841",
+    "unit": "bar",
+    "amount_cents": 3000,
+    "quoted_on": "2026-11-13"
+   },
+   {
+    "id": "757aa01f-f62a-491d-9077-34cad6f21431",
+    "item_kind": "profile",
+    "item_ref": "false_mullion",
+    "colour": "foil_both_sides",
+    "supplier_id": "781e0257-52c3-4259-8537-3434b08ac841",
+    "unit": "bar",
+    "amount_cents": 3600,
+    "quoted_on": "2026-11-13"
+   },
+   {
+    "id": "bfdfe0bd-06e8-44fb-b142-d8350a2a106e",
+    "item_kind": "profile",
+    "item_ref": "bead",
+    "colour": "white",
+    "supplier_id": "781e0257-52c3-4259-8537-3434b08ac841",
+    "unit": "bar",
+    "amount_cents": 2000,
+    "quoted_on": "2026-11-13"
+   },
+   {
+    "id": "37c8e7ac-8ddd-4cae-951b-7fac58a0fc21",
+    "item_kind": "profile",
+    "item_ref": "bead",
+    "colour": "foil_one_side",
+    "supplier_id": "781e0257-52c3-4259-8537-3434b08ac841",
+    "unit": "bar",
+    "amount_cents": 3000,
+    "quoted_on": "2026-11-13"
+   },
+   {
+    "id": "a08d1ded-ecd7-4a3f-a708-6cd2c7e9a60c",
+    "item_kind": "profile",
+    "item_ref": "bead",
+    "colour": "foil_both_sides",
+    "supplier_id": "781e0257-52c3-4259-8537-3434b08ac841",
+    "unit": "bar",
+    "amount_cents": 3600,
+    "quoted_on": "2026-11-13"
+   },
+   {
+    "id": "6d9935ab-7332-43b1-b0ae-77c7b16a2fc3",
+    "item_kind": "profile",
+    "item_ref": "threshold",
+    "colour": "white",
+    "supplier_id": "781e0257-52c3-4259-8537-3434b08ac841",
+    "unit": "bar",
+    "amount_cents": 2000,
+    "quoted_on": "2026-11-13"
+   },
+   {
+    "id": "9a20e28f-1756-46e5-963e-95979baac1fd",
+    "item_kind": "profile",
+    "item_ref": "threshold",
+    "colour": "foil_one_side",
+    "supplier_id": "781e0257-52c3-4259-8537-3434b08ac841",
+    "unit": "bar",
+    "amount_cents": 3000,
+    "quoted_on": "2026-11-13"
+   },
+   {
+    "id": "e077627c-644b-4213-a003-52d554e1a03d",
+    "item_kind": "profile",
+    "item_ref": "threshold",
+    "colour": "foil_both_sides",
+    "supplier_id": "781e0257-52c3-4259-8537-3434b08ac841",
+    "unit": "bar",
+    "amount_cents": 3600,
+    "quoted_on": "2026-11-13"
+   },
+   {
+    "id": "a540cc31-ed92-4a89-bd75-0cbad9df98a2",
+    "item_kind": "steel",
+    "item_ref": "steel",
+    "colour": null,
+    "supplier_id": "781e0257-52c3-4259-8537-3434b08ac841",
+    "unit": "bar",
+    "amount_cents": 900,
+    "quoted_on": "2026-11-13"
+   },
+   {
+    "id": "c14ef25c-adf4-40c9-b324-4c50fa63caff",
+    "item_kind": "gasket",
+    "item_ref": "gasket",
+    "colour": null,
+    "supplier_id": "781e0257-52c3-4259-8537-3434b08ac841",
+    "unit": "m",
+    "amount_cents": 120,
+    "quoted_on": "2026-11-13"
+   },
+   {
+    "id": "5fd4ee4c-9a2f-416e-9012-b61107db2090",
+    "item_kind": "consumables",
+    "item_ref": "window",
+    "colour": null,
+    "supplier_id": "32eccf65-e4b4-4e70-abcc-dfd41bd20b15",
+    "unit": "piece",
+    "amount_cents": 300,
+    "quoted_on": "2026-11-13"
+   },
+   {
+    "id": "a565cfa3-10ec-4602-ab4f-ea7045c3c154",
+    "item_kind": "transport",
+    "item_ref": "flat",
+    "colour": null,
+    "supplier_id": "32eccf65-e4b4-4e70-abcc-dfd41bd20b15",
+    "unit": "job",
+    "amount_cents": 1000,
+    "quoted_on": "2026-11-13"
+   },
+   {
+    "id": "47d5d2e8-a208-4d03-b19b-a38e20390d6f",
+    "item_kind": "transport",
+    "item_ref": "km",
+    "colour": null,
+    "supplier_id": "32eccf65-e4b4-4e70-abcc-dfd41bd20b15",
+    "unit": "km",
+    "amount_cents": 50,
+    "quoted_on": "2026-11-13"
+   },
+   {
+    "id": "8fa5012d-2983-40e1-9cb0-e2d067ce333e",
+    "item_kind": "sill",
+    "item_ref": "200 mm",
+    "colour": "white",
+    "supplier_id": "32eccf65-e4b4-4e70-abcc-dfd41bd20b15",
+    "unit": "m",
+    "amount_cents": 1800,
+    "quoted_on": "2026-11-13"
+   },
+   {
+    "id": "66b3b017-0592-4602-8a7d-ea92c50e82c0",
+    "item_kind": "shutter",
+    "item_ref": "standard",
+    "colour": null,
+    "supplier_id": "32eccf65-e4b4-4e70-abcc-dfd41bd20b15",
+    "unit": "m2",
+    "amount_cents": 6000,
+    "quoted_on": "2026-11-13"
+   },
+   {
+    "id": "ad8de864-4fdb-4040-97f1-9ff119a6dfb1",
+    "item_kind": "screen",
+    "item_ref": "standard",
+    "colour": null,
+    "supplier_id": "32eccf65-e4b4-4e70-abcc-dfd41bd20b15",
+    "unit": "m2",
+    "amount_cents": 2500,
+    "quoted_on": "2026-11-13"
+   },
+   {
+    "id": "b667c57d-d27d-4682-8009-1de7a48713b2",
+    "item_kind": "hardware",
+    "item_ref": "tilt_turn_left",
+    "colour": null,
+    "supplier_id": "32eccf65-e4b4-4e70-abcc-dfd41bd20b15",
+    "unit": "set",
+    "amount_cents": 3500,
+    "quoted_on": "2026-11-13"
+   },
+   {
+    "id": "1f83df8e-8ab4-4abf-849a-d5d7a82bb343",
+    "item_kind": "hardware",
+    "item_ref": "tilt_turn_right",
+    "colour": null,
+    "supplier_id": "32eccf65-e4b4-4e70-abcc-dfd41bd20b15",
+    "unit": "set",
+    "amount_cents": 3500,
+    "quoted_on": "2026-11-13"
+   },
+   {
+    "id": "c220abf4-504e-405a-a269-c3398ee9ab5b",
+    "item_kind": "hardware",
+    "item_ref": "turn_left",
+    "colour": null,
+    "supplier_id": "32eccf65-e4b4-4e70-abcc-dfd41bd20b15",
+    "unit": "set",
+    "amount_cents": 3500,
+    "quoted_on": "2026-11-13"
+   },
+   {
+    "id": "d1bfa8c2-5f0f-4e44-a666-b7d0548f18fa",
+    "item_kind": "hardware",
+    "item_ref": "turn_right",
+    "colour": null,
+    "supplier_id": "32eccf65-e4b4-4e70-abcc-dfd41bd20b15",
+    "unit": "set",
+    "amount_cents": 3500,
+    "quoted_on": "2026-11-13"
+   },
+   {
+    "id": "24464f34-ce34-41f8-b502-089f913c7321",
+    "item_kind": "glass",
+    "item_ref": "4-16-4",
+    "colour": null,
+    "supplier_id": "3db616b4-c8d9-4417-9fc0-9b19689df9b7",
+    "unit": "m2",
+    "amount_cents": 2500,
+    "quoted_on": "2026-11-13"
+   },
+   {
+    "id": "4fa42f12-693b-4d8b-8a1d-fd1c6b358e12",
+    "item_kind": "glass",
+    "item_ref": "4-12-4-12-4",
+    "colour": null,
+    "supplier_id": "3db616b4-c8d9-4417-9fc0-9b19689df9b7",
+    "unit": "m2",
+    "amount_cents": 4000,
+    "quoted_on": "2026-11-13"
+   },
+   {
+    "id": "c7511d69-6848-49ac-906b-bbdf915ecb0d",
+    "item_kind": "installation",
+    "item_ref": "small",
+    "colour": null,
+    "supplier_id": "32eccf65-e4b4-4e70-abcc-dfd41bd20b15",
+    "unit": "piece",
+    "amount_cents": 2000,
+    "quoted_on": "2026-11-13"
+   },
+   {
+    "id": "7599673d-b5f2-439c-b296-e6ac888624fd",
+    "item_kind": "installation",
+    "item_ref": "standard",
+    "colour": null,
+    "supplier_id": "32eccf65-e4b4-4e70-abcc-dfd41bd20b15",
+    "unit": "piece",
+    "amount_cents": 3000,
+    "quoted_on": "2026-11-13"
+   },
+   {
+    "id": "e11f7c5e-4e4c-4fd0-8a3a-50b91a06ebb7",
+    "item_kind": "installation",
+    "item_ref": "large",
+    "colour": null,
+    "supplier_id": "32eccf65-e4b4-4e70-abcc-dfd41bd20b15",
+    "unit": "piece",
+    "amount_cents": 4000,
+    "quoted_on": "2026-11-13"
+   },
+   {
+    "id": "a816d2cc-283e-448d-ab09-4e2d080ed984",
+    "item_kind": "installation",
+    "item_ref": "ral",
+    "colour": null,
+    "supplier_id": "32eccf65-e4b4-4e70-abcc-dfd41bd20b15",
+    "unit": "piece",
+    "amount_cents": 1000,
+    "quoted_on": "2026-11-13"
+   },
+   {
+    "id": "064ec7ec-e1f3-434f-b57f-53795efce77d",
+    "item_kind": "installation",
+    "item_ref": "old_window_removal",
+    "colour": null,
+    "supplier_id": "32eccf65-e4b4-4e70-abcc-dfd41bd20b15",
+    "unit": "piece",
+    "amount_cents": 1000,
+    "quoted_on": "2026-11-13"
+   },
+   {
+    "id": "9a97dbd4-f1c3-4481-9be5-7313cbb3e600",
+    "item_kind": "installation",
+    "item_ref": "wall_repair",
+    "colour": null,
+    "supplier_id": "32eccf65-e4b4-4e70-abcc-dfd41bd20b15",
+    "unit": "piece",
+    "amount_cents": 1000,
+    "quoted_on": "2026-11-13"
+   },
+   {
+    "id": "16b011f4-c940-425a-90bf-ba074809b01e",
+    "item_kind": "labour",
+    "item_ref": "single_sash_tilt_turn/small",
+    "colour": null,
+    "supplier_id": "32eccf65-e4b4-4e70-abcc-dfd41bd20b15",
+    "unit": "piece",
+    "amount_cents": 1500,
+    "quoted_on": "2026-11-13"
+   },
+   {
+    "id": "a58917c3-d06e-4614-8cda-0ebe6525919b",
+    "item_kind": "labour",
+    "item_ref": "single_sash_tilt_turn/standard",
+    "colour": null,
+    "supplier_id": "32eccf65-e4b4-4e70-abcc-dfd41bd20b15",
+    "unit": "piece",
+    "amount_cents": 2500,
+    "quoted_on": "2026-11-13"
+   },
+   {
+    "id": "3d742ce0-7398-4215-8457-a283f29d7937",
+    "item_kind": "labour",
+    "item_ref": "single_sash_tilt_turn/large",
+    "colour": null,
+    "supplier_id": "32eccf65-e4b4-4e70-abcc-dfd41bd20b15",
+    "unit": "piece",
+    "amount_cents": 3500,
+    "quoted_on": "2026-11-13"
+   },
+   {
+    "id": "3b964b29-9ebb-4a73-8d24-26108530523c",
+    "item_kind": "labour",
+    "item_ref": "two_field_t_mullion/small",
+    "colour": null,
+    "supplier_id": "32eccf65-e4b4-4e70-abcc-dfd41bd20b15",
+    "unit": "piece",
+    "amount_cents": 1500,
+    "quoted_on": "2026-11-13"
+   },
+   {
+    "id": "c6fbd1b7-1bb7-4b87-a274-51436bf474c6",
+    "item_kind": "labour",
+    "item_ref": "two_field_t_mullion/standard",
+    "colour": null,
+    "supplier_id": "32eccf65-e4b4-4e70-abcc-dfd41bd20b15",
+    "unit": "piece",
+    "amount_cents": 2500,
+    "quoted_on": "2026-11-13"
+   },
+   {
+    "id": "fb9b7cf7-2f19-4dad-b0f8-06162e205865",
+    "item_kind": "labour",
+    "item_ref": "two_field_t_mullion/large",
+    "colour": null,
+    "supplier_id": "32eccf65-e4b4-4e70-abcc-dfd41bd20b15",
+    "unit": "piece",
+    "amount_cents": 3500,
+    "quoted_on": "2026-11-13"
+   },
+   {
+    "id": "015777a0-d128-4989-8f0d-be1f494abe70",
+    "item_kind": "labour",
+    "item_ref": "two_sash_false_mullion/small",
+    "colour": null,
+    "supplier_id": "32eccf65-e4b4-4e70-abcc-dfd41bd20b15",
+    "unit": "piece",
+    "amount_cents": 1500,
+    "quoted_on": "2026-11-13"
+   },
+   {
+    "id": "52157988-3ea5-4155-81e9-436b77d3832b",
+    "item_kind": "labour",
+    "item_ref": "two_sash_false_mullion/standard",
+    "colour": null,
+    "supplier_id": "32eccf65-e4b4-4e70-abcc-dfd41bd20b15",
+    "unit": "piece",
+    "amount_cents": 2500,
+    "quoted_on": "2026-11-13"
+   },
+   {
+    "id": "53ca8e4c-99bc-4fc5-b16e-0d6e36d67506",
+    "item_kind": "labour",
+    "item_ref": "two_sash_false_mullion/large",
+    "colour": null,
+    "supplier_id": "32eccf65-e4b4-4e70-abcc-dfd41bd20b15",
+    "unit": "piece",
+    "amount_cents": 3500,
+    "quoted_on": "2026-11-13"
+   },
+   {
+    "id": "6468e620-bf10-4e5e-a8bc-a2eef30fe078",
+    "item_kind": "labour",
+    "item_ref": "fixed/small",
+    "colour": null,
+    "supplier_id": "32eccf65-e4b4-4e70-abcc-dfd41bd20b15",
+    "unit": "piece",
+    "amount_cents": 1500,
+    "quoted_on": "2026-11-13"
+   },
+   {
+    "id": "cba78ece-a1af-47d2-b4c8-3618221c6464",
+    "item_kind": "labour",
+    "item_ref": "fixed/standard",
+    "colour": null,
+    "supplier_id": "32eccf65-e4b4-4e70-abcc-dfd41bd20b15",
+    "unit": "piece",
+    "amount_cents": 2500,
+    "quoted_on": "2026-11-13"
+   },
+   {
+    "id": "cb515563-f5b3-4561-9d4d-6f60351c48d2",
+    "item_kind": "labour",
+    "item_ref": "fixed/large",
+    "colour": null,
+    "supplier_id": "32eccf65-e4b4-4e70-abcc-dfd41bd20b15",
+    "unit": "piece",
+    "amount_cents": 3500,
+    "quoted_on": "2026-11-13"
+   },
+   {
+    "id": "229f838a-e7a5-4ec5-bcc6-6f8c21ca95a0",
+    "item_kind": "labour",
+    "item_ref": "balcony_door_tilt_turn/small",
+    "colour": null,
+    "supplier_id": "32eccf65-e4b4-4e70-abcc-dfd41bd20b15",
+    "unit": "piece",
+    "amount_cents": 1500,
+    "quoted_on": "2026-11-13"
+   },
+   {
+    "id": "6adc5a8a-15b5-4b31-8d91-4741f4c94658",
+    "item_kind": "labour",
+    "item_ref": "balcony_door_tilt_turn/standard",
+    "colour": null,
+    "supplier_id": "32eccf65-e4b4-4e70-abcc-dfd41bd20b15",
+    "unit": "piece",
+    "amount_cents": 2500,
+    "quoted_on": "2026-11-13"
+   },
+   {
+    "id": "fe1a8571-d9d6-4e28-91e6-1e7947ad36af",
+    "item_kind": "labour",
+    "item_ref": "balcony_door_tilt_turn/large",
+    "colour": null,
+    "supplier_id": "32eccf65-e4b4-4e70-abcc-dfd41bd20b15",
+    "unit": "piece",
+    "amount_cents": 3500,
+    "quoted_on": "2026-11-13"
+   }
+  ]
+ },
+ "suppliers": [
+  {
+   "id": "781e0257-52c3-4259-8537-3434b08ac841",
+   "name": "Probni dobavljač profila",
+   "phone": "",
+   "kind": "profile"
+  },
+  {
+   "id": "3db616b4-c8d9-4417-9fc0-9b19689df9b7",
+   "name": "Probni dobavljač stakla",
+   "phone": "",
+   "kind": "glass"
+  },
+  {
+   "id": "32eccf65-e4b4-4e70-abcc-dfd41bd20b15",
+   "name": "Probni dobavljač okova",
+   "phone": "",
+   "kind": "hardware"
+  }
+ ],
+ "settings": {
+  "margin_default_bp": 2500,
+  "margin_warn_bp": 1500,
+  "vat_bp": 1800,
+  "advance_bp": 5000,
+  "quote_valid_days": 15,
+  "price_age_warn_days": 30,
+  "glass_min_area_mm2": 300000,
+  "gasket_extra_bp": 500,
+  "small_max_mm2": 1000000,
+  "standard_max_mm2": 2500000
+ }
+}

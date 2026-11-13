@@ -1,1 +1,131 @@
 @import "tailwindcss";
+
+/* Noto Sans (SIL Open Font License 1.1, see assets/fonts/OFL.txt), served from the app itself:
+   the Content-Security-Policy allows no font host. One variable file per script range. */
+@font-face {
+  font-family: "Noto Sans";
+  font-style: normal;
+  font-weight: 400 900;
+  font-stretch: 62.5% 100%;
+  font-display: swap;
+  src: url("./assets/fonts/noto-sans-latin-ext.woff2") format("woff2");
+  unicode-range:
+    U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329,
+    U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113,
+    U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: "Noto Sans";
+  font-style: normal;
+  font-weight: 400 900;
+  font-stretch: 62.5% 100%;
+  font-display: swap;
+  src: url("./assets/fonts/noto-sans-latin.woff2") format("woff2");
+  unicode-range:
+    U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308,
+    U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+/* The site wall: skimmed plaster, carpenter's graphite, the blue chalk line, red marking crayon.
+   Contrast is chosen for direct sunlight: body ink is about 13:1 on the plaster. */
+@theme {
+  --font-sans: "Noto Sans", system-ui, sans-serif;
+
+  --color-plaster: #e6e8e7;
+  --color-plaster-deep: #d3d8d7;
+  --color-board: #fafbfb;
+  --color-graphite: #23272b;
+  --color-graphite-soft: #4b5258;
+  --color-graphite-line: #7a838a;
+  --color-shell: #23272b;
+  --color-shell-raised: #353b41;
+  --color-chalk: #1f5fd1;
+  --color-chalk-deep: #174aa6;
+  --color-chalk-tint: #dbe5f7;
+  --color-crayon: #b42a17;
+  --color-crayon-tint: #f6dcd6;
+  --color-tick: #17653a;
+  --color-tick-tint: #d6ebdf;
+
+  /* Three numeral sizes only: the number he says out loud is always the largest. */
+  --text-figure-lg: 2.75rem;
+  --text-figure-lg--line-height: 1;
+  --text-figure-md: 1.5rem;
+  --text-figure-md--line-height: 1.15;
+  --text-figure-sm: 1.0625rem;
+  --text-figure-sm--line-height: 1.3;
+
+  --radius-slot: 0.625rem;
+  --shadow-sheet: 0 -6px 20px -8px rgb(35 39 43 / 0.28);
+  --shadow-lift: 0 2px 6px -1px rgb(35 39 43 / 0.22);
+}
+
+@layer base {
+  html {
+    background: var(--color-plaster);
+    color: var(--color-graphite);
+    font-family: var(--font-sans);
+    font-size: 106.25%; /* 17 px body: read at arm's length on a ladder */
+    -webkit-text-size-adjust: 100%;
+    text-rendering: optimizeLegibility;
+  }
+  body {
+    min-height: 100dvh;
+    background: var(--color-plaster);
+    caret-color: var(--color-chalk);
+  }
+  ::selection {
+    background: var(--color-chalk-tint);
+    color: var(--color-graphite);
+  }
+  :focus-visible {
+    outline: 3px solid var(--color-chalk);
+    outline-offset: 2px;
+  }
+  a {
+    text-underline-offset: 0.2em;
+    text-decoration-thickness: 2px;
+  }
+  input,
+  select,
+  textarea {
+    font: inherit;
+    color: inherit;
+  }
+  input::placeholder {
+    color: var(--color-graphite-soft);
+    opacity: 1;
+  }
+  * {
+    scrollbar-color: var(--color-graphite-line) transparent;
+    scrollbar-width: thin;
+  }
+  button {
+    cursor: pointer;
+  }
+  button:disabled {
+    cursor: not-allowed;
+  }
+}
+
+/* Window drawings keep a real 2 px pencil line at any size; the vector effect is not inherited,
+   so it is set on every drawn element. */
+.window-drawing * {
+  vector-effect: non-scaling-stroke;
+}
+
+@utility figure {
+  font-variant-numeric: tabular-nums lining-nums;
+  font-stretch: 87.5%;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
