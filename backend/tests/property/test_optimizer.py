@@ -6,8 +6,6 @@ Invariants checked on every random order:
 3. total piece length in equals total piece length placed;
 4. bars used is at least the lower bound;
 5. FFD uses at least as many bars as the exact solver when that is proven optimal.
-
-FFD and the exact model are Mirza's; their tests are ``xfail`` until the code exists.
 """
 
 import importlib
@@ -95,7 +93,6 @@ def test_the_checker_notices_a_lost_piece(order: Order, data: st.DataObject) -> 
     assert validate_plan(broken, demands, kerf, trim) != []
 
 
-@pytest.mark.xfail(reason="waiting for Mirza: ffd.py", raises=ModuleNotFoundError)
 @given(orders())
 def test_ffd_plans_are_always_possible(order: Order) -> None:
     demands, kerf, trim = order
@@ -103,7 +100,6 @@ def test_ffd_plans_are_always_possible(order: Order) -> None:
     assert_invariants(ffd_function()(demands, BAR, kerf, trim), demands, kerf, trim)
 
 
-@pytest.mark.xfail(reason="waiting for Mirza: ffd.py", raises=ModuleNotFoundError)
 @given(orders())
 def test_ffd_is_deterministic(order: Order) -> None:
     demands, kerf, trim = order
@@ -113,10 +109,6 @@ def test_ffd_is_deterministic(order: Order) -> None:
 
 
 @pytest.mark.slow
-@pytest.mark.xfail(
-    reason="waiting for Mirza: exact.build_assignment_model and ffd.py",
-    raises=(NotImplementedError, ModuleNotFoundError),
-)
 @settings(max_examples=30, deadline=None)
 @given(orders(max_demands=4))
 def test_exact_plans_are_possible_and_never_beaten_by_ffd(order: Order) -> None:

@@ -66,8 +66,20 @@ def build_assignment_model(sizes: Sequence[int], capacity: int, max_bars: int) -
 
     The tests are in ``tests/engine/test_exact.py`` and ``tests/property/test_optimizer.py``.
     """
-    # TODO(human): build the variables and constraints described above.
-    raise NotImplementedError("waiting for Mirza: exact.build_assignment_model")
+    model = cp_model.CpModel()
+    pieces = range(len(sizes))
+    bars = range(max_bars)
+    x = {(i, b): model.new_bool_var(f"x_{i}_{b}") for i in pieces for b in bars}
+    y = [model.new_bool_var(f"y_{b}") for b in bars]
+    for i in pieces:
+        model.add_exactly_one(x[i, b] for b in bars)
+    for b in bars:
+        model.add(sum(sizes[i] * x[i, b] for i in pieces) <= capacity * y[b])
+        for i in pieces:
+            model.add_implication(x[i, b], y[b])
+    for b in range(max_bars - 1):
+        model.add(y[b] >= y[b + 1])
+    return AssignmentModel(model, x, y)
 
 
 def ffd_upper_bound(

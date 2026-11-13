@@ -56,15 +56,27 @@ def test_an_exact_run_without_a_plan_adds_no_row() -> None:
     assert [row["method"] for row in rows] == ["ffd"]
 
 
-def test_main_writes_nothing_while_ffd_is_missing(capsys: pytest.CaptureFixture[str]) -> None:
+def test_main_writes_nothing_while_ffd_is_missing(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    monkeypatch.setattr(benchmark, "load_ffd", lambda: None)
+
     assert benchmark.main(["--orders", "1"]) == 1
     assert "ffd.py" in capsys.readouterr().err
+
+
+def test_ffd_is_found_once_it_exists() -> None:
+    assert benchmark.load_ffd() is not None
 
 
 def test_main_writes_nothing_while_the_exact_model_is_missing(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:
+    def unfinished(*args: object, time_limit_s: float) -> ExactResult:
+        raise NotImplementedError("exact.build_assignment_model")
+
     monkeypatch.setattr(benchmark, "load_ffd", lambda: one_piece_per_bar)
+    monkeypatch.setattr(benchmark, "exact", unfinished)
     monkeypatch.setattr(benchmark, "RESULTS", tmp_path / "results.csv")
 
     assert benchmark.main(["--orders", "1", "--time-limit", "1"]) == 1

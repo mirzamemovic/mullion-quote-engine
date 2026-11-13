@@ -1,8 +1,4 @@
-"""The exact solver: two phases, a fixed seed, and a plan the checker accepts.
-
-Most tests run with a stand-in model (every piece on its own bar) so the solving code is tested
-before Mirza's ``build_assignment_model`` exists. Tests of the real model are ``xfail`` until then.
-"""
+"""The exact solver: two phases, a fixed seed, and a plan the checker accepts."""
 
 from collections.abc import Sequence
 from types import SimpleNamespace
@@ -23,46 +19,19 @@ from quote_engine.engine.optimizer.validate import validate_plan
 from quote_engine.engine.units import Mm
 
 BAR, TRIM, KERF = 6000, 10, 4
-WAITING_FOR_MODEL = pytest.mark.xfail(
-    reason="waiting for Mirza: exact.build_assignment_model", raises=NotImplementedError
-)
-
-
-def one_piece_per_bar(sizes: Sequence[int], capacity: int, max_bars: int) -> AssignmentModel:
-    """A stand-in model: piece i must go on bar i. Valid, never clever."""
-    model = cp_model.CpModel()
-    bars = range(max_bars)
-    x = {(i, b): model.new_bool_var(f"x_{i}_{b}") for i in range(len(sizes)) for b in bars}
-    y = [model.new_bool_var(f"y_{b}") for b in bars]
-    for i in range(len(sizes)):
-        model.add(x[i, i] == 1)
-        model.add(sum(x[i, b] for b in bars) == 1)
-        for b in bars:
-            model.add(x[i, b] <= y[b])
-    for b in bars:
-        model.add(sum(sizes[i] * x[i, b] for i in range(len(sizes))) <= capacity * y[b])
-    return AssignmentModel(model, x, y)
-
-
-@pytest.fixture
-def stand_in_model(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setattr(exact_module, "build_assignment_model", one_piece_per_bar)
 
 
 DEMANDS = (Demand("P1 frame top", Mm(1206), 2), Demand("P1 frame left", Mm(1406), 1))
 
 
-@pytest.mark.usefixtures("stand_in_model")
 def test_solver_result_is_a_valid_plan() -> None:
     result = exact(DEMANDS, BAR, KERF, TRIM, time_limit_s=5)
 
     assert result.plan is not None
     assert validate_plan(result.plan, DEMANDS, KERF, TRIM) == []
-    assert len(result.plan.bars) == 3  # the stand-in forces one piece per bar
     assert (result.proven_optimal, result.status) == (True, "OPTIMAL")
 
 
-@pytest.mark.usefixtures("stand_in_model")
 def test_same_input_gives_the_same_plan() -> None:
     first = exact(DEMANDS, BAR, KERF, TRIM, time_limit_s=5)
     second = exact(DEMANDS, BAR, KERF, TRIM, time_limit_s=5)
@@ -74,8 +43,17 @@ def test_no_demands_is_an_empty_optimal_plan() -> None:
     assert exact((), BAR, KERF, TRIM).plan == CuttingPlan(Mm(BAR), ())
 
 
-def test_upper_bound_waits_for_ffd() -> None:
-    # optimizer/ffd.py is Mirza's file and does not exist yet.
+def test_upper_bound_comes_from_ffd() -> None:
+    # 1210 + 1210 + 1410 = 3830 of 5990 usable: FFD needs one bar.
+    assert ffd_upper_bound(DEMANDS, BAR, KERF, TRIM) == 1
+
+
+def test_upper_bound_without_an_ffd_file(monkeypatch: pytest.MonkeyPatch) -> None:
+    def missing(name: str) -> object:
+        raise ModuleNotFoundError(f"No module named '{name}'", name=name)
+
+    monkeypatch.setattr("importlib.import_module", missing)
+
     assert ffd_upper_bound(DEMANDS, BAR, KERF, TRIM) is None
 
 
@@ -135,7 +113,6 @@ def test_no_solution_in_time_returns_no_plan(monkeypatch: pytest.MonkeyPatch) ->
     assert (result.plan, result.proven_optimal, result.status) == (None, False, "INFEASIBLE")
 
 
-@WAITING_FOR_MODEL
 def test_real_model_packs_pieces_onto_few_bars() -> None:
     # 2 x 1210 + 1410 = 3830 of 5990: one bar is enough.
     result = exact(DEMANDS, BAR, KERF, TRIM, time_limit_s=5)
@@ -145,7 +122,6 @@ def test_real_model_packs_pieces_onto_few_bars() -> None:
     assert result.proven_optimal
 
 
-@WAITING_FOR_MODEL
 def test_real_model_keeps_the_longest_offcut() -> None:
     # Three 1996 mm pieces (2000 with kerf): at most two fit in 5990, so 2 bars, as 2 + 1.
     demands = (Demand("a", Mm(1996), 3),)
@@ -156,7 +132,6 @@ def test_real_model_keeps_the_longest_offcut() -> None:
     assert sorted(bar.offcut_mm for bar in result.plan.bars) == [1990, 3990]
 
 
-@WAITING_FOR_MODEL
 def test_model_has_a_variable_per_piece_and_bar() -> None:
     built = build_assignment_model([1210, 1410], 5990, 2)
 
