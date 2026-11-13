@@ -2,7 +2,17 @@
 
 import pytest
 
-from quote_engine.engine.units import Bp, Cents, Mm, Mm2, pct, per_m2, per_metre, share_bp
+from quote_engine.engine.units import (
+    Bp,
+    Cents,
+    Mm,
+    Mm2,
+    pct,
+    per_m2,
+    per_metre,
+    rate_per_m2,
+    share_bp,
+)
 
 
 @pytest.mark.parametrize(
@@ -47,6 +57,14 @@ def test_pct_works_on_areas_and_basis_points() -> None:
 )
 def test_share_bp(part: int, whole: int, expected: int) -> None:
     assert share_bp(part, whole) == expected
+
+
+def test_rate_per_m2() -> None:
+    # 54 000 cents over a 0.8 x 1.4 m window (1.12 m²) is 48 214.28... cents per m².
+    assert rate_per_m2(Cents(54_000), Mm2(1_120_000)) == 48_214
+    assert rate_per_m2(Cents(1), Mm2(2_000_000)) == 1  # 0.5 goes up
+    with pytest.raises(ValueError, match="above zero"):
+        rate_per_m2(Cents(1), Mm2(0))
 
 
 @pytest.mark.parametrize(

@@ -35,11 +35,28 @@ def pct(amount: int, bp: int) -> int:
     return (amount * bp + BP_PER_WHOLE // 2) // BP_PER_WHOLE
 
 
+def grams_for_area(area_mm2: Mm2, grams_per_m2: int) -> int:
+    """Weight of ``area_mm2`` at ``grams_per_m2``, in whole grams, rounded half up."""
+    return (area_mm2 * grams_per_m2 + MM2_PER_M2 // 2) // MM2_PER_M2
+
+
+def grams_for_length(length_mm: Mm, grams_per_m: int) -> int:
+    """Weight of ``length_mm`` at ``grams_per_m``, in whole grams, rounded half up."""
+    return (length_mm * grams_per_m + MM_PER_M // 2) // MM_PER_M
+
+
 def share_bp(part: int, whole: int) -> Bp:
     """Return ``part`` as basis points of ``whole``, rounded half up. A zero whole gives 0."""
     if whole == 0:
         return Bp(0)
     return Bp((part * BP_PER_WHOLE + whole // 2) // whole)
+
+
+def rate_per_m2(amount: Cents, area_mm2: Mm2) -> Cents:
+    """Return ``amount`` spread over ``area_mm2`` as cents per square metre, rounded half up."""
+    if area_mm2 <= 0:
+        raise ValueError(f"area must be above zero, got {area_mm2}")
+    return Cents((amount * MM2_PER_M2 + area_mm2 // 2) // area_mm2)
 
 
 def per_metre(length_mm: Mm, cents_per_m: Cents) -> Cents:
