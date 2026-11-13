@@ -124,7 +124,29 @@ function route(method: string, path: string, body: Json): Response {
   return reply(404, { title: "not found", status: 404, detail: path });
 }
 
+/** The tab keeps the demo's quotes, so a reload stays in the demo with what was entered. */
+export const MOCK_STORE = "mjera.mock";
+
+function restore(): void {
+  try {
+    const saved = window.sessionStorage.getItem(MOCK_STORE);
+    if (saved) quotes.splice(0, quotes.length, ...(JSON.parse(saved) as Json[]));
+  } catch {
+    // Blocked storage: the demo starts fresh on every load.
+  }
+}
+
+function persist(): void {
+  try {
+    window.sessionStorage.setItem(MOCK_STORE, JSON.stringify(quotes));
+  } catch {
+    // Blocked storage: changes last until the next reload.
+  }
+}
+
 export function installMock(): void {
+  restore();
+  persist();
   const real = window.fetch.bind(window);
   window.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
     const url = typeof input === "string" ? input : input instanceof URL ? input.href : input.url;
@@ -132,6 +154,9 @@ export function installMock(): void {
     if (!url.includes("/api/v1/")) return real(input, init);
     await new Promise((resolve) => setTimeout(resolve, 150));
     const body = init?.body ? (JSON.parse(init.body as string) as Json) : {};
-    return route(init?.method ?? "GET", path, body);
+    const method = init?.method ?? "GET";
+    const response = route(method, path, body);
+    if (method !== "GET") persist();
+    return response;
   };
 }

@@ -8,6 +8,7 @@ import "../i18n";
 import { setLanguage } from "../i18n";
 import { App } from "../App";
 import { emptyReadings, type Readings } from "../lib/readings";
+import { DetailsStep } from "./position/DetailsStep";
 import { MeasureStep } from "./position/MeasureStep";
 
 function wrap(children: ReactNode) {
@@ -64,6 +65,47 @@ describe("App", () => {
     render(wrap(<App />));
 
     expect(await screen.findByRole("heading", { name: "Kod iz aplikacije" })).toBeInTheDocument();
+  });
+});
+
+describe("DetailsStep", () => {
+  const details = {
+    ref: "P1",
+    width: 0,
+    height: 0,
+    openings: ["tilt_turn_left" as const],
+    glass: "",
+    qty: 1,
+    installation: { install: true, ral: false, old_window_removal: false, wall_repair: false },
+  };
+
+  it("says why the window cannot be saved yet", () => {
+    render(
+      wrap(
+        <DetailsStep type="single_sash_tilt_turn" colour="white" details={details} glassBuilds={[]} sizeEditable busy={false} error={null} onChange={() => undefined} onSave={() => undefined} />,
+      ),
+    );
+
+    const save = screen.getByRole("button", { name: "Spremi prozor" });
+    expect(save).toBeDisabled();
+    const reasons = document.getElementById(save.getAttribute("aria-describedby") ?? "");
+    expect(reasons).toHaveTextContent("Upiši širinu i visinu");
+    expect(reasons).toHaveTextContent("Odaberi staklo");
+    expect(screen.getByText(/U cjenovniku nema stakla/)).toBeInTheDocument();
+  });
+
+  it("saves once the size and glass are there", () => {
+    const onSave = vi.fn();
+    render(
+      wrap(
+        <DetailsStep type="single_sash_tilt_turn" colour="white" details={{ ...details, width: 1200, height: 1400, glass: "4-16-4" }} glassBuilds={["4-16-4"]} sizeEditable busy={false} error={null} onChange={() => undefined} onSave={onSave} />,
+      ),
+    );
+
+    const save = screen.getByRole("button", { name: "Spremi prozor" });
+    expect(save).not.toHaveAttribute("aria-describedby");
+    fireEvent.click(save);
+    expect(onSave).toHaveBeenCalledOnce();
   });
 });
 

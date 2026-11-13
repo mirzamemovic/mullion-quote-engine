@@ -136,7 +136,11 @@
     "wallRepair": "Popravka zida",
     "sizeLimits": "Mjera mora biti od 300 do 3500 mm.",
     "field": "Polje {{n}}",
-    "pieces": "{{count}} kom"
+    "pieces": "{{count}} kom",
+    "needSize": "Upiši širinu i visinu, od 300 do 3500 mm.",
+    "needGlass": "Odaberi staklo.",
+    "needName": "Upiši naziv prozora.",
+    "noGlass": "U cjenovniku nema stakla. Dodaj ga u Cijene i postavke."
   },
   "types": {
     "single_sash_tilt_turn": "Jedno krilo",

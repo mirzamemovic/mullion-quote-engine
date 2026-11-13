@@ -23,9 +23,18 @@ const queryClient = new QueryClient({
   },
 });
 
+function mockRemembered(): boolean {
+  try {
+    return window.sessionStorage.getItem("mjera.mock") !== null;
+  } catch {
+    return false;
+  }
+}
+
 async function start(root: HTMLElement) {
-  // Development only: `/?mock` serves engine-made sample data without a database.
-  if (import.meta.env.DEV && new URLSearchParams(window.location.search).has("mock")) {
+  // Development only: `/?mock` serves engine-made sample data without a database; the tab
+  // remembers it, so a reload on any page stays in the demo.
+  if (import.meta.env.DEV && (new URLSearchParams(window.location.search).has("mock") || mockRemembered())) {
     const { installMock } = await import("./dev/mock");
     installMock();
   }

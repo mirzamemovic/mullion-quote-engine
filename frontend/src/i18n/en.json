@@ -136,7 +136,11 @@
     "wallRepair": "Wall repair",
     "sizeLimits": "Sizes must be 300 to 3500 mm.",
     "field": "Field {{n}}",
-    "pieces": "{{count}} pcs"
+    "pieces": "{{count}} pcs",
+    "needSize": "Enter the width and height, 300 to 3500 mm.",
+    "needGlass": "Choose the glass.",
+    "needName": "Enter a name for the window.",
+    "noGlass": "The price list has no glass. Add it in Prices and settings."
   },
   "types": {
     "single_sash_tilt_turn": "Single sash",

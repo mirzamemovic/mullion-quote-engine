@@ -49,7 +49,16 @@ export function DetailsStep({
 }) {
   const { t } = useTranslation();
   const fields = fieldCount(type);
-  const sizeOk = [details.width, details.height].every((v) => v >= 300 && v <= 3500);
+  const inRange = (v: number) => v >= 300 && v <= 3500;
+  const widthOk = inRange(details.width);
+  const heightOk = inRange(details.height);
+  const sizeOk = widthOk && heightOk;
+  // Why the save button is off, in his words, so a grey button never leaves him guessing.
+  const missing = [
+    ...(sizeOk ? [] : [t("position.needSize")]),
+    ...(details.glass ? [] : [t("position.needGlass")]),
+    ...(details.ref.trim() ? [] : [t("position.needName")]),
+  ];
   const set = <K extends keyof Details>(key: K, value: Details[K]) =>
     onChange({ ...details, [key]: value });
 
@@ -70,7 +79,9 @@ export function DetailsStep({
           <div className="min-w-0">
             <p className="text-base font-bold">{t(`types.${type}`)}</p>
             <p className="flex items-end gap-1.5">
-              <SizeMark className="text-figure-md">{size(details.width, details.height)}</SizeMark>
+              <SizeMark className="text-figure-md">
+                {details.width && details.height ? size(details.width, details.height) : "– × –"}
+              </SizeMark>
               <span className="figure mb-2.5 text-figure-sm text-graphite-soft">mm</span>
             </p>
             <p className="text-sm text-graphite-soft">
@@ -90,13 +101,14 @@ export function DetailsStep({
               inputMode="numeric"
               value={details.width || ""}
               onChange={(e) => set("width", Number(e.target.value.replace(/\D/g, "").slice(0, 4)))}
-              error={details.width && !sizeOk ? t("position.sizeLimits") : undefined}
+              error={details.width && !widthOk ? t("position.sizeLimits") : undefined}
             />
             <Field
               label={t("position.height")}
               inputMode="numeric"
               value={details.height || ""}
               onChange={(e) => set("height", Number(e.target.value.replace(/\D/g, "").slice(0, 4)))}
+              error={details.height && !heightOk ? t("position.sizeLimits") : undefined}
             />
           </div>
         )}
@@ -150,6 +162,9 @@ export function DetailsStep({
               </button>
             ))}
           </div>
+          {glassBuilds.length === 0 && (
+            <p className="mt-1.5 text-base font-semibold text-crayon">{t("position.noGlass")}</p>
+          )}
         </fieldset>
 
         <div>
@@ -223,11 +238,22 @@ export function DetailsStep({
           className="w-full"
           icon="check"
           busy={busy}
-          disabled={!sizeOk || !details.ref.trim() || !details.glass}
+          disabled={missing.length > 0}
+          aria-describedby={missing.length > 0 ? "save-missing" : undefined}
           onClick={onSave}
         >
           {t("position.done")}
         </Button>
+        {missing.length > 0 && (
+          <ul id="save-missing" role="status" className="-mt-4 space-y-1 text-base font-semibold text-crayon">
+            {missing.map((reason) => (
+              <li key={reason} className="flex items-start gap-2">
+                <Icon name="alert" className="mt-0.5 size-5 shrink-0" />
+                {reason}
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
     </div>
   );
