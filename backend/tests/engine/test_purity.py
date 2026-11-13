@@ -1,7 +1,7 @@
 """The engine stays pure: importing it loads the standard library only (PLAN.md section 2).
 
-import-linter checks the import statements. This test checks what really gets loaded, in a
-fresh interpreter, for every module in the engine package.
+The one exception is ``optimizer/exact.py``, which may use OR-Tools. import-linter checks the
+import statements; this test checks what really gets loaded, in a fresh interpreter.
 """
 
 import json
@@ -9,6 +9,7 @@ import subprocess
 import sys
 
 ALLOWED_ROOTS = frozenset(sys.stdlib_module_names) | {"quote_engine"}
+EXACT = "quote_engine.engine.optimizer.exact"
 
 PROBE = """
 import importlib, json, pkgutil, sys
@@ -18,7 +19,8 @@ before = set(sys.modules)
 import quote_engine.engine as engine
 
 for info in pkgutil.walk_packages(engine.__path__, engine.__name__ + "."):
-    importlib.import_module(info.name)
+    if info.name != {exact!r}:
+        importlib.import_module(info.name)
 
 loaded = set(sys.modules) - before
 print(json.dumps(sorted({{name.partition(".")[0] for name in loaded}})))
@@ -26,9 +28,9 @@ print(json.dumps(sorted({{name.partition(".")[0] for name in loaded}})))
 
 
 def roots_loaded_by_engine(extra_import: str = "") -> set[str]:
-    """Top-level packages that importing every engine module pulls into a fresh interpreter."""
+    """Top-level packages that importing every engine module (except ``exact``) pulls in."""
     result = subprocess.run(
-        [sys.executable, "-c", PROBE.format(extra_import=extra_import)],
+        [sys.executable, "-c", PROBE.format(extra_import=extra_import, exact=EXACT)],
         capture_output=True,
         text=True,
         check=True,

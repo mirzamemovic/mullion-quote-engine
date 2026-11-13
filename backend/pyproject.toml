@@ -8,6 +8,7 @@ authors = [
 requires-python = ">=3.13"
 dependencies = [
     "fastapi>=0.162.4",
+    "ortools>=9.15.6755",
     "pydantic>=2.14.3",
     "uvicorn>=0.54.0",
 ]
@@ -19,7 +20,7 @@ build-backend = "uv_build"
 [tool.ruff]
 line-length = 100
 target-version = "py313"
-src = ["src", "tests"]
+src = ["src", "tests", "benchmarks"]
 
 [tool.ruff.lint]
 select = [
@@ -47,7 +48,7 @@ select = [
 python_version = "3.13"
 strict = true
 warn_unreachable = true
-files = ["src", "tests"]
+files = ["src", "tests", "benchmarks"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
@@ -82,9 +83,17 @@ forbidden_modules = [
     "quote_engine.db",
 ]
 
+[[tool.importlinter.contracts]]
+name = "Only the exact solver may use OR-Tools"
+type = "forbidden"
+source_modules = ["quote_engine.engine"]
+forbidden_modules = ["ortools"]
+ignore_imports = ["quote_engine.engine.optimizer.exact -> ortools"]
+
 [dependency-groups]
 dev = [
     "httpx>=0.28.1",
+    "hypothesis>=6.170.15",
     "import-linter>=2.16",
     "mypy>=2.4.1",
     "pre-commit>=4.7.0",
