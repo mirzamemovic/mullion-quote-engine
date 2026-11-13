@@ -1,0 +1,112 @@
+name: Deploy
+
+# After CI passes on main (PLAN.md section 11): build the ARM64 image, push it to GHCR, deploy it
+# to the server over SSH (deploy.sh rolls back on failure), and create a release.
+#
+# Repository secrets needed:
+#   DEPLOY_HOST          server address
+#   DEPLOY_USER          the deploy user created by infra/setup-server.sh
+#   DEPLOY_SSH_KEY       private key of a key pair used only for deploys
+#   DEPLOY_HOST_KEY      the server's SSH host key line (from `ssh-keyscan <host>`, checked by hand)
+
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy
+  cancel-in-progress: false
+
+jobs:
+  image:
+    name: Build and push the image
+    if: github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push'
+    runs-on: ubuntu-24.04-arm
+    permissions:
+      contents: read
+      packages: write
+    outputs:
+      image: ${{ steps.name.outputs.image }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+          persist-credentials: false
+      - id: name
+        name: Image name
+        run: |
+          owner="$(echo "${GITHUB_REPOSITORY_OWNER}" | tr '[:upper:]' '[:lower:]')"
+          echo "image=ghcr.io/${owner}/quote-engine:${SHA}" >> "$GITHUB_OUTPUT"
+        env:
+          SHA: ${{ github.event.workflow_run.head_sha }}
+      - name: Log in to GHCR
+        run: echo "${TOKEN}" | docker login ghcr.io --username "${GITHUB_ACTOR}" --password-stdin
+        env:
+          TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build
+        run: docker build --file infra/Dockerfile --tag "${IMAGE}" .
+        env:
+          IMAGE: ${{ steps.name.outputs.image }}
+      - name: Push
+        run: docker push "${IMAGE}"
+        env:
+          IMAGE: ${{ steps.name.outputs.image }}
+
+  deploy:
+    name: Deploy to the server
+    needs: image
+    runs-on: ubuntu-24.04
+    environment: production
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+          persist-credentials: false
+      - name: SSH key and pinned host key
+        run: |
+          install -d -m 0700 ~/.ssh
+          printf '%s\n' "${DEPLOY_SSH_KEY}" > ~/.ssh/deploy_key
+          chmod 0600 ~/.ssh/deploy_key
+          printf '%s\n' "${DEPLOY_HOST_KEY}" > ~/.ssh/known_hosts
+        env:
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          DEPLOY_HOST_KEY: ${{ secrets.DEPLOY_HOST_KEY }}
+      - name: Copy the stack files
+        run: |
+          scp -i ~/.ssh/deploy_key -o StrictHostKeyChecking=yes \
+            infra/compose.prod.yaml infra/Caddyfile infra/deploy.sh \
+            "${DEPLOY_USER}@${DEPLOY_HOST}:/opt/quote-engine/"
+        env:
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+      - name: Deploy (rolls back on failure)
+        run: |
+          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=yes "${DEPLOY_USER}@${DEPLOY_HOST}" \
+            "bash /opt/quote-engine/deploy.sh '${IMAGE}'"
+        env:
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          IMAGE: ${{ needs.image.outputs.image }}
+      - name: Remove the key
+        if: always()
+        run: rm -f ~/.ssh/deploy_key
+
+  release:
+    name: Release notes
+    needs: deploy
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - name: Create the release
+        run: |
+          gh release create "deploy-${SHA::12}" --repo "${GITHUB_REPOSITORY}" \
+            --target "${SHA}" --title "Deploy ${SHA::12}" --generate-notes
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SHA: ${{ github.event.workflow_run.head_sha }}
