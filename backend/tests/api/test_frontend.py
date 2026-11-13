@@ -35,6 +35,17 @@ def test_api_still_answers_with_the_frontend_mounted() -> None:
         assert client.get("/api/v1/nothing-here").status_code == 404
 
 
+@pytest.mark.usefixtures("built_frontend")
+def test_app_routes_get_the_app_on_a_reload() -> None:
+    with TestClient(create_app()) as client:
+        page = client.get("/quotes/12")
+        missing_file = client.get("/assets/missing.js")
+
+    assert page.status_code == 200
+    assert "PVC Quote Engine" in page.text
+    assert missing_file.status_code == 404
+
+
 def test_no_frontend_without_a_built_index(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv(STATIC_DIR_ENV, str(tmp_path))
 

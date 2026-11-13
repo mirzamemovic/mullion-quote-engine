@@ -9,8 +9,14 @@ APP_DIR=/opt/quote-engine
 KEEP_NIGHTLY=14
 KEEP_WEEKLY=8
 
-# shellcheck source=/dev/null
-. "$ENV_FILE"
+# The env file is a docker compose env file, not a shell script: read single values from it
+# instead of sourcing it, so a password with spaces or `$` cannot break or run anything.
+env_value() {
+    sed -n "s/^$1=//p" "$ENV_FILE" | tail -n 1
+}
+BACKUP_AGE_RECIPIENT="$(env_value BACKUP_AGE_RECIPIENT)"
+BACKUP_REMOTE_NIGHTLY="$(env_value BACKUP_REMOTE_NIGHTLY)"
+BACKUP_REMOTE_WEEKLY="$(env_value BACKUP_REMOTE_WEEKLY)"
 : "${BACKUP_AGE_RECIPIENT:?set BACKUP_AGE_RECIPIENT in $ENV_FILE}"
 : "${BACKUP_REMOTE_NIGHTLY:?set BACKUP_REMOTE_NIGHTLY in $ENV_FILE}"
 
@@ -34,7 +40,7 @@ upload() {
 }
 
 upload "$BACKUP_REMOTE_NIGHTLY" "$KEEP_NIGHTLY"
-if [[ "$(date -u +%u)" == 7 && -n "${BACKUP_REMOTE_WEEKLY:-}" ]]; then
+if [[ "$(date -u +%u)" == 7 && -n "$BACKUP_REMOTE_WEEKLY" ]]; then
     upload "$BACKUP_REMOTE_WEEKLY" "$KEEP_WEEKLY"
 fi
 echo "backup $STAMP done"

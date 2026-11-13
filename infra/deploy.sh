@@ -30,8 +30,11 @@ healthy() {
     return 1
 }
 
+# Every compose command needs APP_IMAGE (compose.prod.yaml refuses to load without it), so it is
+# exported once and changed only by start().
 start() {
-    APP_IMAGE="$1" compose up -d --remove-orphans
+    export APP_IMAGE="$1"
+    compose up -d --remove-orphans
 }
 
 PREVIOUS_IMAGE="$(cat "$CURRENT_FILE" 2>/dev/null || true)"
@@ -40,8 +43,9 @@ echo "== pulling $NEW_IMAGE"
 docker pull "$NEW_IMAGE"
 
 echo "== database migrations"
-APP_IMAGE="$NEW_IMAGE" compose up -d db
-APP_IMAGE="$NEW_IMAGE" compose run --rm --no-deps app /app/.venv/bin/alembic upgrade head
+export APP_IMAGE="$NEW_IMAGE"
+compose up -d db
+compose run --rm --no-deps app /app/.venv/bin/alembic upgrade head
 
 echo "== starting $NEW_IMAGE"
 start "$NEW_IMAGE"
@@ -52,7 +56,7 @@ if healthy; then
 fi
 
 echo "== $NEW_IMAGE is not healthy after ${HEALTH_WAIT_S}s" >&2
-APP_IMAGE="$NEW_IMAGE" compose logs --no-color --tail 100 app >&2 || true
+compose logs --no-color --tail 100 app >&2 || true
 if [[ -n "$PREVIOUS_IMAGE" ]]; then
     echo "== rolling back to $PREVIOUS_IMAGE" >&2
     start "$PREVIOUS_IMAGE"

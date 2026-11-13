@@ -9,6 +9,9 @@ from pathlib import Path
 
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
+from starlette.exceptions import HTTPException
+from starlette.responses import Response
+from starlette.types import Scope
 
 from quote_engine import __version__
 from quote_engine.api import health
@@ -16,6 +19,23 @@ from quote_engine.api import health
 API_PREFIX = "/api/v1"
 STATIC_DIR_ENV = "QUOTE_ENGINE_STATIC_DIR"
 DEFAULT_STATIC_DIR = Path("/app/static")
+
+
+class SinglePageApp(StaticFiles):
+    """Static files, plus ``index.html`` for app routes such as ``/quotes/12`` on a reload.
+
+    Paths under ``api/`` and paths that name a file (with an extension) still get their 404.
+    """
+
+    async def get_response(self, path: str, scope: Scope) -> Response:
+        try:
+            return await super().get_response(path, scope)
+        except HTTPException as error:
+            route = path.replace("\\", "/")  # StaticFiles uses the OS separator
+            is_app_route = "." not in route.rsplit("/", 1)[-1] and not route.startswith("api/")
+            if error.status_code != 404 or not is_app_route:
+                raise
+            return await super().get_response("index.html", scope)
 
 
 def static_dir() -> Path | None:
@@ -36,7 +56,7 @@ def create_app() -> FastAPI:
     app.include_router(health.router, prefix=API_PREFIX)
     frontend = static_dir()
     if frontend is not None:
-        app.mount("/", StaticFiles(directory=frontend, html=True), name="frontend")
+        app.mount("/", SinglePageApp(directory=frontend, html=True), name="frontend")
     return app
 
 
