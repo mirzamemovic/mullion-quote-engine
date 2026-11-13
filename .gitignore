@@ -4,6 +4,9 @@
 !.env.example
 infra/secrets/
 
+# Real price lists for golden tests: on Mirza's machine only
+backend/tests/golden/private/
+
 # Personal editor settings
 .claude/settings.local.json
 
