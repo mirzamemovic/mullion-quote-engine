@@ -55,6 +55,14 @@ def test_bad_sheet_is_refused(sample_sheet_data: dict[str, Any], key: str, value
         system_constants_from_mapping(sample_sheet_data)
 
 
+def test_unknown_keys_of_mixed_kinds_are_named(sample_sheet_data: dict[Any, Any]) -> None:
+    sample_sheet_data[1] = "typo"
+    sample_sheet_data["kerf"] = 4
+
+    with pytest.raises(InvalidInput, match="unknown keys: 1, kerf"):
+        system_constants_from_mapping(sample_sheet_data)
+
+
 def test_missing_system_id_is_refused(sample_sheet_data: dict[str, Any]) -> None:
     del sample_sheet_data["system_id"]
 

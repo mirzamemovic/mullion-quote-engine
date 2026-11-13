@@ -67,6 +67,12 @@ def test_term_sign_must_be_plus_or_minus_one() -> None:
         Term("x", 1, 2)
 
 
+@pytest.mark.parametrize("value", [1180.5, True, "12"])
+def test_term_value_must_be_whole_millimetres(value: object) -> None:
+    with pytest.raises(InvalidInput, match="whole millimetres"):
+        Term("d", value)  # type: ignore[arg-type]
+
+
 def test_deduction_and_bar_length_come_from_the_sheet(sample_constants: SystemConstants) -> None:
     assert deduction(sample_constants, "sample_deduction_a") == 11
     assert bar_length(sample_constants, Role.STEEL) == 5555

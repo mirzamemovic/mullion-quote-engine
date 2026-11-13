@@ -44,7 +44,7 @@ def system_constants_from_mapping(data: Mapping[str, object]) -> SystemConstants
     if not isinstance(system_id, str) or not system_id.strip():
         raise InvalidInput(f"system_id must be a non-empty text, got {system_id!r}")
 
-    unknown = sorted(set(data) - ALL_KEYS)
+    unknown = sorted(str(key) for key in set(data) - ALL_KEYS)
     if unknown:
         raise InvalidInput(f"system sheet '{system_id}' has unknown keys: {', '.join(unknown)}")
     for key in (*LENGTH_KEYS, *MAPPING_KEYS):

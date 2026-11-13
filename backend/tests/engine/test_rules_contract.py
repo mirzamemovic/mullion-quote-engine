@@ -106,6 +106,7 @@ def test_every_piece_fits_on_its_bar(key: str, sample_constants: SystemConstants
     }
 
     for piece in (*result.pieces, *result.steel):
+        assert piece.role in usable, f"the sample sheet has no bar length for {piece.role}"
         assert piece.length_mm + sample_constants.kerf_mm <= usable[piece.role], piece.label
 
 

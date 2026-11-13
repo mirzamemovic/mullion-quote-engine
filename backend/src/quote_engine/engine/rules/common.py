@@ -33,6 +33,10 @@ class Term:
     sign: int = 1
 
     def __post_init__(self) -> None:
+        if type(self.value) is not int:
+            raise InvalidInput(
+                f"term {self.symbol}: value must be whole millimetres, got {self.value!r}"
+            )
         if self.sign not in (1, -1):
             raise InvalidInput(f"term {self.symbol}: sign must be +1 or -1, got {self.sign}")
 

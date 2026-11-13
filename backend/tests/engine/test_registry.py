@@ -1,5 +1,7 @@
 """The registry checks each position against its construction type, then calls the type's rule."""
 
+from dataclasses import replace
+
 import pytest
 
 from quote_engine.engine.errors import InvalidInput
@@ -111,6 +113,23 @@ def test_cut_job_merges_every_position(sample_constants: SystemConstants) -> Non
 def test_cut_job_refuses_a_repeated_ref(sample_constants: SystemConstants) -> None:
     with pytest.raises(InvalidInput, match="used twice"):
         registry.cut_job([a_position(ref="P1"), a_position(ref="P1")], sample_constants)
+
+
+def test_rule_output_must_belong_to_its_position(
+    monkeypatch: pytest.MonkeyPatch, sample_constants: SystemConstants
+) -> None:
+    def wrong_ref_rule(pos: PositionSpec, c: SystemConstants) -> CutList:
+        return stand_in_rule(replace(pos, ref="P9"), c)
+
+    kind = registry.TYPES["single_sash_tilt_turn"]
+    monkeypatch.setitem(
+        registry.TYPES,  # pyright: ignore[reportArgumentType]
+        kind.key,
+        registry.ConstructionType(kind.key, kind.fields, kind.fixed, wrong_ref_rule),
+    )
+
+    with pytest.raises(InvalidInput, match=r"P1: .* returned parts for \['P9'\]"):
+        registry.cut_position(a_position(ref="P1"), sample_constants)
 
 
 def test_empty_job_is_an_empty_cut_list(sample_constants: SystemConstants) -> None:

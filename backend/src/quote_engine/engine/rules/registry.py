@@ -6,7 +6,6 @@ opening) before calling that type's rule, then merges the results into one ``Cut
 
 from collections.abc import Callable, Iterable, Mapping
 from dataclasses import dataclass
-from types import ModuleType
 
 from quote_engine.engine.errors import InvalidInput
 from quote_engine.engine.model import CutList, Opening, PositionSpec, SystemConstants
@@ -32,18 +31,32 @@ class ConstructionType:
     rule: CutRule
 
 
-def _from_module(module: ModuleType, *, fixed: bool = False) -> ConstructionType:
-    return ConstructionType(module.KEY, module.FIELDS, fixed, module.cut)
-
-
+# Spelled out per module, so mypy checks every rule against the ``CutRule`` signature.
 TYPES: Mapping[str, ConstructionType] = {
     t.key: t
     for t in (
-        _from_module(single_sash_tilt_turn),
-        _from_module(two_field_t_mullion),
-        _from_module(two_sash_false_mullion),
-        _from_module(fixed, fixed=True),
-        _from_module(balcony_door_tilt_turn),
+        ConstructionType(
+            single_sash_tilt_turn.KEY,
+            single_sash_tilt_turn.FIELDS,
+            False,
+            single_sash_tilt_turn.cut,
+        ),
+        ConstructionType(
+            two_field_t_mullion.KEY, two_field_t_mullion.FIELDS, False, two_field_t_mullion.cut
+        ),
+        ConstructionType(
+            two_sash_false_mullion.KEY,
+            two_sash_false_mullion.FIELDS,
+            False,
+            two_sash_false_mullion.cut,
+        ),
+        ConstructionType(fixed.KEY, fixed.FIELDS, True, fixed.cut),
+        ConstructionType(
+            balcony_door_tilt_turn.KEY,
+            balcony_door_tilt_turn.FIELDS,
+            False,
+            balcony_door_tilt_turn.cut,
+        ),
     )
 }
 
@@ -73,8 +86,22 @@ def check_position(pos: PositionSpec) -> ConstructionType:
 
 
 def cut_position(pos: PositionSpec, c: SystemConstants) -> CutList:
-    """Cut one position with its construction type's rule."""
-    return check_position(pos).rule(pos, c)
+    """Cut one position with its construction type's rule.
+
+    Everything the rule returns must belong to this position, so a rule bug cannot move pieces,
+    panes or hardware to another position.
+    """
+    result = check_position(pos).rule(pos, c)
+    refs = {
+        *(piece.position_ref for piece in (*result.pieces, *result.steel)),
+        *(pane.position_ref for pane in result.glass),
+        *(need.position_ref for need in result.hardware_sets),
+    }
+    if refs - {pos.ref}:
+        raise InvalidInput(
+            f"{pos.ref}: the {pos.construction_type} rule returned parts for {sorted(refs)}"
+        )
+    return result
 
 
 def merge(cut_lists: Iterable[CutList]) -> CutList:
