@@ -1,0 +1,8 @@
+[Unit]
+Description=Encrypted backup of the quote-engine database
+After=docker.service
+Requires=docker.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/quote-engine-backup

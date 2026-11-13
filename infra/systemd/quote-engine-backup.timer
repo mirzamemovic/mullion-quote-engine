@@ -1,0 +1,10 @@
+[Unit]
+Description=Nightly encrypted backup of the quote-engine database
+
+[Timer]
+OnCalendar=*-*-* 02:30:00 UTC
+Persistent=true
+RandomizedDelaySec=10min
+
+[Install]
+WantedBy=timers.target
