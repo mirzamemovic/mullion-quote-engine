@@ -1,0 +1,54 @@
+# Production stack on the server (PLAN.md section 12): Caddy (HTTPS), the app, PostgreSQL.
+# Started by infra/deploy.sh from /opt/quote-engine. Secrets come from the root-only env file
+# /etc/quote-engine/app.env, never from this repository.
+#   APP_IMAGE=ghcr.io/<owner>/quote-engine:<git-sha> docker compose -f compose.prod.yaml up -d
+name: quote-engine
+
+services:
+  caddy:
+    image: caddy:2
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    environment:
+      DOMAIN: ${DOMAIN:?set DOMAIN in /etc/quote-engine/app.env}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    depends_on:
+      app:
+        condition: service_healthy
+
+  app:
+    image: ${APP_IMAGE:?set APP_IMAGE to the image to run}
+    restart: unless-stopped
+    env_file: /etc/quote-engine/app.env
+    expose:
+      - "8000"
+    depends_on:
+      db:
+        condition: service_healthy
+
+  db:
+    image: postgres:18
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: quote_engine
+      POSTGRES_USER: quote_engine
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in /etc/quote-engine/app.env}
+    volumes:
+      # PostgreSQL 18 images keep their data under /var/lib/postgresql/18/docker.
+      - db-data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready --username quote_engine --dbname quote_engine"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+
+volumes:
+  caddy-data:
+  caddy-config:
+  db-data:
