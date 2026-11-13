@@ -63,8 +63,11 @@ To run the fast ones before each commit: `uv run --project backend pre-commit in
 backend/    FastAPI app and the calculation engine (src/quote_engine), tests
 frontend/   React app
 infra/      Dockerfile and deployment files
-docs/       PLAN.md (build spec), PROGRESS.md, architecture decisions (adr/)
+docs/       PLAN.md (build spec), PROGRESS.md, architecture decisions (adr/),
+            optimizer.md, runbook.md, security.md, privacy.md
 ```
+
+Optimizer benchmark (FFD against the exact solver and the lower bound): `cd backend && uv run python -m benchmarks.run`. Golden tests and their file formats: `backend/tests/golden/README.md`.
 
 ## Who writes what
 
