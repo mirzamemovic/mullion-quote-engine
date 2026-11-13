@@ -160,6 +160,20 @@ def test_every_layer_by_hand(sample_constants: SystemConstants, sample_book: Pri
 
 
 @pytest.mark.usefixtures("stand_in_pricing_decisions")
+def test_line_total_is_unit_price_times_quantity(
+    sample_constants: SystemConstants, sample_book: PriceBook
+) -> None:
+    job = a_job(sample_constants, at=(a_position("P1", qty=3),), installation={})
+
+    p1 = price_job(job, sample_book, SETTINGS).positions[0]
+
+    layers = p1.material_cents + p1.margin_cents + p1.labour_cents + p1.installation_cents
+    assert p1.total_cents == p1.unit_price_cents * 3
+    assert p1.rounding_cents == p1.total_cents - layers
+    assert abs(p1.rounding_cents) <= 1  # half of the quantity, rounded down
+
+
+@pytest.mark.usefixtures("stand_in_pricing_decisions")
 def test_no_vat_when_not_registered(
     sample_constants: SystemConstants, sample_book: PriceBook
 ) -> None:

@@ -19,7 +19,7 @@ from quote_engine.engine.model import Role, SystemConstants
 from quote_engine.engine.optimizer.groups import group_pieces
 from quote_engine.engine.optimizer.plan import CuttingPlan, Demand
 from quote_engine.engine.pricing import QuoteJob, price_job
-from quote_engine.engine.rules.registry import cut_job, cut_position
+from quote_engine.engine.rules.registry import cut_job, cut_position, merge
 from tests.golden.loaders import GoldenJob, job_files, load_job, load_private_prices, load_system
 
 FILES = job_files()
@@ -50,7 +50,7 @@ def ffd_function() -> FfdFunction:
 def plans_for(job: GoldenJob, c: SystemConstants) -> tuple[QuoteJob, dict[str, CuttingPlan]]:
     ffd = ffd_function()
     cut_lists = {pos.ref: cut_position(pos, c) for pos in job.positions}
-    groups = group_pieces(cut_job(job.positions, c), job.positions, c)
+    groups = group_pieces(merge(cut_lists.values()), job.positions, c)
     plans = {g.name: ffd(g.demands, g.bar_length_mm, c.kerf_mm, c.bar_end_trim_mm) for g in groups}
     quote = QuoteJob(
         positions=job.positions,
@@ -74,11 +74,14 @@ def test_cuts_match_what_was_really_cut(path_id: str) -> None:
     job, c = golden(path_id)
     result = cut_job(job.positions, c)
     pieces = {(p.position_ref, p.role.value, p.label): p for p in (*result.pieces, *result.steel)}
+    roles = {role.value for role in Role}
 
     differences = []
     for cut in job.cuts:
-        piece = pieces.get((cut.ref, Role(cut.role).value, cut.label))
-        if piece is None:
+        piece = pieces.get((cut.ref, cut.role, cut.label))
+        if cut.role not in roles:
+            differences.append(f"{cut.ref} {cut.label}: unknown role '{cut.role}' in the job file")
+        elif piece is None:
             differences.append(f"{cut.ref} {cut.label}: expected, not produced")
         elif abs(piece.length_mm - cut.length_mm) > job.cut_tolerance_mm or piece.qty != cut.qty:
             differences.append(

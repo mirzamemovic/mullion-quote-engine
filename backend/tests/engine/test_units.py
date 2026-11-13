@@ -2,6 +2,7 @@
 
 import pytest
 
+from quote_engine.engine.errors import InvalidInput
 from quote_engine.engine.units import (
     Bp,
     Cents,
@@ -63,7 +64,7 @@ def test_rate_per_m2() -> None:
     # 54 000 cents over a 0.8 x 1.4 m window (1.12 m²) is 48 214.28... cents per m².
     assert rate_per_m2(Cents(54_000), Mm2(1_120_000)) == 48_214
     assert rate_per_m2(Cents(1), Mm2(2_000_000)) == 1  # 0.5 goes up
-    with pytest.raises(ValueError, match="above zero"):
+    with pytest.raises(InvalidInput, match="above zero"):
         rate_per_m2(Cents(1), Mm2(0))
 
 

@@ -9,6 +9,8 @@ positive infinity, so 0.5 becomes 1 and -12.5 becomes -12.
 
 from typing import NewType, overload
 
+from quote_engine.engine.errors import InvalidInput
+
 Mm = NewType("Mm", int)
 Mm2 = NewType("Mm2", int)
 Cents = NewType("Cents", int)
@@ -55,7 +57,7 @@ def share_bp(part: int, whole: int) -> Bp:
 def rate_per_m2(amount: Cents, area_mm2: Mm2) -> Cents:
     """Return ``amount`` spread over ``area_mm2`` as cents per square metre, rounded half up."""
     if area_mm2 <= 0:
-        raise ValueError(f"area must be above zero, got {area_mm2}")
+        raise InvalidInput(f"area must be above zero, got {area_mm2}")
     return Cents((amount * MM2_PER_M2 + area_mm2 // 2) // area_mm2)
 
 

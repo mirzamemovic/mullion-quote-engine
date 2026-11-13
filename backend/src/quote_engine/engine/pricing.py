@@ -151,6 +151,7 @@ class PositionPrice:
     labour_cents: Cents
     installation: tuple[Line, ...]
     installation_cents: Cents
+    rounding_cents: Cents
     total_cents: Cents
     unit_price_cents: Cents
     area_mm2: Mm2
@@ -300,7 +301,11 @@ def price_position(
     labour = Cents(labour_rate * pos.qty)
     installation = _installation(pos, cls, job.installation.get(pos.ref, Installation()), book)
     installation_cents = Cents(sum(line.cents for line in installation))
-    total = Cents(material_cents + margin + labour + installation_cents)
+    layers = material_cents + margin + labour + installation_cents
+    # The client sees unit price x quantity, so that is the line: the unit price is the layers
+    # divided by the quantity, rounded half up, and the cent difference is kept as rounding.
+    unit_price = Cents((layers + pos.qty // 2) // pos.qty)
+    total = Cents(unit_price * pos.qty)
     return PositionPrice(
         ref=pos.ref,
         material=tuple(material),
@@ -309,8 +314,9 @@ def price_position(
         labour_cents=labour,
         installation=tuple(installation),
         installation_cents=installation_cents,
+        rounding_cents=Cents(total - layers),
         total_cents=total,
-        unit_price_cents=Cents(total // pos.qty),
+        unit_price_cents=unit_price,
         area_mm2=area,
         cents_per_m2=rate_per_m2(total, Mm2(area * pos.qty)),
     )
