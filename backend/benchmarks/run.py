@@ -19,7 +19,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from quote_engine.engine.optimizer.bounds import lower_bound
-from quote_engine.engine.optimizer.exact import ExactResult, exact
+from quote_engine.engine.optimizer.exact import FFD_MODULE, ExactResult, exact
 from quote_engine.engine.optimizer.plan import CuttingPlan, Demand, plan_stats
 from quote_engine.engine.units import Mm
 
@@ -66,7 +66,7 @@ def random_orders(count: int, seed: int) -> Iterator[Order]:
 
 
 def _row(
-    order: Order, method: str, plan: CuttingPlan, runtime_s: float, proven: str
+    order: Order, method: str, plan: CuttingPlan, bound: int, runtime_s: float, proven: str
 ) -> dict[str, object]:
     stats = plan_stats(plan, order.demands, order.min_offcut_mm)
     return {
@@ -74,9 +74,7 @@ def _row(
         "method": method,
         "pieces": sum(d.qty for d in order.demands),
         "bars": stats.bars,
-        "lower_bound": lower_bound(
-            order.demands, order.bar_length_mm, order.kerf_mm, order.end_trim_mm
-        ),
+        "lower_bound": bound,
         "waste_bp": stats.waste_bp,
         "scrap_bp": stats.scrap_bp,
         "runtime_ms": round(runtime_s * 1000),
@@ -91,16 +89,24 @@ def run(
     rows: list[dict[str, object]] = []
     for order in orders:
         args = (order.demands, order.bar_length_mm, order.kerf_mm, order.end_trim_mm)
+        bound = lower_bound(*args)
         started = time.perf_counter()
         ffd_plan = ffd(*args)
-        rows.append(_row(order, "ffd", ffd_plan, time.perf_counter() - started, ""))
+        rows.append(_row(order, "ffd", ffd_plan, bound, time.perf_counter() - started, ""))
 
         started = time.perf_counter()
         result = exact_solver(*args, time_limit_s=time_limit_s)
         elapsed = time.perf_counter() - started
         if result.plan is not None:
             rows.append(
-                _row(order, "exact", result.plan, elapsed, str(result.proven_optimal).lower())
+                _row(
+                    order,
+                    "exact",
+                    result.plan,
+                    bound,
+                    elapsed,
+                    str(result.proven_optimal).lower(),
+                )
             )
     return rows
 
@@ -114,8 +120,10 @@ def write_csv(rows: Sequence[dict[str, object]], path: Path) -> None:
 
 def load_ffd() -> FfdFunction | None:
     try:
-        module = importlib.import_module("quote_engine.engine.optimizer.ffd")
-    except ModuleNotFoundError:
+        module = importlib.import_module(FFD_MODULE)
+    except ModuleNotFoundError as error:
+        if error.name != FFD_MODULE:
+            raise
         return None
     ffd: FfdFunction = module.ffd
     return ffd

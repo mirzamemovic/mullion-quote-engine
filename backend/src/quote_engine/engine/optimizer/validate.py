@@ -8,14 +8,22 @@ from quote_engine.engine.optimizer.plan import CuttingPlan, Demand, usable_lengt
 
 
 def validate_plan(
-    plan: CuttingPlan, demands: Sequence[Demand], kerf_mm: int, end_trim_mm: int
+    plan: CuttingPlan,
+    demands: Sequence[Demand],
+    kerf_mm: int,
+    end_trim_mm: int,
+    *,
+    bar_length_mm: int | None = None,
 ) -> list[str]:
     """Return every problem with the plan; an empty list means the plan is valid.
 
     Checks: every demanded piece appears on exactly one bar, in the demanded quantity; no unknown
     pieces; no empty bars; each bar's used length and offcut agree with its pieces; no bar holds
-    more than its usable length, kerf included.
+    more than its usable length, kerf included. With ``bar_length_mm``, the plan must also be
+    for that bar length.
     """
+    if bar_length_mm is not None and plan.bar_length_mm != bar_length_mm:
+        return [f"plan is for {plan.bar_length_mm} mm bars, the group uses {bar_length_mm} mm"]
     try:
         usable = usable_length(plan.bar_length_mm, end_trim_mm)
     except InvalidInput as error:

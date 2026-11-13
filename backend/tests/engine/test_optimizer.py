@@ -117,6 +117,13 @@ def test_valid_plan_has_no_problems() -> None:
     assert validate_plan(valid_plan(), DEMANDS, KERF, TRIM) == []
 
 
+def test_plan_for_another_bar_length_is_reported() -> None:
+    problems = validate_plan(valid_plan(), DEMANDS, KERF, TRIM, bar_length_mm=6666)
+
+    assert problems == ["plan is for 6000 mm bars, the group uses 6666 mm"]
+    assert validate_plan(valid_plan(), DEMANDS, KERF, TRIM, bar_length_mm=BAR) == []
+
+
 def test_missing_piece_is_reported() -> None:
     plan = CuttingPlan(Mm(BAR), (a_bar("P1 frame left", "P1 frame left", "P1 frame top"),))
 

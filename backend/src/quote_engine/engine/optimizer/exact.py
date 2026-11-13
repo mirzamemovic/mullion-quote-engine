@@ -13,6 +13,7 @@ from dataclasses import dataclass, field
 
 from ortools.sat.python import cp_model
 
+from quote_engine.engine.errors import EngineError
 from quote_engine.engine.optimizer.plan import (
     CuttingPlan,
     Demand,
@@ -20,8 +21,10 @@ from quote_engine.engine.optimizer.plan import (
     piece_sizes,
     usable_length,
 )
+from quote_engine.engine.optimizer.validate import validate_plan
 from quote_engine.engine.units import Mm
 
+FFD_MODULE = "quote_engine.engine.optimizer.ffd"
 RANDOM_SEED = 20_261_113
 SOLVED = (cp_model.OPTIMAL, cp_model.FEASIBLE)
 
@@ -72,8 +75,10 @@ def ffd_upper_bound(
 ) -> int | None:
     """Bars used by FFD, or ``None`` while ``optimizer/ffd.py`` does not exist yet."""
     try:
-        ffd_module = importlib.import_module("quote_engine.engine.optimizer.ffd")
-    except ModuleNotFoundError:
+        ffd_module = importlib.import_module(FFD_MODULE)
+    except ModuleNotFoundError as error:
+        if error.name != FFD_MODULE:
+            raise  # ffd.py exists but something it imports is missing
         return None
     ffd: Callable[[Sequence[Demand], int, int, int], CuttingPlan] = ffd_module.ffd
     return len(ffd(demands, bar_length_mm, kerf_mm, end_trim_mm).bars)
@@ -149,8 +154,8 @@ def exact(
         for b in bars
         if solver.boolean_value(y[b])
     ]
-    return ExactResult(
-        CuttingPlan(Mm(bar_length_mm), tuple(plan_bars)),
-        proven,
-        "OPTIMAL" if proven else "FEASIBLE",
-    )
+    plan = CuttingPlan(Mm(bar_length_mm), tuple(plan_bars))
+    problems = validate_plan(plan, demands, kerf_mm, end_trim_mm, bar_length_mm=bar_length_mm)
+    if problems:
+        raise EngineError(f"the solver model produced an impossible plan: {'; '.join(problems)}")
+    return ExactResult(plan, proven, "OPTIMAL" if proven else "FEASIBLE")

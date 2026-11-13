@@ -10,6 +10,7 @@ from types import SimpleNamespace
 import pytest
 from ortools.sat.python import cp_model
 
+from quote_engine.engine.errors import EngineError
 from quote_engine.engine.optimizer import exact as exact_module
 from quote_engine.engine.optimizer.exact import (
     AssignmentModel,
@@ -87,6 +88,36 @@ def test_upper_bound_uses_ffd_once_it_exists(monkeypatch: pytest.MonkeyPatch) ->
     monkeypatch.setattr("importlib.import_module", lambda name: SimpleNamespace(ffd=fake_ffd))
 
     assert ffd_upper_bound(DEMANDS, BAR, KERF, TRIM) == 1
+
+
+def test_a_broken_ffd_is_not_mistaken_for_a_missing_one(monkeypatch: pytest.MonkeyPatch) -> None:
+    def broken_import(name: str) -> object:
+        raise ModuleNotFoundError("No module named 'numpy_extra'", name="numpy_extra")
+
+    monkeypatch.setattr("importlib.import_module", broken_import)
+
+    with pytest.raises(ModuleNotFoundError, match="numpy_extra"):
+        ffd_upper_bound(DEMANDS, BAR, KERF, TRIM)
+
+
+def test_an_impossible_plan_from_the_model_is_refused(monkeypatch: pytest.MonkeyPatch) -> None:
+    def loose_model(sizes: Sequence[int], capacity: int, max_bars: int) -> AssignmentModel:
+        # Pieces are not tied to used bars, so the solver may leave them on unused ones.
+        model = cp_model.CpModel()
+        x = {
+            (i, b): model.new_bool_var(f"x_{i}_{b}")
+            for i in range(len(sizes))
+            for b in range(max_bars)
+        }
+        y = [model.new_bool_var(f"y_{b}") for b in range(max_bars)]
+        for i in range(len(sizes)):
+            model.add(sum(x[i, b] for b in range(max_bars)) == 1)
+        return AssignmentModel(model, x, y)
+
+    monkeypatch.setattr(exact_module, "build_assignment_model", loose_model)
+
+    with pytest.raises(EngineError, match="impossible plan"):
+        exact(DEMANDS, BAR, KERF, TRIM, time_limit_s=5)
 
 
 def test_no_solution_in_time_returns_no_plan(monkeypatch: pytest.MonkeyPatch) -> None:
