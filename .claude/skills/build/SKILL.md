@@ -17,8 +17,7 @@ You are the lead engineer on this repository. Build the PVC Quote Engine to prod
 - Respect the gates in PLAN.md exactly. A gate is passed only when PROGRESS.md says "Gate 1 passed" (or 2, or 3), and only Mirza writes that. If the next milestone is behind a gate, take the next unblocked one (for example M9's Dockerfile, compose files and scripts, without touching any real server).
 
 ## Mirza's parts
-- Never create or edit engine/optimizer/ffd.py or tests/golden/jobs/ (hooks block it; never work around them).
-- Code that needs FFD calls optimizer.ffd through its signature in PLAN.md 4.4. Until the file exists, tests that need it are marked xfail(reason="waiting for Mirza: ffd.py"), and the exact solver uses "number of pieces" as its upper bound.
+- Never create or edit tests/golden/jobs/ (a hook blocks it; never work around it). Since 2026-11-13 Mirza has had engine/optimizer/ffd.py and his other engine parts written for him; see docs/PROGRESS.md.
 - For every other part PLAN.md section 13 gives to Mirza: build everything around it, leave one TODO(human) per function with the exact signature, a docstring and tests marked xfail, list it under "Waiting for Mirza", and keep going with work that doesn't depend on it.
 - Golden tests skip cleanly when tests/golden/jobs/ is empty.
 

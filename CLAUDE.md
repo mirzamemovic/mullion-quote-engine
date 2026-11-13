@@ -23,7 +23,7 @@ Full local check, required before every commit (this replaces CI until there is 
 - if the frontend changed: `cd frontend && npm run lint && npm run typecheck && npm test && npm run build`
 
 ## Hard rules
-- IMPORTANT: `backend/src/quote_engine/engine/optimizer/ffd.py` and `backend/tests/golden/jobs/` are written by Mirza only. Hooks block edits. Never work around them (no Bash writes, copies or renames). If a golden test fails, show the diff and stop. Never change expected values or tolerances.
+- IMPORTANT: `backend/tests/golden/jobs/` is written by Mirza only (his real past jobs, anonymised). A hook blocks edits. (`ffd.py` was also his until 2026-11-13, when he chose to have it written.) Never work around them (no Bash writes, copies or renames). If a golden test fails, show the diff and stop. Never change expected values or tolerances.
 - The engine (`quote_engine.engine`) is pure: stdlib only, plus `ortools` in `optimizer/exact.py`. No FastAPI, SQLAlchemy, Pydantic, httpx, `quote_engine.api` or `quote_engine.db` imports.
 - Lengths are int mm, money int cents, percentages int basis points (2500 = 25%), areas int mm². No floats for lengths, areas, weights or money. Round only with the helpers in `engine/units.py`.
 - Every cut piece carries its formula string, e.g. `"W + 2a = 1200 + 6 = 1206"`.

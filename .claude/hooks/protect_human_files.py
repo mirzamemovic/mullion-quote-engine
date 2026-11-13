@@ -15,10 +15,8 @@ import sys
 from pathlib import Path, PurePosixPath
 
 # Repo-relative, forward slashes. A trailing slash protects a whole folder.
-PROTECTED = (
-    "backend/src/quote_engine/engine/optimizer/ffd.py",
-    "backend/tests/golden/jobs/",
-)
+# ffd.py was protected until 2026-11-13, when Mirza chose to have it written for him.
+PROTECTED = ("backend/tests/golden/jobs/",)
 
 REASON = (
     "Blocked by .claude/hooks/protect_human_files.py: {path} is written by Mirza only "
@@ -55,9 +53,23 @@ GLUED_PUNCTUATION = ";&|(){}"
 
 # PowerShell only: cmdlets and aliases that write, move, delete or overwrite files.
 # Each name is matched as a whole command word, ignoring case (PowerShell ignores case).
-# rm, mv, cp, tee and the `>` redirect are already covered above.
-# TODO(human): fill in this tuple, e.g. ("Set-Content", ...).
-POWERSHELL_WRITE_NAMES: tuple[str, ...] = ()
+# rm, mv, cp, tee and the `>` redirect are already covered above. Short aliases that are also
+# ordinary words in other commands (such as `ci` in `npm ci`) are left out on purpose.
+POWERSHELL_WRITE_NAMES: tuple[str, ...] = (
+    # content
+    "Set-Content", "sc", "Add-Content", "ac", "Clear-Content", "clc",
+    "Out-File", "Tee-Object", "Export-Csv", "Export-Clixml",
+    # items
+    "New-Item", "ni", "md", "mkdir",
+    "Remove-Item", "ri", "del", "erase", "rd", "rmdir",
+    "Move-Item", "mi", "move",
+    "Copy-Item", "cpi", "copy",
+    "Rename-Item", "rni", "ren",
+    "Clear-Item", "cli", "Set-Item", "si",
+    # archives and downloads that write files
+    "Expand-Archive", "Compress-Archive",
+    "Invoke-WebRequest", "iwr", "Invoke-RestMethod", "irm", "Start-BitsTransfer",
+)
 
 # PowerShell only: a .NET static call such as [IO.File]::WriteAllText(...) can write anything.
 DOTNET_CALL = re.compile(r"\]\s*::")
