@@ -1,0 +1,20 @@
+# SAMPLE - NOT REAL
+# An invented system sheet for tests and the demo workshop. Every value is deliberately fake.
+# Real constants come only from a profile system's sheet entered in the admin screens.
+system_id: sample-not-real
+bar_length_mm:
+  frame: 6666
+  sash: 6666
+  mullion: 6666
+  false_mullion: 6666
+  bead: 6666
+  threshold: 6666
+  steel: 5555
+weld_allowance_mm: 1
+kerf_mm: 2
+bar_end_trim_mm: 3
+steel_shortening_mm: 4
+min_offcut_mm: 555
+deductions:
+  sample_deduction_a: 11
+  sample_deduction_b: 22

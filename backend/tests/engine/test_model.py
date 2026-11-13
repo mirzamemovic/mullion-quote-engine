@@ -103,7 +103,7 @@ def test_system_constants_can_be_copied_pickled_and_turned_into_data(
     assert pickle.loads(pickle.dumps(sample_constants)) == sample_constants
     assert copy.deepcopy(sample_constants) == sample_constants
     data = asdict(sample_constants)
-    assert data["deductions"] == {"sample_sash_deduction": 11}
+    assert data["deductions"] == {"sample_deduction_a": 11, "sample_deduction_b": 22}
     copied: SystemConstants = pickle.loads(pickle.dumps(sample_constants))
     with pytest.raises(TypeError):
         copied.deductions["x"] = Mm(1)  # type: ignore[index]
@@ -113,12 +113,12 @@ def test_system_constants_can_be_copied_pickled_and_turned_into_data(
     "change",
     [
         lambda d: d.clear(),
-        lambda d: d.pop("sample_sash_deduction"),
+        lambda d: d.pop("sample_deduction_a"),
         lambda d: d.popitem(),
         lambda d: d.setdefault("x", 1),
         lambda d: d.update({"x": 1}),
         lambda d: d.__ior__({"x": 1}),
-        lambda d: d.__delitem__("sample_sash_deduction"),
+        lambda d: d.__delitem__("sample_deduction_a"),
     ],
 )
 def test_every_way_to_change_a_mapping_is_refused(
@@ -126,7 +126,7 @@ def test_every_way_to_change_a_mapping_is_refused(
 ) -> None:
     with pytest.raises(TypeError):
         change(sample_constants.deductions)
-    assert sample_constants.deductions == {"sample_sash_deduction": 11}
+    assert sample_constants.deductions == {"sample_deduction_a": 11, "sample_deduction_b": 22}
 
 
 def test_system_constants_have_no_default_values() -> None:
