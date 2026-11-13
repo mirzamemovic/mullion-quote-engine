@@ -1,0 +1,175 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-11-13T12:00:00Z",
+  "title": "Design System: Mjera",
+  "extensions": {
+    "colorMeta": {
+      "chalk": { "role": "primary", "displayName": "Chalk-Line Blue", "canonical": "#1f5fd1", "tonalRamp": ["#0d2147", "#133170", "#174aa6", "#1f5fd1", "#4c80e0", "#86a9ea", "#b9cdf2", "#dbe5f7"] },
+      "chalk-deep": { "role": "primary", "displayName": "Deep Chalk", "canonical": "#174aa6", "tonalRamp": ["#0d2147", "#133170", "#174aa6", "#1f5fd1", "#4c80e0", "#86a9ea", "#b9cdf2", "#dbe5f7"] },
+      "chalk-tint": { "role": "primary", "displayName": "Chalk Tint", "canonical": "#dbe5f7", "tonalRamp": ["#0d2147", "#133170", "#174aa6", "#1f5fd1", "#4c80e0", "#86a9ea", "#b9cdf2", "#dbe5f7"] },
+      "crayon": { "role": "secondary", "displayName": "Marking-Crayon Red", "canonical": "#b42a17", "tonalRamp": ["#3d0f08", "#651a0f", "#8d2213", "#b42a17", "#d2533f", "#e28a7b", "#efbcb2", "#f6dcd6"] },
+      "crayon-tint": { "role": "secondary", "displayName": "Crayon Tint", "canonical": "#f6dcd6", "tonalRamp": ["#3d0f08", "#651a0f", "#8d2213", "#b42a17", "#d2533f", "#e28a7b", "#efbcb2", "#f6dcd6"] },
+      "tick": { "role": "tertiary", "displayName": "Tick Green", "canonical": "#17653a", "tonalRamp": ["#082615", "#0f4024", "#17653a", "#1f8a4f", "#4caa76", "#86c7a2", "#b8dfc8", "#d6ebdf"] },
+      "tick-tint": { "role": "tertiary", "displayName": "Tick Tint", "canonical": "#d6ebdf", "tonalRamp": ["#082615", "#0f4024", "#17653a", "#1f8a4f", "#4caa76", "#86c7a2", "#b8dfc8", "#d6ebdf"] },
+      "plaster": { "role": "neutral", "displayName": "Skimmed Plaster", "canonical": "#e6e8e7", "tonalRamp": ["#232726", "#3d4241", "#5c6261", "#7f8584", "#a3a9a8", "#c4c9c8", "#d3d8d7", "#e6e8e7"] },
+      "plaster-deep": { "role": "neutral", "displayName": "Deep Plaster", "canonical": "#d3d8d7", "tonalRamp": ["#232726", "#3d4241", "#5c6261", "#7f8584", "#a3a9a8", "#c4c9c8", "#d3d8d7", "#e6e8e7"] },
+      "board": { "role": "neutral", "displayName": "Board White", "canonical": "#fafbfb", "tonalRamp": ["#23272b", "#4b5258", "#7a838a", "#a5acb1", "#c8cdd0", "#e0e3e5", "#eef0f1", "#fafbfb"] },
+      "graphite": { "role": "neutral", "displayName": "Graphite", "canonical": "#23272b", "tonalRamp": ["#15181a", "#23272b", "#353b41", "#4b5258", "#7a838a", "#a5acb1", "#c8cdd0", "#eef0f1"] },
+      "graphite-soft": { "role": "neutral", "displayName": "Soft Graphite", "canonical": "#4b5258", "tonalRamp": ["#15181a", "#23272b", "#353b41", "#4b5258", "#7a838a", "#a5acb1", "#c8cdd0", "#eef0f1"] },
+      "graphite-line": { "role": "neutral", "displayName": "Graphite Line", "canonical": "#7a838a", "tonalRamp": ["#15181a", "#23272b", "#353b41", "#4b5258", "#7a838a", "#a5acb1", "#c8cdd0", "#eef0f1"] },
+      "shell": { "role": "neutral", "displayName": "Shell Graphite", "canonical": "#23272b", "tonalRamp": ["#15181a", "#23272b", "#353b41", "#4b5258", "#7a838a", "#a5acb1", "#c8cdd0", "#eef0f1"] },
+      "shell-raised": { "role": "neutral", "displayName": "Shell Raised", "canonical": "#353b41", "tonalRamp": ["#15181a", "#23272b", "#353b41", "#4b5258", "#7a838a", "#a5acb1", "#c8cdd0", "#eef0f1"] }
+    },
+    "typographyMeta": {
+      "figure-lg": { "displayName": "Figure Large", "purpose": "The one number he says out loud: window size on the measuring sheet, quote total." },
+      "figure-md": { "displayName": "Figure Medium", "purpose": "Reading slots, position prices, units next to a large figure." },
+      "figure-sm": { "displayName": "Figure Small", "purpose": "Sizes in lists, cut lengths, offcuts, formula lines." },
+      "headline": { "displayName": "Headline", "purpose": "Step and screen headings." },
+      "title": { "displayName": "Title", "purpose": "Top bar title, section headings, button labels." },
+      "body": { "displayName": "Body", "purpose": "Rows, warnings, descriptions. Root size is 17 px." },
+      "label": { "displayName": "Label", "purpose": "Field labels and segmented legends." },
+      "note": { "displayName": "Note", "purpose": "Hints, field errors, top bar subtitle." }
+    },
+    "shadows": [
+      { "name": "sheet", "value": "0 -6px 20px -8px rgb(35 39 43 / 0.28)", "purpose": "The bottom sheet holding the result and the primary action." },
+      { "name": "lift", "value": "0 2px 6px -1px rgb(35 39 43 / 0.22)", "purpose": "The selected segment and the one opened position row." },
+      { "name": "slot-halo", "value": "0 0 0 4px var(--color-chalk-tint)", "purpose": "The measuring slot being typed into." },
+      { "name": "focus", "value": "outline: 3px solid var(--color-chalk); outline-offset: 2px", "purpose": "Keyboard focus on every control." }
+    ],
+    "motion": [
+      { "name": "state-change", "value": "150ms colors", "purpose": "Colour and border changes on buttons, fields, segments and tiles. Nothing moves; reduced motion cuts it to near zero." }
+    ],
+    "breakpoints": [
+      { "name": "sm", "value": "640px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "The one action on a screen, usually full width in the bottom sheet.",
+      "html": "<button class=\"ds-btn ds-btn-primary\"><svg viewBox=\"0 0 24 24\" width=\"24\" height=\"24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.25\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M9 5l7 7-7 7\"/></svg><span>Dalje: tip prozora</span></button>",
+      "css": ".ds-btn { display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; min-height: 3.5rem; padding: 0 1.25rem; border-radius: var(--radius-slot, 0.625rem); font-family: \"Noto Sans\", system-ui, sans-serif; font-size: 1.125rem; font-weight: 700; border: none; cursor: pointer; transition: background-color 150ms, color 150ms, border-color 150ms; } .ds-btn-primary { background: var(--color-chalk, #1f5fd1); color: #fff; } .ds-btn-primary:hover, .ds-btn-primary:active { background: var(--color-chalk-deep, #174aa6); } .ds-btn-primary:disabled { background: var(--color-graphite-line, #7a838a); cursor: not-allowed; } .ds-btn:focus-visible { outline: 3px solid var(--color-chalk, #1f5fd1); outline-offset: 2px; }"
+    },
+    {
+      "name": "Secondary Button",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "A second action, such as retry; white board with a graphite border.",
+      "html": "<button class=\"ds-btn2\">Pokušaj ponovo</button>",
+      "css": ".ds-btn2 { min-height: 3.5rem; padding: 0 1.25rem; border-radius: var(--radius-slot, 0.625rem); background: var(--color-board, #fafbfb); color: var(--color-graphite, #23272b); border: 2px solid var(--color-graphite, #23272b); font-family: \"Noto Sans\", system-ui, sans-serif; font-size: 1.125rem; font-weight: 700; cursor: pointer; transition: background-color 150ms; } .ds-btn2:hover { background: var(--color-plaster, #e6e8e7); } .ds-btn2:active { background: var(--color-plaster-deep, #d3d8d7); } .ds-btn2:focus-visible { outline: 3px solid var(--color-chalk, #1f5fd1); outline-offset: 2px; }"
+    },
+    {
+      "name": "Danger Button",
+      "kind": "button",
+      "refersTo": "button-danger",
+      "description": "Destructive actions; crayon text and border on board white.",
+      "html": "<button class=\"ds-btn-danger\">Obriši</button>",
+      "css": ".ds-btn-danger { min-height: 3.5rem; padding: 0 1.25rem; border-radius: var(--radius-slot, 0.625rem); background: var(--color-board, #fafbfb); color: var(--color-crayon, #b42a17); border: 2px solid var(--color-crayon, #b42a17); font-family: \"Noto Sans\", system-ui, sans-serif; font-size: 1.125rem; font-weight: 700; cursor: pointer; transition: background-color 150ms; } .ds-btn-danger:hover { background: var(--color-crayon-tint, #f6dcd6); } .ds-btn-danger:focus-visible { outline: 3px solid var(--color-chalk, #1f5fd1); outline-offset: 2px; }"
+    },
+    {
+      "name": "Field",
+      "kind": "input",
+      "refersTo": "field",
+      "description": "Labelled text field, 56 px tall; chalk border on focus, crayon on error.",
+      "html": "<div class=\"ds-field\"><label class=\"ds-field-label\" for=\"ds-f1\">Ime klijenta</label><input id=\"ds-f1\" class=\"ds-field-input\" placeholder=\"Primjer d.o.o.\"><p class=\"ds-field-hint\">Kako stoji na ponudi.</p></div>",
+      "css": ".ds-field { font-family: \"Noto Sans\", system-ui, sans-serif; color: var(--color-graphite, #23272b); } .ds-field-label { display: block; margin-bottom: 0.375rem; font-size: 1rem; font-weight: 700; } .ds-field-input { height: 3.5rem; width: 100%; box-sizing: border-box; padding: 0 1rem; border-radius: var(--radius-slot, 0.625rem); border: 2px solid var(--color-graphite-line, #7a838a); background: var(--color-board, #fafbfb); font: inherit; font-size: 1.125rem; outline: none; transition: border-color 150ms; } .ds-field-input::placeholder { color: var(--color-graphite-soft, #4b5258); } .ds-field-input:focus { border-color: var(--color-chalk, #1f5fd1); } .ds-field-input[aria-invalid=\"true\"] { border-color: var(--color-crayon, #b42a17); } .ds-field-hint { margin-top: 0.375rem; font-size: 0.875rem; color: var(--color-graphite-soft, #4b5258); }"
+    },
+    {
+      "name": "Top Bar",
+      "kind": "nav",
+      "refersTo": "top-bar",
+      "description": "Sticky graphite bar with a raised back button, title, subtitle and actions.",
+      "html": "<header class=\"ds-topbar\"><a class=\"ds-topbar-back\" href=\"#\" aria-label=\"Nazad\"><svg viewBox=\"0 0 24 24\" width=\"24\" height=\"24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.25\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M15 5l-7 7 7 7\"/></svg></a><div class=\"ds-topbar-text\"><h1>Pozicija 2</h1><p>Ponuda 2026-014</p></div></header>",
+      "css": ".ds-topbar { display: flex; align-items: center; gap: 0.75rem; min-height: 4rem; padding: 0 0.75rem; background: var(--color-shell, #23272b); color: #fff; font-family: \"Noto Sans\", system-ui, sans-serif; } .ds-topbar-back { display: grid; place-items: center; width: 2.75rem; height: 2.75rem; flex-shrink: 0; border-radius: var(--radius-slot, 0.625rem); background: var(--color-shell-raised, #353b41); color: #fff; } .ds-topbar-back:hover { background: var(--color-graphite-soft, #4b5258); } .ds-topbar-back:focus-visible { outline: 3px solid var(--color-chalk, #1f5fd1); outline-offset: 2px; } .ds-topbar-text { min-width: 0; flex: 1; padding: 0.5rem 0; } .ds-topbar-text h1 { margin: 0; font-size: 1.125rem; line-height: 1.25; font-weight: 800; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } .ds-topbar-text p { margin: 0; font-size: 0.875rem; color: rgb(255 255 255 / 0.75); }"
+    },
+    {
+      "name": "Segmented Choice",
+      "kind": "chip",
+      "refersTo": "segmented",
+      "description": "One-tap choice on a deep plaster track; the chosen option is chalk blue and lifted.",
+      "html": "<div class=\"ds-seg\" role=\"radiogroup\"><button class=\"ds-seg-opt\" aria-checked=\"true\" role=\"radio\">Bijela</button><button class=\"ds-seg-opt\" aria-checked=\"false\" role=\"radio\">Folija vani</button><button class=\"ds-seg-opt\" aria-checked=\"false\" role=\"radio\">Folija obostrano</button></div>",
+      "css": ".ds-seg { display: flex; gap: 0.25rem; padding: 0.25rem; border-radius: var(--radius-slot, 0.625rem); background: var(--color-plaster-deep, #d3d8d7); font-family: \"Noto Sans\", system-ui, sans-serif; } .ds-seg-opt { flex: 1 1 auto; min-height: 2.75rem; padding: 0 0.75rem; border: none; border-radius: 0.5rem; background: transparent; color: var(--color-graphite, #23272b); font: inherit; font-size: 0.9375rem; font-weight: 700; white-space: nowrap; cursor: pointer; transition: background-color 150ms, color 150ms; } .ds-seg-opt:hover { background: rgb(250 251 251 / 0.6); } .ds-seg-opt[aria-checked=\"true\"] { background: var(--color-chalk, #1f5fd1); color: #fff; box-shadow: 0 2px 6px -1px rgb(35 39 43 / 0.22); } .ds-seg-opt:focus-visible { outline: 3px solid var(--color-chalk, #1f5fd1); }"
+    },
+    {
+      "name": "Status Pill",
+      "kind": "chip",
+      "refersTo": "status-pill-accepted",
+      "description": "Quote status; green only for accepted, red only for expired.",
+      "html": "<span class=\"ds-pill ds-pill-draft\">Nacrt</span> <span class=\"ds-pill ds-pill-sent\">Poslano</span> <span class=\"ds-pill ds-pill-accepted\">Prihvaćeno</span> <span class=\"ds-pill ds-pill-expired\">Isteklo</span>",
+      "css": ".ds-pill { display: inline-flex; align-items: center; min-height: 1.75rem; padding: 0 0.75rem; border-radius: 9999px; font-family: \"Noto Sans\", system-ui, sans-serif; font-size: 0.875rem; font-weight: 800; } .ds-pill-draft { background: var(--color-plaster-deep, #d3d8d7); color: var(--color-graphite, #23272b); } .ds-pill-sent { background: var(--color-chalk-tint, #dbe5f7); color: var(--color-chalk-deep, #174aa6); } .ds-pill-accepted { background: var(--color-tick-tint, #d6ebdf); color: var(--color-tick, #17653a); } .ds-pill-expired { background: var(--color-crayon-tint, #f6dcd6); color: var(--color-crayon, #b42a17); }"
+    },
+    {
+      "name": "Dimension String",
+      "kind": "custom",
+      "refersTo": "measure-slot",
+      "description": "A size written like a drawing: the figure on top, a chalk line with end ticks under it.",
+      "html": "<span class=\"ds-size\"><span class=\"ds-size-num\">1196 × 1396</span><span class=\"ds-size-line\"></span></span> <span class=\"ds-size-unit\">mm</span>",
+      "css": ".ds-size { display: inline-flex; flex-direction: column; align-items: stretch; font-family: \"Noto Sans\", system-ui, sans-serif; color: var(--color-graphite, #23272b); } .ds-size-num { padding: 0 0.25rem; font-size: 2.75rem; line-height: 1; font-weight: 800; font-stretch: 87.5%; letter-spacing: -0.01em; font-variant-numeric: tabular-nums lining-nums; } .ds-size-line { position: relative; display: block; height: 0; margin: 0.25rem 0; border-top: 2px solid var(--color-chalk, #1f5fd1); } .ds-size-line::before, .ds-size-line::after { content: \"\"; position: absolute; top: -7px; width: 2px; height: 0.75rem; background: var(--color-chalk, #1f5fd1); } .ds-size-line::before { left: 0; } .ds-size-line::after { right: 0; } .ds-size-unit { font-family: \"Noto Sans\", system-ui, sans-serif; font-size: 1.5rem; font-weight: 800; font-stretch: 87.5%; color: var(--color-graphite-soft, #4b5258); }"
+    },
+    {
+      "name": "Measuring Slot",
+      "kind": "input",
+      "refersTo": "measure-slot-active",
+      "description": "A reading box placed where he measures; chalk when active, crayon when off, a graphite ring on the reading that counts.",
+      "html": "<input class=\"ds-slot ds-slot-on\" inputmode=\"numeric\" value=\"1204\" aria-label=\"Širina gore\"> <input class=\"ds-slot ds-slot-counts\" inputmode=\"numeric\" value=\"1198\" aria-label=\"Širina sredina\"> <input class=\"ds-slot ds-slot-warn\" inputmode=\"numeric\" value=\"1221\" aria-label=\"Širina dolje\">",
+      "css": ".ds-slot { width: 4.75rem; height: 3rem; box-sizing: border-box; border-radius: var(--radius-slot, 0.625rem); border: 2px solid var(--color-graphite-line, #7a838a); background: var(--color-board, #fafbfb); color: var(--color-graphite, #23272b); text-align: center; font-family: \"Noto Sans\", system-ui, sans-serif; font-size: 1.5rem; font-weight: 800; font-stretch: 87.5%; letter-spacing: -0.01em; font-variant-numeric: tabular-nums lining-nums; outline: none; transition: border-color 150ms, box-shadow 150ms; } .ds-slot:focus, .ds-slot-on { border-color: var(--color-chalk, #1f5fd1); color: var(--color-chalk, #1f5fd1); box-shadow: 0 0 0 4px var(--color-chalk-tint, #dbe5f7); } .ds-slot-counts { box-shadow: 0 0 0 2px var(--color-plaster, #e6e8e7), 0 0 0 5px var(--color-graphite, #23272b); } .ds-slot-warn { border-color: var(--color-crayon, #b42a17); color: var(--color-crayon, #b42a17); }"
+    },
+    {
+      "name": "Bottom Sheet",
+      "kind": "card",
+      "refersTo": "bottom-sheet",
+      "description": "Sticky result sheet: caption, the figure he says out loud, an explain toggle and the primary action.",
+      "html": "<section class=\"ds-sheet\"><div class=\"ds-sheet-head\"><p>Ukupno</p><button class=\"ds-sheet-toggle\">Kako je izračunato?</button></div><p class=\"ds-sheet-figure\">1.240,00 €</p><button class=\"ds-sheet-btn\">Pošalji klijentu</button></section>",
+      "css": ".ds-sheet { padding: 1rem; background: var(--color-board, #fafbfb); border-top: 2px solid var(--color-plaster-deep, #d3d8d7); box-shadow: 0 -6px 20px -8px rgb(35 39 43 / 0.28); font-family: \"Noto Sans\", system-ui, sans-serif; color: var(--color-graphite, #23272b); } .ds-sheet-head { display: flex; align-items: center; justify-content: space-between; min-height: 2.75rem; } .ds-sheet-head p { margin: 0; font-size: 1rem; font-weight: 600; color: var(--color-graphite-soft, #4b5258); } .ds-sheet-toggle { min-height: 2.75rem; border: none; background: none; color: var(--color-chalk, #1f5fd1); font: inherit; font-weight: 700; text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 4px; cursor: pointer; } .ds-sheet-toggle:focus-visible { outline: 3px solid var(--color-chalk, #1f5fd1); outline-offset: 2px; } .ds-sheet-figure { margin: 0; font-size: 2.75rem; line-height: 1; font-weight: 800; font-stretch: 87.5%; letter-spacing: -0.01em; font-variant-numeric: tabular-nums lining-nums; } .ds-sheet-btn { margin-top: 0.75rem; width: 100%; min-height: 3.5rem; border: none; border-radius: var(--radius-slot, 0.625rem); background: var(--color-chalk, #1f5fd1); color: #fff; font: inherit; font-size: 1.125rem; font-weight: 700; cursor: pointer; transition: background-color 150ms; } .ds-sheet-btn:hover { background: var(--color-chalk-deep, #174aa6); }"
+    },
+    {
+      "name": "Bar Row",
+      "kind": "custom",
+      "description": "A stock bar: chalk-tint cuts sized to length, the hatched offcut always last.",
+      "html": "<div class=\"ds-bar\"><span style=\"width:34%\"></span><span style=\"width:34%\"></span><span style=\"width:22%\"></span><i></i></div>",
+      "css": ".ds-bar { display: flex; height: 1.25rem; overflow: hidden; border: 2px solid var(--color-graphite, #23272b); border-radius: 0.25rem; background: var(--color-board, #fafbfb); } .ds-bar span { background: var(--color-chalk-tint, #dbe5f7); border-right: 2px solid var(--color-graphite, #23272b); } .ds-bar i { flex: 1; background: repeating-linear-gradient(135deg, var(--color-plaster-deep, #d3d8d7) 0 4px, transparent 4px 8px); }"
+    }
+  ],
+  "narrative": {
+    "northStar": "Pencil on the Site Wall",
+    "overview": "The app looks like the wall of a building site after the owner has measured it. The ground is skimmed plaster. Ink and the top bar are carpenter's graphite. The blue chalk line marks what he is working on now. Red marking crayon marks only what he must check again. A quiet green marks only what is accepted or paid.\n\nNumbers carry the screen. Every size is written like a dimension string on a drawing: the number on top, a line with an end tick on each side under it. The number he says out loud is always the biggest thing on the screen. Every total and every size opens to show its sum. Text is short and the controls are large, because he works in sunlight, with one hand, sometimes on a ladder.\n\nDensity is low on the phone and the same layout centres on the PC. There is no imagery and no logo. The only drawings are the windows themselves, drawn from inside with 45° mitres and 90° joints, and they are also the buttons for choosing a construction type.",
+    "keyCharacteristics": [
+      "Cool light plaster ground, graphite ink, one chalk-blue action colour.",
+      "Red only for re-check, green only for accepted or paid.",
+      "Tabular, slightly narrow, extra-bold numerals in exactly three sizes.",
+      "Dimension strings (ticked lines) under every size.",
+      "Window drawings in a 2 px pencil line, 45° and 90° only.",
+      "17 px body text, 44 px minimum targets, 56 px main controls.",
+      "Flat surfaces; shadows only on the bottom sheet and on a lifted, chosen item."
+    ],
+    "rules": [
+      { "name": "The Chalk Line Rule", "body": "Chalk blue means \"this is where you act now\". One primary button per screen; the active slot is the only blue slot.", "section": "colors" },
+      { "name": "The Crayon Rule", "body": "Red is only for a value he must re-check or a stop he must fix. Never use it for decoration or emphasis.", "section": "colors" },
+      { "name": "The Tick Rule", "body": "Green appears only once something is accepted or paid.", "section": "colors" },
+      { "name": "The Sunlight Rule", "body": "Body ink on plaster stays near 13:1. Never set running text lighter than Soft Graphite.", "section": "colors" },
+      { "name": "The Three Numerals Rule", "body": "Numbers use only the three figure sizes. The number he says out loud is always the largest on the screen.", "section": "typography" },
+      { "name": "The Ledger Rule", "body": "Every size, price and length uses the figure style, so digits never shift when a value changes.", "section": "typography" },
+      { "name": "The Lifted Means Open Rule", "body": "A shadow means \"this is open or chosen now\". Rows and cards at rest have none.", "section": "elevation" }
+    ],
+    "dos": [
+      "Do put every size in a dimension string and in the figure style.",
+      "Do keep the number he says out loud in Figure Large (2.75rem) and nothing else that large on the screen.",
+      "Do let every size and total open to show its formula or price layers.",
+      "Do keep one Chalk Blue primary action per screen, in the bottom sheet when the screen has one.",
+      "Do keep tap targets at least 2.75rem and main controls 3.5rem tall.",
+      "Do draw windows from inside, with 45° mitres and 90° joints only, in a 2 px non-scaling line.",
+      "Do use the 135° hatch for masonry, offcuts and foil."
+    ],
+    "donts": [
+      "Don't add a fourth numeral size or set numbers in the body style.",
+      "Don't use Crayon Red for anything but a re-check, an error or a stop.",
+      "Don't use Tick Green for anything but accepted or paid.",
+      "Don't build screens as long labelled forms of fields on white cards; put readings where they are measured.",
+      "Don't put shadows on rows or cards at rest.",
+      "Don't load fonts, icons or images from another host; the Content-Security-Policy allows only the app itself.",
+      "Don't add small uppercase labels above headings."
+    ]
+  }
+}
