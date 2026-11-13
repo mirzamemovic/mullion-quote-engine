@@ -12,7 +12,7 @@ Git is local only. Each milestone has its own branch; a branch is merged into `m
 | M0 Repo and tooling | waiting for Mirza | `feat/m0-repo-tooling` | Built. All checks pass locally; CI passed once on GitHub (2026-11-12). Review and merge. |
 | M1 Requirements | waiting for Mirza | | Mirza's work with the workshop owner. |
 | M2 Engine types and measuring | waiting for Mirza | `feat/m2-engine-types` (on M0) | Built, reviewed, green. `installation_gap` is Mirza's. Review and merge. |
-| M3 Cut rules | todo | | The formulas are Mirza's (section 13). |
+| M3 Cut rules | waiting for Mirza | `feat/m3-cut-rules` (on M2) | Built, reviewed, green. The five `cut()` formulas are Mirza's. |
 | M4 Optimizer | todo | | `ffd.py` and the decision part of `exact.py` are Mirza's. |
 | M5 Pricing, warnings, lists, golden tests | todo | | The golden job files and the decision parts of pricing are Mirza's. Ends at Gate 2. |
 | M6 Database and API | blocked | | Gate 2. |
@@ -37,6 +37,7 @@ Only Mirza writes "Gate N passed" here.
 | What | Where | Needed for |
 |---|---|---|
 | Implement `installation_gap(side_length_mm, colour)` (`TODO(human)`) | `backend/src/quote_engine/engine/measuring.py` | Measuring end to end; 19 tests are `xfail` until then |
+| Write the cut formulas: `cut(pos, c)` in `single_sash_tilt_turn.py`, `two_field_t_mullion.py`, `two_sash_false_mullion.py`, `fixed.py`, `balcony_door_tilt_turn.py` (one `TODO(human)` each). Add the deduction names you use to `tests/fixtures/sample_system.yaml` with fake values, and add hand-checked sash, bead and glass tests. | `backend/src/quote_engine/engine/rules/` | Cut lists; 45 contract tests are `xfail` until then |
 | Fill in `POWERSHELL_WRITE_NAMES` (`TODO(human)`) | `.claude/hooks/protect_human_files.py` | The protection hook to block PowerShell cmdlets such as `Set-Content`; 7 tests are `xfail` |
 | Review and merge `feat/m0-repo-tooling`, then `feat/m2-engine-types` | local git | Later milestones start from `main` |
 | Decide: keep `httpx` or switch to `httpx2` | backend dev dependencies | Starlette's test client warns that `httpx` is deprecated |
@@ -58,6 +59,9 @@ Only Mirza writes "Gate N passed" here.
 | 2026-11-13 | Git stays local until Mirza creates the public repository at the end. Before anything is published, everything that would become public is audited for secrets, private data and billing risks. | Mirza's instruction. |
 | 2026-11-13 | Commit history was rewritten so that commit messages carry no attribution lines and no tool names. Commit IDs from before 2026-11-13 are no longer valid. | Mirza's instruction. |
 | 2026-11-12 | M2, approved with its plan: the gap is looked up by the opening size (smallest reading); both foil colours use the "coloured" column; `SystemConstants` has no default values; its mappings are read-only; a new area type `Mm2`; `CutList.hardware_sets` holds `HardwareNeed(position_ref, opening, qty)`; objects raise `InvalidInput` for zero sizes, zero quantities, angles other than 45 or 90 and blank formulas; typing the window size directly stays outside the engine; no new dependencies. | Open points in PLAN.md section 4. |
+
+| 2026-11-13 | Approved with the M3 to M9 plan: PyYAML and `types-PyYAML` as development dependencies; system sheets read by a pure `system_constants_from_mapping`; shared rule helpers in `engine/rules/common.py`; `CutList.gasket_mm` is the raw gasket length and the 5% extra is added in pricing; contract tests check only what PLAN.md fixes. | Open points in PLAN.md section 4.2. |
+| 2026-11-13 | A position is checked against its type before its rule runs: the number of fields must match; a fixed window has only fixed fields; every other type has only opening fields. A rule's output must carry its own position ref. | Catches wrong input and rule bugs before they reach the optimizer. |
 
 ## Deviations from PLAN.md
 
@@ -97,3 +101,11 @@ Status (2026-11-13): built and green. Full local check: ruff, format, mypy stric
 Reviews: `/code-review` found six gaps in the model (no whole-number checks, a fixed field allowed hardware, steel and profile lists not kept apart, deductions unchecked, empty positions allowed, `pct` missing area and basis-point overloads); all fixed with tests. A fresh-context review found no blocking gaps; its one real point, that the read-only mappings could not be copied or pickled, is fixed with `ReadOnlyDict`.
 
 Extra checks added during review, beyond the approved list (tell me if any is wrong): every size, quantity, angle and system-sheet value must be a whole number; a position needs a ref, a construction type and at least one field; deductions must be zero or more; a fixed field has no hardware set; steel pieces go only in the steel list.
+
+## M3 Cut rules (plan approved 2026-11-13)
+
+Files (under `backend/`): `engine/sheet.py` (system sheet from plain data), `engine/rules/common.py` (formula terms, deduction and bar-length lookups, welded, mechanical and steel pieces, frame pieces, glass panes, hardware), `engine/rules/registry.py` (the five types, position checks, `cut_job`), one module per construction type, `tests/fixtures/sample_system.yaml` (SAMPLE - NOT REAL), and tests in `tests/engine/`.
+
+Mirza's part: the five `cut(pos, c)` functions. Contract tests for every type (frame = size + 2a, angles by role, formulas end in their length, one pane per field, one hardware set per opening sash, every piece fits its bar, gasket present, mullions, no guessed deduction) are `xfail` until they exist.
+
+Status (2026-11-13): built and green. Full local check passes; `pytest`: 162 passed, 61 xfailed; coverage 100%; pyright 0 errors. `/code-review` found five gaps (float formula terms, unchecked rule signatures, rule output not tied to its position, a crash on mixed unknown keys, an unclear bar-fit test); all fixed with tests.
