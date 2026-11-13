@@ -14,7 +14,14 @@ from starlette.responses import Response
 from starlette.types import Scope
 
 from quote_engine import __version__
-from quote_engine.api import health
+from quote_engine.api import (
+    health,
+    problems,
+    routes_admin,
+    routes_auth,
+    routes_clients,
+    routes_quotes,
+)
 
 API_PREFIX = "/api/v1"
 STATIC_DIR_ENV = "QUOTE_ENGINE_STATIC_DIR"
@@ -53,7 +60,15 @@ def create_app() -> FastAPI:
         docs_url=f"{API_PREFIX}/docs",
         redoc_url=None,
     )
-    app.include_router(health.router, prefix=API_PREFIX)
+    problems.install(app)
+    for router in (
+        health.router,
+        routes_auth.router,
+        routes_clients.router,
+        routes_quotes.router,
+        routes_admin.router,
+    ):
+        app.include_router(router, prefix=API_PREFIX)
     frontend = static_dir()
     if frontend is not None:
         app.mount("/", SinglePageApp(directory=frontend, html=True), name="frontend")

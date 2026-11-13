@@ -19,6 +19,22 @@ jobs:
     defaults:
       run:
         working-directory: backend
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_DB: quote_engine
+          POSTGRES_USER: quote_engine
+          POSTGRES_PASSWORD: ci-only
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready --username quote_engine"
+          --health-interval 5s --health-timeout 3s --health-retries 12
+    env:
+      QUOTE_ENGINE_TEST_DATABASE_URL: postgresql+psycopg://quote_engine:ci-only@localhost:5432/quote_engine_test
+      # In CI the database tests must run: a missing database fails instead of skipping.
+      QUOTE_ENGINE_REQUIRE_DATABASE: "1"
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -26,6 +42,8 @@ jobs:
       - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
       - name: Install dependencies
         run: uv sync --locked
+      - name: OpenAPI schema is current
+        run: uv run python -m quote_engine.export_openapi --check
       - name: Lint
         run: uv run ruff check .
       - name: Format check

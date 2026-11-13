@@ -1,7 +1,8 @@
 # Local development stack: the app and its database.
 #   docker compose up --build
 # then open http://localhost:8000/api/v1/health
-# The app does not talk to the database until milestone M6.
+# The app applies the database migrations before it starts. A demo login:
+#   docker compose exec app /app/.venv/bin/python -m quote_engine.manage seed-demo
 name: quote-engine
 
 services:
@@ -9,6 +10,12 @@ services:
     build:
       context: .
       dockerfile: infra/Dockerfile
+    environment:
+      QUOTE_ENGINE_DATABASE_URL: postgresql+psycopg://quote_engine:${POSTGRES_PASSWORD:-local-dev-only}@db:5432/quote_engine
+    command:
+      - sh
+      - -c
+      - /app/.venv/bin/python -m quote_engine.manage migrate && exec /app/.venv/bin/uvicorn quote_engine.main:app --host 0.0.0.0 --port 8000
     ports:
       - "127.0.0.1:8000:8000"
     depends_on:

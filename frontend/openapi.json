@@ -1,0 +1,4272 @@
+{
+  "components": {
+    "schemas": {
+      "BumpIn": {
+        "additionalProperties": false,
+        "properties": {
+          "bp": {
+            "maximum": 10000.0,
+            "minimum": -5000.0,
+            "title": "Bp",
+            "type": "integer"
+          },
+          "supplier_id": {
+            "format": "uuid",
+            "title": "Supplier Id",
+            "type": "string"
+          },
+          "valid_from": {
+            "format": "date",
+            "title": "Valid From",
+            "type": "string"
+          }
+        },
+        "required": [
+          "supplier_id",
+          "bp",
+          "valid_from"
+        ],
+        "title": "BumpIn",
+        "type": "object"
+      },
+      "ClientIn": {
+        "additionalProperties": false,
+        "properties": {
+          "name": {
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          },
+          "phone": {
+            "default": "",
+            "maxLength": 50,
+            "title": "Phone",
+            "type": "string"
+          },
+          "place": {
+            "default": "",
+            "maxLength": 200,
+            "title": "Place",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "title": "ClientIn",
+        "type": "object"
+      },
+      "ClientOut": {
+        "additionalProperties": false,
+        "properties": {
+          "erased_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Erased At"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "phone": {
+            "title": "Phone",
+            "type": "string"
+          },
+          "place": {
+            "title": "Place",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "phone",
+          "place",
+          "erased_at"
+        ],
+        "title": "ClientOut",
+        "type": "object"
+      },
+      "CodeIn": {
+        "additionalProperties": false,
+        "properties": {
+          "code": {
+            "pattern": "^\\s*\\d{6}\\s*$",
+            "title": "Code",
+            "type": "string"
+          }
+        },
+        "required": [
+          "code"
+        ],
+        "title": "CodeIn",
+        "type": "object"
+      },
+      "Colour": {
+        "description": "Profile colour. Prices and installation gaps depend on it.",
+        "enum": [
+          "white",
+          "foil_one_side",
+          "foil_both_sides"
+        ],
+        "title": "Colour",
+        "type": "string"
+      },
+      "CompareIn": {
+        "additionalProperties": false,
+        "properties": {
+          "group": {
+            "maxLength": 50,
+            "minLength": 1,
+            "title": "Group",
+            "type": "string"
+          },
+          "quote_id": {
+            "format": "uuid",
+            "title": "Quote Id",
+            "type": "string"
+          },
+          "revision_no": {
+            "maximum": 999.0,
+            "minimum": 1.0,
+            "title": "Revision No",
+            "type": "integer"
+          },
+          "time_limit_s": {
+            "default": 10,
+            "maximum": 30.0,
+            "minimum": 1.0,
+            "title": "Time Limit S",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "quote_id",
+          "revision_no",
+          "group"
+        ],
+        "title": "CompareIn",
+        "type": "object"
+      },
+      "CompareOut": {
+        "additionalProperties": false,
+        "properties": {
+          "exact_bars": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Exact Bars"
+          },
+          "exact_largest_offcut_mm": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Exact Largest Offcut Mm"
+          },
+          "ffd_bars": {
+            "title": "Ffd Bars",
+            "type": "integer"
+          },
+          "ffd_largest_offcut_mm": {
+            "title": "Ffd Largest Offcut Mm",
+            "type": "integer"
+          },
+          "group": {
+            "title": "Group",
+            "type": "string"
+          },
+          "proven_optimal": {
+            "title": "Proven Optimal",
+            "type": "boolean"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "group",
+          "ffd_bars",
+          "ffd_largest_offcut_mm",
+          "exact_bars",
+          "exact_largest_offcut_mm",
+          "proven_optimal",
+          "status"
+        ],
+        "title": "CompareOut",
+        "type": "object"
+      },
+      "ConstructionTypeIO": {
+        "properties": {
+          "enabled": {
+            "title": "Enabled",
+            "type": "boolean"
+          },
+          "key": {
+            "maxLength": 50,
+            "minLength": 1,
+            "title": "Key",
+            "type": "string"
+          }
+        },
+        "required": [
+          "key",
+          "enabled"
+        ],
+        "title": "ConstructionTypeIO",
+        "type": "object"
+      },
+      "ExtraIn": {
+        "additionalProperties": false,
+        "properties": {
+          "area_mm2": {
+            "anyOf": [
+              {
+                "maximum": 50000000.0,
+                "minimum": 1.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Area Mm2"
+          },
+          "colour": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Colour"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "description": {
+            "default": "",
+            "maxLength": 200,
+            "title": "Description",
+            "type": "string"
+          },
+          "kind": {
+            "$ref": "#/components/schemas/ExtraKind"
+          },
+          "length_mm": {
+            "anyOf": [
+              {
+                "maximum": 10000.0,
+                "minimum": 1.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Length Mm"
+          },
+          "manual_price_cents": {
+            "anyOf": [
+              {
+                "maximum": 10000000000.0,
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Manual Price Cents"
+          },
+          "qty": {
+            "maximum": 99.0,
+            "minimum": 1.0,
+            "title": "Qty",
+            "type": "integer"
+          },
+          "ref": {
+            "maxLength": 50,
+            "minLength": 1,
+            "title": "Ref",
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "ref",
+          "qty"
+        ],
+        "title": "ExtraIn",
+        "type": "object"
+      },
+      "ExtraKind": {
+        "description": "Lines priced without a cut list (PLAN.md section 4.5, layer 5).",
+        "enum": [
+          "sill",
+          "shutter",
+          "screen",
+          "other"
+        ],
+        "title": "ExtraKind",
+        "type": "string"
+      },
+      "ExtraOut": {
+        "properties": {
+          "area_mm2": {
+            "anyOf": [
+              {
+                "maximum": 50000000.0,
+                "minimum": 1.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Area Mm2"
+          },
+          "colour": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Colour"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "description": {
+            "default": "",
+            "maxLength": 200,
+            "title": "Description",
+            "type": "string"
+          },
+          "kind": {
+            "$ref": "#/components/schemas/ExtraKind"
+          },
+          "length_mm": {
+            "anyOf": [
+              {
+                "maximum": 10000.0,
+                "minimum": 1.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Length Mm"
+          },
+          "manual_price_cents": {
+            "anyOf": [
+              {
+                "maximum": 10000000000.0,
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Manual Price Cents"
+          },
+          "qty": {
+            "maximum": 99.0,
+            "minimum": 1.0,
+            "title": "Qty",
+            "type": "integer"
+          },
+          "ref": {
+            "maxLength": 50,
+            "minLength": 1,
+            "title": "Ref",
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "ref",
+          "qty"
+        ],
+        "title": "ExtraOut",
+        "type": "object"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "title": "Detail",
+            "type": "array"
+          }
+        },
+        "title": "HTTPValidationError",
+        "type": "object"
+      },
+      "HardwareSetIn": {
+        "additionalProperties": false,
+        "properties": {
+          "max_area_mm2": {
+            "maximum": 25000000.0,
+            "minimum": 1.0,
+            "title": "Max Area Mm2",
+            "type": "integer"
+          },
+          "max_height_mm": {
+            "maximum": 5000.0,
+            "minimum": 1.0,
+            "title": "Max Height Mm",
+            "type": "integer"
+          },
+          "max_weight_g": {
+            "maximum": 500000.0,
+            "minimum": 1.0,
+            "title": "Max Weight G",
+            "type": "integer"
+          },
+          "max_width_mm": {
+            "maximum": 5000.0,
+            "minimum": 1.0,
+            "title": "Max Width Mm",
+            "type": "integer"
+          },
+          "name": {
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          },
+          "opening_type": {
+            "$ref": "#/components/schemas/Opening"
+          }
+        },
+        "required": [
+          "name",
+          "opening_type",
+          "max_width_mm",
+          "max_height_mm",
+          "max_area_mm2",
+          "max_weight_g"
+        ],
+        "title": "HardwareSetIn",
+        "type": "object"
+      },
+      "HardwareSetOut": {
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "max_area_mm2": {
+            "maximum": 25000000.0,
+            "minimum": 1.0,
+            "title": "Max Area Mm2",
+            "type": "integer"
+          },
+          "max_height_mm": {
+            "maximum": 5000.0,
+            "minimum": 1.0,
+            "title": "Max Height Mm",
+            "type": "integer"
+          },
+          "max_weight_g": {
+            "maximum": 500000.0,
+            "minimum": 1.0,
+            "title": "Max Weight G",
+            "type": "integer"
+          },
+          "max_width_mm": {
+            "maximum": 5000.0,
+            "minimum": 1.0,
+            "title": "Max Width Mm",
+            "type": "integer"
+          },
+          "name": {
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          },
+          "opening_type": {
+            "$ref": "#/components/schemas/Opening"
+          }
+        },
+        "required": [
+          "name",
+          "opening_type",
+          "max_width_mm",
+          "max_height_mm",
+          "max_area_mm2",
+          "max_weight_g",
+          "id"
+        ],
+        "title": "HardwareSetOut",
+        "type": "object"
+      },
+      "Health": {
+        "description": "What the service reports about itself.",
+        "properties": {
+          "database": {
+            "enum": [
+              "ok",
+              "down"
+            ],
+            "title": "Database",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "ok",
+              "degraded"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "version": {
+            "title": "Version",
+            "type": "string"
+          }
+        },
+        "required": [
+          "status",
+          "version",
+          "database"
+        ],
+        "title": "Health",
+        "type": "object"
+      },
+      "InstallationIn": {
+        "additionalProperties": false,
+        "properties": {
+          "install": {
+            "default": true,
+            "title": "Install",
+            "type": "boolean"
+          },
+          "old_window_removal": {
+            "default": false,
+            "title": "Old Window Removal",
+            "type": "boolean"
+          },
+          "ral": {
+            "default": false,
+            "title": "Ral",
+            "type": "boolean"
+          },
+          "wall_repair": {
+            "default": false,
+            "title": "Wall Repair",
+            "type": "boolean"
+          }
+        },
+        "title": "InstallationIn",
+        "type": "object"
+      },
+      "LoginIn": {
+        "additionalProperties": false,
+        "properties": {
+          "email": {
+            "maxLength": 200,
+            "minLength": 3,
+            "title": "Email",
+            "type": "string"
+          },
+          "password": {
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Password",
+            "type": "string"
+          }
+        },
+        "required": [
+          "email",
+          "password"
+        ],
+        "title": "LoginIn",
+        "type": "object"
+      },
+      "MeOut": {
+        "additionalProperties": false,
+        "properties": {
+          "csrf_token": {
+            "title": "Csrf Token",
+            "type": "string"
+          },
+          "email": {
+            "title": "Email",
+            "type": "string"
+          },
+          "is_demo": {
+            "title": "Is Demo",
+            "type": "boolean"
+          },
+          "role": {
+            "title": "Role",
+            "type": "string"
+          },
+          "totp_ok": {
+            "title": "Totp Ok",
+            "type": "boolean"
+          },
+          "user_id": {
+            "format": "uuid",
+            "title": "User Id",
+            "type": "string"
+          },
+          "workshop_id": {
+            "format": "uuid",
+            "title": "Workshop Id",
+            "type": "string"
+          },
+          "workshop_name": {
+            "title": "Workshop Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "user_id",
+          "email",
+          "role",
+          "workshop_id",
+          "workshop_name",
+          "is_demo",
+          "totp_ok",
+          "csrf_token"
+        ],
+        "title": "MeOut",
+        "type": "object"
+      },
+      "Opening": {
+        "description": "How one field of a window opens, seen from inside.",
+        "enum": [
+          "fixed",
+          "tilt_turn_left",
+          "tilt_turn_right",
+          "turn_left",
+          "turn_right"
+        ],
+        "title": "Opening",
+        "type": "string"
+      },
+      "PasswordIn": {
+        "additionalProperties": false,
+        "properties": {
+          "password": {
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Password",
+            "type": "string"
+          }
+        },
+        "required": [
+          "password"
+        ],
+        "title": "PasswordIn",
+        "type": "object"
+      },
+      "PaymentIn": {
+        "additionalProperties": false,
+        "properties": {
+          "amount_cents": {
+            "maximum": 10000000000.0,
+            "minimum": 1.0,
+            "title": "Amount Cents",
+            "type": "integer"
+          },
+          "kind": {
+            "enum": [
+              "advance",
+              "balance"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "received_on": {
+            "format": "date",
+            "title": "Received On",
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "amount_cents",
+          "received_on"
+        ],
+        "title": "PaymentIn",
+        "type": "object"
+      },
+      "PaymentOut": {
+        "additionalProperties": false,
+        "properties": {
+          "amount_cents": {
+            "title": "Amount Cents",
+            "type": "integer"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "kind": {
+            "title": "Kind",
+            "type": "string"
+          },
+          "received_on": {
+            "format": "date",
+            "title": "Received On",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "amount_cents",
+          "received_on"
+        ],
+        "title": "PaymentOut",
+        "type": "object"
+      },
+      "PositionIn": {
+        "additionalProperties": false,
+        "properties": {
+          "colour": {
+            "$ref": "#/components/schemas/Colour"
+          },
+          "construction_type": {
+            "maxLength": 50,
+            "minLength": 1,
+            "title": "Construction Type",
+            "type": "string"
+          },
+          "glass_build": {
+            "maxLength": 50,
+            "minLength": 1,
+            "title": "Glass Build",
+            "type": "string"
+          },
+          "height_mm": {
+            "maximum": 3500.0,
+            "minimum": 300.0,
+            "title": "Height Mm",
+            "type": "integer"
+          },
+          "installation": {
+            "$ref": "#/components/schemas/InstallationIn",
+            "default": {
+              "install": true,
+              "old_window_removal": false,
+              "ral": false,
+              "wall_repair": false
+            }
+          },
+          "openings": {
+            "items": {
+              "$ref": "#/components/schemas/Opening"
+            },
+            "maxItems": 4,
+            "minItems": 1,
+            "title": "Openings",
+            "type": "array"
+          },
+          "qty": {
+            "maximum": 99.0,
+            "minimum": 1.0,
+            "title": "Qty",
+            "type": "integer"
+          },
+          "readings": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Readings"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "ref": {
+            "maxLength": 50,
+            "minLength": 1,
+            "title": "Ref",
+            "type": "string"
+          },
+          "width_mm": {
+            "maximum": 3500.0,
+            "minimum": 300.0,
+            "title": "Width Mm",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "ref",
+          "construction_type",
+          "width_mm",
+          "height_mm",
+          "qty",
+          "colour",
+          "glass_build",
+          "openings"
+        ],
+        "title": "PositionIn",
+        "type": "object"
+      },
+      "PositionOut": {
+        "properties": {
+          "colour": {
+            "$ref": "#/components/schemas/Colour"
+          },
+          "construction_type": {
+            "maxLength": 50,
+            "minLength": 1,
+            "title": "Construction Type",
+            "type": "string"
+          },
+          "glass_build": {
+            "maxLength": 50,
+            "minLength": 1,
+            "title": "Glass Build",
+            "type": "string"
+          },
+          "height_mm": {
+            "maximum": 3500.0,
+            "minimum": 300.0,
+            "title": "Height Mm",
+            "type": "integer"
+          },
+          "installation": {
+            "$ref": "#/components/schemas/InstallationIn",
+            "default": {
+              "install": true,
+              "old_window_removal": false,
+              "ral": false,
+              "wall_repair": false
+            }
+          },
+          "openings": {
+            "items": {
+              "$ref": "#/components/schemas/Opening"
+            },
+            "maxItems": 4,
+            "minItems": 1,
+            "title": "Openings",
+            "type": "array"
+          },
+          "qty": {
+            "maximum": 99.0,
+            "minimum": 1.0,
+            "title": "Qty",
+            "type": "integer"
+          },
+          "readings": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Readings"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "ref": {
+            "maxLength": 50,
+            "minLength": 1,
+            "title": "Ref",
+            "type": "string"
+          },
+          "width_mm": {
+            "maximum": 3500.0,
+            "minimum": 300.0,
+            "title": "Width Mm",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "ref",
+          "construction_type",
+          "width_mm",
+          "height_mm",
+          "qty",
+          "colour",
+          "glass_build",
+          "openings"
+        ],
+        "title": "PositionOut",
+        "type": "object"
+      },
+      "PreviewIn": {
+        "additionalProperties": false,
+        "properties": {
+          "position": {
+            "$ref": "#/components/schemas/PositionIn"
+          },
+          "profile_system_id": {
+            "format": "uuid",
+            "title": "Profile System Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "profile_system_id",
+          "position"
+        ],
+        "title": "PreviewIn",
+        "type": "object"
+      },
+      "PriceEntryIn": {
+        "additionalProperties": false,
+        "properties": {
+          "amount_cents": {
+            "maximum": 10000000000.0,
+            "minimum": 0.0,
+            "title": "Amount Cents",
+            "type": "integer"
+          },
+          "colour": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Colour"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "item_kind": {
+            "maxLength": 50,
+            "minLength": 1,
+            "title": "Item Kind",
+            "type": "string"
+          },
+          "item_ref": {
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Item Ref",
+            "type": "string"
+          },
+          "quoted_on": {
+            "format": "date",
+            "title": "Quoted On",
+            "type": "string"
+          },
+          "supplier_id": {
+            "format": "uuid",
+            "title": "Supplier Id",
+            "type": "string"
+          },
+          "unit": {
+            "$ref": "#/components/schemas/PriceUnit"
+          }
+        },
+        "required": [
+          "item_kind",
+          "item_ref",
+          "supplier_id",
+          "unit",
+          "amount_cents",
+          "quoted_on"
+        ],
+        "title": "PriceEntryIn",
+        "type": "object"
+      },
+      "PriceEntryOut": {
+        "properties": {
+          "amount_cents": {
+            "maximum": 10000000000.0,
+            "minimum": 0.0,
+            "title": "Amount Cents",
+            "type": "integer"
+          },
+          "colour": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Colour"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "item_kind": {
+            "maxLength": 50,
+            "minLength": 1,
+            "title": "Item Kind",
+            "type": "string"
+          },
+          "item_ref": {
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Item Ref",
+            "type": "string"
+          },
+          "quoted_on": {
+            "format": "date",
+            "title": "Quoted On",
+            "type": "string"
+          },
+          "supplier_id": {
+            "format": "uuid",
+            "title": "Supplier Id",
+            "type": "string"
+          },
+          "unit": {
+            "$ref": "#/components/schemas/PriceUnit"
+          }
+        },
+        "required": [
+          "item_kind",
+          "item_ref",
+          "supplier_id",
+          "unit",
+          "amount_cents",
+          "quoted_on",
+          "id"
+        ],
+        "title": "PriceEntryOut",
+        "type": "object"
+      },
+      "PriceListIn": {
+        "additionalProperties": false,
+        "properties": {
+          "entries": {
+            "items": {
+              "$ref": "#/components/schemas/PriceEntryIn"
+            },
+            "maxItems": 2000,
+            "title": "Entries",
+            "type": "array"
+          },
+          "note": {
+            "default": "",
+            "maxLength": 200,
+            "title": "Note",
+            "type": "string"
+          },
+          "valid_from": {
+            "format": "date",
+            "title": "Valid From",
+            "type": "string"
+          }
+        },
+        "required": [
+          "valid_from",
+          "entries"
+        ],
+        "title": "PriceListIn",
+        "type": "object"
+      },
+      "PriceListOut": {
+        "properties": {
+          "entries": {
+            "items": {
+              "$ref": "#/components/schemas/PriceEntryOut"
+            },
+            "title": "Entries",
+            "type": "array"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "locked": {
+            "title": "Locked",
+            "type": "boolean"
+          },
+          "note": {
+            "title": "Note",
+            "type": "string"
+          },
+          "valid_from": {
+            "format": "date",
+            "title": "Valid From",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "valid_from",
+          "locked",
+          "note",
+          "entries"
+        ],
+        "title": "PriceListOut",
+        "type": "object"
+      },
+      "PriceUnit": {
+        "description": "What one price is for.",
+        "enum": [
+          "bar",
+          "m",
+          "m2",
+          "set",
+          "piece",
+          "job",
+          "km"
+        ],
+        "title": "PriceUnit",
+        "type": "string"
+      },
+      "ProfileIn": {
+        "additionalProperties": false,
+        "properties": {
+          "code": {
+            "maxLength": 50,
+            "minLength": 1,
+            "title": "Code",
+            "type": "string"
+          },
+          "g_per_m": {
+            "maximum": 100000.0,
+            "minimum": 1.0,
+            "title": "G Per M",
+            "type": "integer"
+          },
+          "profile_system_id": {
+            "format": "uuid",
+            "title": "Profile System Id",
+            "type": "string"
+          },
+          "role": {
+            "$ref": "#/components/schemas/Role"
+          }
+        },
+        "required": [
+          "profile_system_id",
+          "role",
+          "code",
+          "g_per_m"
+        ],
+        "title": "ProfileIn",
+        "type": "object"
+      },
+      "ProfileOut": {
+        "properties": {
+          "code": {
+            "maxLength": 50,
+            "minLength": 1,
+            "title": "Code",
+            "type": "string"
+          },
+          "g_per_m": {
+            "maximum": 100000.0,
+            "minimum": 1.0,
+            "title": "G Per M",
+            "type": "integer"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "profile_system_id": {
+            "format": "uuid",
+            "title": "Profile System Id",
+            "type": "string"
+          },
+          "role": {
+            "$ref": "#/components/schemas/Role"
+          }
+        },
+        "required": [
+          "profile_system_id",
+          "role",
+          "code",
+          "g_per_m",
+          "id"
+        ],
+        "title": "ProfileOut",
+        "type": "object"
+      },
+      "ProfileSystemIn": {
+        "additionalProperties": false,
+        "properties": {
+          "brand": {
+            "maxLength": 50,
+            "minLength": 1,
+            "title": "Brand",
+            "type": "string"
+          },
+          "depth_mm": {
+            "maximum": 150.0,
+            "minimum": 40.0,
+            "title": "Depth Mm",
+            "type": "integer"
+          },
+          "enabled": {
+            "default": true,
+            "title": "Enabled",
+            "type": "boolean"
+          },
+          "key": {
+            "maxLength": 50,
+            "minLength": 1,
+            "title": "Key",
+            "type": "string"
+          },
+          "series": {
+            "maxLength": 50,
+            "minLength": 1,
+            "title": "Series",
+            "type": "string"
+          }
+        },
+        "required": [
+          "key",
+          "brand",
+          "series",
+          "depth_mm"
+        ],
+        "title": "ProfileSystemIn",
+        "type": "object"
+      },
+      "ProfileSystemOut": {
+        "properties": {
+          "brand": {
+            "maxLength": 50,
+            "minLength": 1,
+            "title": "Brand",
+            "type": "string"
+          },
+          "depth_mm": {
+            "maximum": 150.0,
+            "minimum": 40.0,
+            "title": "Depth Mm",
+            "type": "integer"
+          },
+          "enabled": {
+            "default": true,
+            "title": "Enabled",
+            "type": "boolean"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "key": {
+            "maxLength": 50,
+            "minLength": 1,
+            "title": "Key",
+            "type": "string"
+          },
+          "series": {
+            "maxLength": 50,
+            "minLength": 1,
+            "title": "Series",
+            "type": "string"
+          }
+        },
+        "required": [
+          "key",
+          "brand",
+          "series",
+          "depth_mm",
+          "id"
+        ],
+        "title": "ProfileSystemOut",
+        "type": "object"
+      },
+      "QuoteCreate": {
+        "additionalProperties": false,
+        "properties": {
+          "client_id": {
+            "format": "uuid",
+            "title": "Client Id",
+            "type": "string"
+          },
+          "profile_system_id": {
+            "format": "uuid",
+            "title": "Profile System Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "client_id",
+          "profile_system_id"
+        ],
+        "title": "QuoteCreate",
+        "type": "object"
+      },
+      "QuoteDetail": {
+        "additionalProperties": false,
+        "properties": {
+          "accepted_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Accepted At"
+          },
+          "client_id": {
+            "format": "uuid",
+            "title": "Client Id",
+            "type": "string"
+          },
+          "client_name": {
+            "title": "Client Name",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "number": {
+            "title": "Number",
+            "type": "string"
+          },
+          "paid_cents": {
+            "title": "Paid Cents",
+            "type": "integer"
+          },
+          "revision": {
+            "$ref": "#/components/schemas/RevisionOut"
+          },
+          "revision_no": {
+            "title": "Revision No",
+            "type": "integer"
+          },
+          "revisions": {
+            "items": {
+              "type": "integer"
+            },
+            "title": "Revisions",
+            "type": "array"
+          },
+          "sent_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sent At"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "total_cents": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Total Cents"
+          },
+          "valid_until": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Valid Until"
+          }
+        },
+        "required": [
+          "id",
+          "number",
+          "client_id",
+          "client_name",
+          "status",
+          "revision_no",
+          "sent_at",
+          "accepted_at",
+          "valid_until",
+          "total_cents",
+          "paid_cents",
+          "revision",
+          "revisions"
+        ],
+        "title": "QuoteDetail",
+        "type": "object"
+      },
+      "QuoteOut": {
+        "additionalProperties": false,
+        "properties": {
+          "accepted_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Accepted At"
+          },
+          "client_id": {
+            "format": "uuid",
+            "title": "Client Id",
+            "type": "string"
+          },
+          "client_name": {
+            "title": "Client Name",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "number": {
+            "title": "Number",
+            "type": "string"
+          },
+          "paid_cents": {
+            "title": "Paid Cents",
+            "type": "integer"
+          },
+          "revision_no": {
+            "title": "Revision No",
+            "type": "integer"
+          },
+          "sent_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sent At"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "total_cents": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Total Cents"
+          },
+          "valid_until": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Valid Until"
+          }
+        },
+        "required": [
+          "id",
+          "number",
+          "client_id",
+          "client_name",
+          "status",
+          "revision_no",
+          "sent_at",
+          "accepted_at",
+          "valid_until",
+          "total_cents",
+          "paid_cents"
+        ],
+        "title": "QuoteOut",
+        "type": "object"
+      },
+      "Readings": {
+        "additionalProperties": false,
+        "properties": {
+          "heights": {
+            "items": {
+              "maximum": 4000.0,
+              "minimum": 300.0,
+              "type": "integer"
+            },
+            "maxItems": 3,
+            "minItems": 3,
+            "title": "Heights",
+            "type": "array"
+          },
+          "widths": {
+            "items": {
+              "maximum": 4000.0,
+              "minimum": 300.0,
+              "type": "integer"
+            },
+            "maxItems": 3,
+            "minItems": 3,
+            "title": "Widths",
+            "type": "array"
+          }
+        },
+        "required": [
+          "widths",
+          "heights"
+        ],
+        "title": "Readings",
+        "type": "object"
+      },
+      "RevisionIn": {
+        "additionalProperties": false,
+        "properties": {
+          "discount_bp": {
+            "default": 0,
+            "maximum": 10000.0,
+            "minimum": 0.0,
+            "title": "Discount Bp",
+            "type": "integer"
+          },
+          "discount_cents": {
+            "default": 0,
+            "maximum": 10000000000.0,
+            "minimum": 0.0,
+            "title": "Discount Cents",
+            "type": "integer"
+          },
+          "extras": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/ExtraIn"
+            },
+            "maxItems": 50,
+            "title": "Extras",
+            "type": "array"
+          },
+          "margin_bp": {
+            "maximum": 10000.0,
+            "minimum": 0.0,
+            "title": "Margin Bp",
+            "type": "integer"
+          },
+          "positions": {
+            "items": {
+              "$ref": "#/components/schemas/PositionIn"
+            },
+            "maxItems": 50,
+            "title": "Positions",
+            "type": "array"
+          },
+          "transport_km": {
+            "default": 0,
+            "maximum": 1000.0,
+            "minimum": 0.0,
+            "title": "Transport Km",
+            "type": "integer"
+          },
+          "valid_days": {
+            "maximum": 365.0,
+            "minimum": 1.0,
+            "title": "Valid Days",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "margin_bp",
+          "valid_days",
+          "positions"
+        ],
+        "title": "RevisionIn",
+        "type": "object"
+      },
+      "RevisionOut": {
+        "properties": {
+          "discount_bp": {
+            "title": "Discount Bp",
+            "type": "integer"
+          },
+          "discount_cents": {
+            "title": "Discount Cents",
+            "type": "integer"
+          },
+          "extra_lines": {
+            "items": {
+              "$ref": "#/components/schemas/ExtraOut"
+            },
+            "title": "Extra Lines",
+            "type": "array"
+          },
+          "locked_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Locked At"
+          },
+          "margin_bp": {
+            "title": "Margin Bp",
+            "type": "integer"
+          },
+          "positions": {
+            "items": {
+              "$ref": "#/components/schemas/PositionOut"
+            },
+            "title": "Positions",
+            "type": "array"
+          },
+          "price_list_version_id": {
+            "format": "uuid",
+            "title": "Price List Version Id",
+            "type": "string"
+          },
+          "revision_no": {
+            "title": "Revision No",
+            "type": "integer"
+          },
+          "system_sheet_version_id": {
+            "format": "uuid",
+            "title": "System Sheet Version Id",
+            "type": "string"
+          },
+          "transport_km": {
+            "title": "Transport Km",
+            "type": "integer"
+          },
+          "valid_days": {
+            "title": "Valid Days",
+            "type": "integer"
+          },
+          "vat_bp": {
+            "title": "Vat Bp",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "revision_no",
+          "margin_bp",
+          "discount_cents",
+          "discount_bp",
+          "vat_bp",
+          "valid_days",
+          "transport_km",
+          "locked_at",
+          "price_list_version_id",
+          "system_sheet_version_id",
+          "positions",
+          "extra_lines"
+        ],
+        "title": "RevisionOut",
+        "type": "object"
+      },
+      "Role": {
+        "description": "What a profile or a cut piece is used for.",
+        "enum": [
+          "frame",
+          "sash",
+          "mullion",
+          "false_mullion",
+          "bead",
+          "threshold",
+          "steel"
+        ],
+        "title": "Role",
+        "type": "string"
+      },
+      "SessionOut": {
+        "properties": {
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "last_seen_at": {
+            "format": "date-time",
+            "title": "Last Seen At",
+            "type": "string"
+          },
+          "user_agent": {
+            "title": "User Agent",
+            "type": "string"
+          },
+          "user_id": {
+            "format": "uuid",
+            "title": "User Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "user_id",
+          "created_at",
+          "last_seen_at",
+          "user_agent"
+        ],
+        "title": "SessionOut",
+        "type": "object"
+      },
+      "SettingsIO": {
+        "properties": {
+          "advance_bp": {
+            "maximum": 10000.0,
+            "minimum": 0.0,
+            "title": "Advance Bp",
+            "type": "integer"
+          },
+          "gasket_extra_bp": {
+            "maximum": 10000.0,
+            "minimum": 0.0,
+            "title": "Gasket Extra Bp",
+            "type": "integer"
+          },
+          "glass_min_area_mm2": {
+            "maximum": 10000000.0,
+            "minimum": 0.0,
+            "title": "Glass Min Area Mm2",
+            "type": "integer"
+          },
+          "margin_default_bp": {
+            "maximum": 10000.0,
+            "minimum": 0.0,
+            "title": "Margin Default Bp",
+            "type": "integer"
+          },
+          "margin_warn_bp": {
+            "maximum": 10000.0,
+            "minimum": 0.0,
+            "title": "Margin Warn Bp",
+            "type": "integer"
+          },
+          "price_age_warn_days": {
+            "maximum": 365.0,
+            "minimum": 1.0,
+            "title": "Price Age Warn Days",
+            "type": "integer"
+          },
+          "quote_valid_days": {
+            "maximum": 365.0,
+            "minimum": 1.0,
+            "title": "Quote Valid Days",
+            "type": "integer"
+          },
+          "small_max_mm2": {
+            "maximum": 50000000.0,
+            "minimum": 1.0,
+            "title": "Small Max Mm2",
+            "type": "integer"
+          },
+          "standard_max_mm2": {
+            "maximum": 50000000.0,
+            "minimum": 1.0,
+            "title": "Standard Max Mm2",
+            "type": "integer"
+          },
+          "vat_bp": {
+            "maximum": 10000.0,
+            "minimum": 0.0,
+            "title": "Vat Bp",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "margin_default_bp",
+          "margin_warn_bp",
+          "vat_bp",
+          "advance_bp",
+          "quote_valid_days",
+          "price_age_warn_days",
+          "glass_min_area_mm2",
+          "gasket_extra_bp",
+          "small_max_mm2",
+          "standard_max_mm2"
+        ],
+        "title": "SettingsIO",
+        "type": "object"
+      },
+      "SheetIn": {
+        "additionalProperties": false,
+        "properties": {
+          "constants": {
+            "additionalProperties": true,
+            "title": "Constants",
+            "type": "object"
+          },
+          "source_pages": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "default": {},
+            "title": "Source Pages",
+            "type": "object"
+          }
+        },
+        "required": [
+          "constants"
+        ],
+        "title": "SheetIn",
+        "type": "object"
+      },
+      "SheetOut": {
+        "properties": {
+          "constants": {
+            "additionalProperties": true,
+            "title": "Constants",
+            "type": "object"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "locked": {
+            "title": "Locked",
+            "type": "boolean"
+          },
+          "profile_system_id": {
+            "format": "uuid",
+            "title": "Profile System Id",
+            "type": "string"
+          },
+          "source_pages": {
+            "additionalProperties": true,
+            "title": "Source Pages",
+            "type": "object"
+          },
+          "version": {
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "profile_system_id",
+          "version",
+          "constants",
+          "source_pages",
+          "locked",
+          "created_at"
+        ],
+        "title": "SheetOut",
+        "type": "object"
+      },
+      "StatusIn": {
+        "additionalProperties": false,
+        "properties": {
+          "status": {
+            "enum": [
+              "draft",
+              "sent",
+              "accepted",
+              "rejected"
+            ],
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "status"
+        ],
+        "title": "StatusIn",
+        "type": "object"
+      },
+      "SupplierIn": {
+        "additionalProperties": false,
+        "properties": {
+          "kind": {
+            "enum": [
+              "profile",
+              "glass",
+              "hardware",
+              "other"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "name": {
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          },
+          "phone": {
+            "default": "",
+            "maxLength": 50,
+            "title": "Phone",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "kind"
+        ],
+        "title": "SupplierIn",
+        "type": "object"
+      },
+      "SupplierOut": {
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "profile",
+              "glass",
+              "hardware",
+              "other"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "name": {
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          },
+          "phone": {
+            "default": "",
+            "maxLength": 50,
+            "title": "Phone",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "kind",
+          "id"
+        ],
+        "title": "SupplierOut",
+        "type": "object"
+      },
+      "UserCreated": {
+        "description": "A new user. ``totp_uri`` is shown once, for an admin to add to an authenticator app.",
+        "properties": {
+          "email": {
+            "title": "Email",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "is_active": {
+            "title": "Is Active",
+            "type": "boolean"
+          },
+          "role": {
+            "title": "Role",
+            "type": "string"
+          },
+          "totp_uri": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Totp Uri"
+          }
+        },
+        "required": [
+          "id",
+          "email",
+          "role",
+          "is_active"
+        ],
+        "title": "UserCreated",
+        "type": "object"
+      },
+      "UserIn": {
+        "additionalProperties": false,
+        "properties": {
+          "email": {
+            "maxLength": 200,
+            "minLength": 3,
+            "title": "Email",
+            "type": "string"
+          },
+          "password": {
+            "maxLength": 200,
+            "minLength": 12,
+            "title": "Password",
+            "type": "string"
+          },
+          "role": {
+            "enum": [
+              "owner",
+              "admin"
+            ],
+            "title": "Role",
+            "type": "string"
+          }
+        },
+        "required": [
+          "email",
+          "password",
+          "role"
+        ],
+        "title": "UserIn",
+        "type": "object"
+      },
+      "UserOut": {
+        "properties": {
+          "email": {
+            "title": "Email",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "is_active": {
+            "title": "Is Active",
+            "type": "boolean"
+          },
+          "role": {
+            "title": "Role",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "email",
+          "role",
+          "is_active"
+        ],
+        "title": "UserOut",
+        "type": "object"
+      },
+      "UserPatch": {
+        "additionalProperties": false,
+        "properties": {
+          "is_active": {
+            "title": "Is Active",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "is_active"
+        ],
+        "title": "UserPatch",
+        "type": "object"
+      },
+      "ValidationError": {
+        "properties": {
+          "ctx": {
+            "title": "Context",
+            "type": "object"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "title": "Location",
+            "type": "array"
+          },
+          "msg": {
+            "title": "Message",
+            "type": "string"
+          },
+          "type": {
+            "title": "Error Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError",
+        "type": "object"
+      }
+    }
+  },
+  "info": {
+    "title": "PVC Quote Engine",
+    "version": "0.1.0"
+  },
+  "openapi": "3.1.0",
+  "paths": {
+    "/api/v1/admin/compare-optimizer": {
+      "post": {
+        "description": "FFD (what quotes use) against the exact solver, for one bar group of one revision.",
+        "operationId": "compare_optimizer_api_v1_admin_compare_optimizer_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CompareIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompareOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Compare Optimizer",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/api/v1/auth/login": {
+      "post": {
+        "description": "Check email and password and open a new session (a new token on every login).",
+        "operationId": "login_api_v1_auth_login_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MeOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Login",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/api/v1/auth/logout": {
+      "post": {
+        "operationId": "logout_api_v1_auth_logout_post",
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Logout",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/api/v1/auth/me": {
+      "get": {
+        "operationId": "me_api_v1_auth_me_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MeOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Me",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/api/v1/auth/reauth": {
+      "post": {
+        "description": "Confirm the password again before a sensitive action (valid 15 minutes).",
+        "operationId": "reauth_api_v1_auth_reauth_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PasswordIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MeOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Reauth",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/api/v1/auth/totp": {
+      "post": {
+        "description": "The admin's second step: a 6-digit code from the authenticator app.",
+        "operationId": "totp_api_v1_auth_totp_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CodeIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MeOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Totp",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/api/v1/clients": {
+      "get": {
+        "description": "Clients by name, optionally filtered by a part of the name, phone or place.",
+        "operationId": "list_clients_api_v1_clients_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "search",
+            "required": false,
+            "schema": {
+              "default": "",
+              "title": "Search",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ClientOut"
+                  },
+                  "title": "Response List Clients Api V1 Clients Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Clients",
+        "tags": [
+          "clients"
+        ]
+      },
+      "post": {
+        "operationId": "create_client_api_v1_clients_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ClientIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClientOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Create Client",
+        "tags": [
+          "clients"
+        ]
+      }
+    },
+    "/api/v1/clients/{client_id}": {
+      "get": {
+        "operationId": "get_client_api_v1_clients__client_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "client_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Client Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClientOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Client",
+        "tags": [
+          "clients"
+        ]
+      },
+      "patch": {
+        "operationId": "update_client_api_v1_clients__client_id__patch",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "client_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Client Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ClientIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClientOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Update Client",
+        "tags": [
+          "clients"
+        ]
+      }
+    },
+    "/api/v1/clients/{client_id}/erase": {
+      "post": {
+        "description": "Blank the name, phone and place; quotes and totals stay (PLAN.md section 5).",
+        "operationId": "erase_client_api_v1_clients__client_id__erase_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "client_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Client Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClientOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Erase Client",
+        "tags": [
+          "clients"
+        ]
+      }
+    },
+    "/api/v1/clients/{client_id}/export": {
+      "get": {
+        "description": "Everything kept about one client (data-protection export), behind a password re-check.",
+        "operationId": "export_client_api_v1_clients__client_id__export_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "client_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Client Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Export Client Api V1 Clients  Client Id  Export Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Export Client",
+        "tags": [
+          "clients"
+        ]
+      }
+    },
+    "/api/v1/construction-types": {
+      "get": {
+        "description": "Every type the engine knows; a type without a row is enabled.",
+        "operationId": "list_construction_types_api_v1_construction_types_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ConstructionTypeIO"
+                  },
+                  "title": "Response List Construction Types Api V1 Construction Types Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "List Construction Types",
+        "tags": [
+          "admin"
+        ]
+      },
+      "put": {
+        "operationId": "set_construction_type_api_v1_construction_types_put",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConstructionTypeIO"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConstructionTypeIO"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Set Construction Type",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/api/v1/engine/preview": {
+      "post": {
+        "description": "One position's cut list and measuring warnings, for live feedback while typing.",
+        "operationId": "preview_api_v1_engine_preview_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PreviewIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Preview Api V1 Engine Preview Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Preview",
+        "tags": [
+          "quotes"
+        ]
+      }
+    },
+    "/api/v1/hardware-sets": {
+      "get": {
+        "operationId": "list_hardware_sets_api_v1_hardware_sets_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/HardwareSetOut"
+                  },
+                  "title": "Response List Hardware Sets Api V1 Hardware Sets Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "List Hardware Sets",
+        "tags": [
+          "admin"
+        ]
+      },
+      "post": {
+        "operationId": "create_hardware_set_api_v1_hardware_sets_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HardwareSetIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HardwareSetOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Create Hardware Set",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/api/v1/hardware-sets/{set_id}": {
+      "delete": {
+        "operationId": "delete_hardware_set_api_v1_hardware_sets__set_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "set_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Set Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Delete Hardware Set",
+        "tags": [
+          "admin"
+        ]
+      },
+      "put": {
+        "operationId": "update_hardware_set_api_v1_hardware_sets__set_id__put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "set_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Set Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HardwareSetIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HardwareSetOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Update Hardware Set",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/api/v1/health": {
+      "get": {
+        "description": "Report that the process is up, which version is running, and whether the database answers.",
+        "operationId": "read_health_api_v1_health_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Health"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Health"
+                }
+              }
+            },
+            "description": "Database down"
+          }
+        },
+        "summary": "Read Health",
+        "tags": [
+          "health"
+        ]
+      }
+    },
+    "/api/v1/price-lists": {
+      "get": {
+        "operationId": "list_price_lists_api_v1_price_lists_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/PriceListOut"
+                  },
+                  "title": "Response List Price Lists Api V1 Price Lists Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "List Price Lists",
+        "tags": [
+          "admin"
+        ]
+      },
+      "post": {
+        "description": "A new price-list version, valid from its start date. Older versions stay as they are.",
+        "operationId": "create_price_list_api_v1_price_lists_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PriceListIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PriceListOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Create Price List",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/api/v1/price-lists/{list_id}": {
+      "get": {
+        "operationId": "get_price_list_api_v1_price_lists__list_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "list_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "List Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PriceListOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Price List",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/api/v1/price-lists/{list_id}/bump": {
+      "post": {
+        "description": "A copy of a price list with one supplier's prices changed by ``bp`` (rounded half up).",
+        "operationId": "bump_price_list_api_v1_price_lists__list_id__bump_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "list_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "List Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BumpIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PriceListOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Bump Price List",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/api/v1/profiles": {
+      "get": {
+        "operationId": "list_profiles_api_v1_profiles_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "system_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "System Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ProfileOut"
+                  },
+                  "title": "Response List Profiles Api V1 Profiles Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Profiles",
+        "tags": [
+          "admin"
+        ]
+      },
+      "post": {
+        "operationId": "create_profile_api_v1_profiles_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProfileIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProfileOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Create Profile",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/api/v1/quotes": {
+      "get": {
+        "description": "Newest first; search by number or client name; filter by status (including expired).",
+        "operationId": "list_quotes_api_v1_quotes_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "search",
+            "required": false,
+            "schema": {
+              "default": "",
+              "title": "Search",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "status_filter",
+            "required": false,
+            "schema": {
+              "default": "",
+              "title": "Status Filter",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/QuoteOut"
+                  },
+                  "title": "Response List Quotes Api V1 Quotes Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Quotes",
+        "tags": [
+          "quotes"
+        ]
+      },
+      "post": {
+        "operationId": "create_quote_api_v1_quotes_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/QuoteCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QuoteDetail"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Create Quote",
+        "tags": [
+          "quotes"
+        ]
+      }
+    },
+    "/api/v1/quotes/{quote_id}": {
+      "get": {
+        "operationId": "get_quote_api_v1_quotes__quote_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "quote_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Quote Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QuoteDetail"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Quote",
+        "tags": [
+          "quotes"
+        ]
+      }
+    },
+    "/api/v1/quotes/{quote_id}/payments": {
+      "get": {
+        "operationId": "list_payments_api_v1_quotes__quote_id__payments_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "quote_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Quote Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/PaymentOut"
+                  },
+                  "title": "Response List Payments Api V1 Quotes  Quote Id  Payments Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Payments",
+        "tags": [
+          "quotes"
+        ]
+      },
+      "post": {
+        "operationId": "add_payment_api_v1_quotes__quote_id__payments_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "quote_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Quote Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PaymentIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaymentOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Add Payment",
+        "tags": [
+          "quotes"
+        ]
+      }
+    },
+    "/api/v1/quotes/{quote_id}/revisions": {
+      "post": {
+        "operationId": "new_revision_api_v1_quotes__quote_id__revisions_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "quote_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Quote Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QuoteDetail"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "New Revision",
+        "tags": [
+          "quotes"
+        ]
+      }
+    },
+    "/api/v1/quotes/{quote_id}/revisions/{first}/diff/{second}": {
+      "get": {
+        "operationId": "diff_revisions_api_v1_quotes__quote_id__revisions__first__diff__second__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "quote_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Quote Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "first",
+            "required": true,
+            "schema": {
+              "title": "First",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "path",
+            "name": "second",
+            "required": true,
+            "schema": {
+              "title": "Second",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "additionalProperties": true,
+                    "type": "object"
+                  },
+                  "title": "Response Diff Revisions Api V1 Quotes  Quote Id  Revisions  First  Diff  Second  Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Diff Revisions",
+        "tags": [
+          "quotes"
+        ]
+      }
+    },
+    "/api/v1/quotes/{quote_id}/revisions/{number}": {
+      "put": {
+        "description": "Replace a draft's content. Only the current revision of a draft quote can change; a sent\nquote gets a new revision first, so what the client saw stays on record.",
+        "operationId": "update_revision_api_v1_quotes__quote_id__revisions__number__put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "quote_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Quote Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "number",
+            "required": true,
+            "schema": {
+              "title": "Number",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RevisionIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QuoteDetail"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Update Revision",
+        "tags": [
+          "quotes"
+        ]
+      }
+    },
+    "/api/v1/quotes/{quote_id}/revisions/{number}/calculate": {
+      "post": {
+        "description": "Cut list, cutting plans, price breakdown and warnings. A locked revision returns its\nstored snapshot, so an accepted quote never changes.",
+        "operationId": "calculate_api_v1_quotes__quote_id__revisions__number__calculate_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "quote_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Quote Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "number",
+            "required": true,
+            "schema": {
+              "title": "Number",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Calculate Api V1 Quotes  Quote Id  Revisions  Number  Calculate Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Calculate",
+        "tags": [
+          "quotes"
+        ]
+      }
+    },
+    "/api/v1/quotes/{quote_id}/status": {
+      "post": {
+        "operationId": "set_status_api_v1_quotes__quote_id__status_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "quote_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Quote Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StatusIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QuoteDetail"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Set Status",
+        "tags": [
+          "quotes"
+        ]
+      }
+    },
+    "/api/v1/sessions": {
+      "get": {
+        "operationId": "list_sessions_api_v1_sessions_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/SessionOut"
+                  },
+                  "title": "Response List Sessions Api V1 Sessions Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "List Sessions",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/api/v1/sessions/{session_id}": {
+      "delete": {
+        "operationId": "revoke_session_api_v1_sessions__session_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "session_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Session Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Revoke Session",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/api/v1/settings": {
+      "get": {
+        "operationId": "get_settings__api_v1_settings_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SettingsIO"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Get Settings ",
+        "tags": [
+          "admin"
+        ]
+      },
+      "put": {
+        "operationId": "put_settings_api_v1_settings_put",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SettingsIO"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SettingsIO"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Put Settings",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/api/v1/suppliers": {
+      "get": {
+        "operationId": "list_suppliers_api_v1_suppliers_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/SupplierOut"
+                  },
+                  "title": "Response List Suppliers Api V1 Suppliers Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "List Suppliers",
+        "tags": [
+          "admin"
+        ]
+      },
+      "post": {
+        "operationId": "create_supplier_api_v1_suppliers_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SupplierIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SupplierOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Create Supplier",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/api/v1/suppliers/{supplier_id}": {
+      "patch": {
+        "operationId": "update_supplier_api_v1_suppliers__supplier_id__patch",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "supplier_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Supplier Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SupplierIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SupplierOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Update Supplier",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/api/v1/systems": {
+      "get": {
+        "operationId": "list_systems_api_v1_systems_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ProfileSystemOut"
+                  },
+                  "title": "Response List Systems Api V1 Systems Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "List Systems",
+        "tags": [
+          "admin"
+        ]
+      },
+      "post": {
+        "operationId": "create_system_api_v1_systems_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProfileSystemIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProfileSystemOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Create System",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/api/v1/systems/{system_id}": {
+      "patch": {
+        "operationId": "update_system_api_v1_systems__system_id__patch",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "system_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "System Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProfileSystemIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProfileSystemOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Update System",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/api/v1/systems/{system_id}/sheets": {
+      "get": {
+        "operationId": "list_sheets_api_v1_systems__system_id__sheets_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "system_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "System Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/SheetOut"
+                  },
+                  "title": "Response List Sheets Api V1 Systems  System Id  Sheets Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Sheets",
+        "tags": [
+          "admin"
+        ]
+      },
+      "post": {
+        "description": "A new version of a system's sheet. The constants are checked by the engine first.",
+        "operationId": "create_sheet_api_v1_systems__system_id__sheets_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "system_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "System Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SheetIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SheetOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Create Sheet",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/api/v1/users": {
+      "get": {
+        "operationId": "list_users_api_v1_users_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/UserOut"
+                  },
+                  "title": "Response List Users Api V1 Users Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "List Users",
+        "tags": [
+          "admin"
+        ]
+      },
+      "post": {
+        "description": "A new login. An admin gets a TOTP secret, returned once as an ``otpauth://`` link.",
+        "operationId": "create_user_api_v1_users_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserCreated"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Create User",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/api/v1/users/{user_id}": {
+      "patch": {
+        "description": "Turn a login on or off. Turning it off also ends all its sessions.",
+        "operationId": "update_user_api_v1_users__user_id__patch",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "user_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "User Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserPatch"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Update User",
+        "tags": [
+          "admin"
+        ]
+      }
+    }
+  }
+}

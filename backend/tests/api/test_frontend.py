@@ -31,7 +31,7 @@ def test_frontend_is_served_at_the_root() -> None:
 @pytest.mark.usefixtures("built_frontend")
 def test_api_still_answers_with_the_frontend_mounted() -> None:
     with TestClient(create_app()) as client:
-        assert client.get("/api/v1/health").json()["status"] == "ok"
+        assert client.get("/api/v1/health").json()["version"]  # 200, or 503 without a database
         assert client.get("/api/v1/nothing-here").status_code == 404
 
 

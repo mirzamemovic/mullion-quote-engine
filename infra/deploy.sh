@@ -45,7 +45,7 @@ docker pull "$NEW_IMAGE"
 echo "== database migrations"
 export APP_IMAGE="$NEW_IMAGE"
 compose up -d db
-compose run --rm --no-deps app /app/.venv/bin/alembic upgrade head
+compose run --rm --no-deps app /app/.venv/bin/python -m quote_engine.manage migrate
 
 echo "== starting $NEW_IMAGE"
 # `compose up` itself fails when the app never becomes healthy (Caddy waits for it), so a failed
