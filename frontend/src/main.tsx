@@ -36,7 +36,7 @@ async function start(root: HTMLElement) {
   // remembers it, so a reload on any page stays in the demo.
   if (import.meta.env.DEV && (new URLSearchParams(window.location.search).has("mock") || mockRemembered())) {
     const { installMock } = await import("./dev/mock");
-    installMock();
+    await installMock();
   }
   createRoot(root).render(
     <StrictMode>

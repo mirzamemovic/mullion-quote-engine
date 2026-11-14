@@ -1250,6 +1250,12 @@ export interface components {
             enabled: boolean;
             /** Key */
             key: string;
+            /**
+             * Material
+             * @default pvc
+             * @enum {string}
+             */
+            material: "pvc" | "aluminium";
             /** Series */
             series: string;
         };
@@ -1271,6 +1277,12 @@ export interface components {
             id: string;
             /** Key */
             key: string;
+            /**
+             * Material
+             * @default pvc
+             * @enum {string}
+             */
+            material: "pvc" | "aluminium";
             /** Series */
             series: string;
         };

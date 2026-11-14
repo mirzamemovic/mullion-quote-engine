@@ -50,9 +50,11 @@
     "name": "Full name",
     "phone": "Phone",
     "place": "Place",
-    "system": "Profile",
+    "system": "Profile system",
     "create": "Create quote",
-    "noSystem": "No profile system yet. The admin needs to add one."
+    "noSystem": "No profile system yet. The admin needs to add one.",
+    "pvc": "PVC",
+    "aluminium": "Aluminium"
   },
   "summary": {
     "positions": "Positions",

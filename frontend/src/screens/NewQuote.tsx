@@ -7,9 +7,9 @@ import { useNavigate } from "react-router";
 import { z } from "zod";
 
 import { useClients, useCreateClient, useCreateQuote, useSystems } from "../api/queries";
-import type { Client } from "../api/types";
+import type { Client, ProfileSystem } from "../api/types";
 import { Icon } from "../components/Icon";
-import { Button, ErrorNote, Field, Segmented, TopBar } from "../components/ui";
+import { Button, ErrorNote, Field, TopBar } from "../components/ui";
 import { lastChoices, remember } from "../lib/remember";
 
 const clientSchema = z.object({
@@ -18,6 +18,60 @@ const clientSchema = z.object({
   place: z.string().trim().max(200),
 });
 type ClientForm = z.infer<typeof clientSchema>;
+
+/** Profile systems grouped by material; each card names the brand, series and depth. */
+function SystemPicker({
+  systems,
+  value,
+  onChange,
+}: {
+  systems: ProfileSystem[];
+  value: string;
+  onChange: (id: string) => void;
+}) {
+  const { t } = useTranslation();
+  const groups = (["pvc", "aluminium"] as const)
+    .map((material) => ({ material, items: systems.filter((s) => s.material === material) }))
+    .filter((group) => group.items.length > 0);
+  return (
+    <section aria-labelledby="system" className="space-y-4">
+      <h2 id="system" className="text-2xl font-extrabold">
+        {t("newQuote.system")}
+      </h2>
+      {groups.map(({ material, items }) => (
+        <fieldset key={material}>
+          <legend className="mb-2 text-base font-bold text-graphite-soft">
+            {t(`newQuote.${material}`)}
+          </legend>
+          <div className="grid gap-2 sm:grid-cols-3">
+            {items.map((s) => {
+              const chosen = s.id === value;
+              return (
+                <label
+                  key={s.id}
+                  className={`flex min-h-16 cursor-pointer flex-col justify-center rounded-slot px-4 py-2 transition-colors duration-150 has-focus-visible:outline-3 has-focus-visible:outline-chalk ${chosen ? "bg-chalk-tint outline-3 outline-chalk" : "bg-board hover:bg-chalk-tint/50"}`}
+                >
+                  <input
+                    type="radio"
+                    name="profile-system"
+                    className="sr-only"
+                    value={s.id}
+                    checked={chosen}
+                    onChange={() => onChange(s.id)}
+                  />
+                  <span className="text-lg leading-tight font-bold">{s.brand}</span>
+                  <span className="text-sm leading-snug text-graphite-soft">
+                    {s.series} · <span className="figure">{s.depth_mm}</span> mm
+                  </span>
+                </label>
+              );
+            })}
+          </div>
+        </fieldset>
+      ))}
+    </section>
+  );
+}
 
 export function NewQuote() {
   const { t } = useTranslation();
@@ -53,12 +107,7 @@ export function NewQuote() {
         {systems.isError && <ErrorNote message={systems.error.message} />}
         {systems.data && enabled.length === 0 && <ErrorNote message={t("newQuote.noSystem")} />}
         {enabled.length > 1 && chosenSystem && (
-          <Segmented
-            label={t("newQuote.system")}
-            value={chosenSystem.id}
-            onChange={setSystemId}
-            options={enabled.map((s) => ({ value: s.id, label: `${s.brand} ${s.series}` }))}
-          />
+          <SystemPicker systems={enabled} value={chosenSystem.id} onChange={setSystemId} />
         )}
 
         <section aria-labelledby="client">

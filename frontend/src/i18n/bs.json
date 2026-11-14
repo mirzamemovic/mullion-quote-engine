@@ -50,9 +50,11 @@
     "name": "Ime i prezime",
     "phone": "Telefon",
     "place": "Mjesto",
-    "system": "Profil",
+    "system": "Profilni sistem",
     "create": "Napravi ponudu",
-    "noSystem": "Nema profila. Admin ga treba dodati."
+    "noSystem": "Nema profila. Admin ga treba dodati.",
+    "pvc": "PVC",
+    "aluminium": "Aluminij"
   },
   "summary": {
     "positions": "Pozicije",
