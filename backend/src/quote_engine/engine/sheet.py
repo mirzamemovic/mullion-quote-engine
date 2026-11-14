@@ -8,7 +8,7 @@ A missing value raises ``MissingConstant``; an unknown key or a value of the wro
 from collections.abc import Mapping
 
 from quote_engine.engine.errors import InvalidInput, MissingConstant
-from quote_engine.engine.model import Role, SystemConstants
+from quote_engine.engine.model import Material, Role, SystemConstants
 from quote_engine.engine.units import Mm
 
 LENGTH_KEYS = (
@@ -19,7 +19,7 @@ LENGTH_KEYS = (
     "min_offcut_mm",
 )
 MAPPING_KEYS = ("bar_length_mm", "deductions")
-ALL_KEYS = frozenset(("system_id", *LENGTH_KEYS, *MAPPING_KEYS))
+ALL_KEYS = frozenset(("system_id", "material", "reinforced", *LENGTH_KEYS, *MAPPING_KEYS))
 
 
 def _length(value: object, what: str, system_id: str) -> Mm:
@@ -49,9 +49,19 @@ def system_constants_from_mapping(data: Mapping[str, object]) -> SystemConstants
     unknown = sorted(str(key) for key in set(data) - ALL_KEYS)
     if unknown:
         raise InvalidInput(f"system sheet '{system_id}' has unknown keys: {', '.join(unknown)}")
-    for key in (*LENGTH_KEYS, *MAPPING_KEYS):
+    for key in ("material", "reinforced", *LENGTH_KEYS, *MAPPING_KEYS):
         if data.get(key) is None:
             raise MissingConstant(system_id, key)
+    try:
+        material = Material(str(data["material"]))
+    except ValueError:
+        raise InvalidInput(
+            f"system sheet '{system_id}': material must be 'pvc' or 'aluminium', "
+            f"got {data['material']!r}"
+        ) from None
+    reinforced = data["reinforced"]
+    if not isinstance(reinforced, bool):
+        raise InvalidInput(f"system sheet '{system_id}': reinforced must be true or false")
 
     bar_lengths: dict[Role, Mm] = {}
     for role_name, length in _mapping(data["bar_length_mm"], "bar_length_mm").items():
@@ -71,6 +81,8 @@ def system_constants_from_mapping(data: Mapping[str, object]) -> SystemConstants
 
     return SystemConstants(
         system_id=system_id,
+        material=material,
+        reinforced=reinforced,
         bar_length_mm=bar_lengths,
         deductions=deductions,
         weld_allowance_mm=lengths["weld_allowance_mm"],

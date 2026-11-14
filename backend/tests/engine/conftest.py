@@ -42,13 +42,15 @@ def sample_constants() -> SystemConstants:
 
 # SAMPLE - NOT REAL: invented round prices for tests. Real prices never enter the repository.
 SAMPLE_PRICES: tuple[tuple[str, str, Colour | None, int, PriceUnit], ...] = (
-    ("profile", "frame", Colour.WHITE, 10_000, PriceUnit.BAR),
-    ("steel", "steel", None, 5_000, PriceUnit.BAR),
-    ("gasket", "gasket", None, 200, PriceUnit.METRE),
-    ("hardware", "tilt_turn_right", None, 3_000, PriceUnit.SET),
+    # Profile, steel and gasket prices are per profile system; hardware, consumables and labour
+    # per material.
+    ("profile", "sample-not-real/frame", Colour.WHITE, 10_000, PriceUnit.BAR),
+    ("steel", "sample-not-real", None, 5_000, PriceUnit.BAR),
+    ("gasket", "sample-not-real", None, 200, PriceUnit.METRE),
+    ("hardware", "pvc/tilt_turn_right", None, 3_000, PriceUnit.SET),
     ("glass", "4-16-4", None, 2_500, PriceUnit.SQUARE_METRE),
-    ("consumables", "window", None, 700, PriceUnit.PIECE),
-    ("labour", "single_sash_tilt_turn/standard", None, 4_000, PriceUnit.PIECE),
+    ("consumables", "pvc", None, 700, PriceUnit.PIECE),
+    ("labour", "pvc/single_sash_tilt_turn/standard", None, 4_000, PriceUnit.PIECE),
     ("installation", "standard", None, 3_000, PriceUnit.PIECE),
     ("installation", "ral", None, 1_000, PriceUnit.PIECE),
     ("installation", "old_window_removal", None, 1_200, PriceUnit.PIECE),

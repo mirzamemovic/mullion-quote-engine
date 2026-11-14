@@ -15,7 +15,7 @@ from dataclasses import dataclass, field
 from enum import StrEnum
 
 from quote_engine.engine.errors import InvalidInput
-from quote_engine.engine.model import Colour, CutList, PositionSpec, Role
+from quote_engine.engine.model import Colour, CutList, Material, PositionSpec, Role
 from quote_engine.engine.optimizer.groups import PieceGroup, demand_key
 from quote_engine.engine.optimizer.plan import CuttingPlan
 from quote_engine.engine.prices import PriceBook, PriceKey, PriceUnit
@@ -136,6 +136,8 @@ class QuoteJob:
     groups: tuple[PieceGroup, ...]
     plans: Mapping[str, CuttingPlan]
     kerf_mm: Mm
+    system_id: str
+    material: Material
     installation: Mapping[str, Installation] = field(default_factory=dict)
     extras: tuple[Extra, ...] = ()
     transport_km: int = 0
@@ -255,10 +257,11 @@ def _bar_costs(job: QuoteJob, book: PriceBook) -> dict[str, list[Line]]:
             raise InvalidInput(f"no cutting plan for group {group.name}") from None
         if plan.bar_length_mm != group.bar_length_mm:
             raise InvalidInput(f"plan for {group.name} uses the wrong bar length")
+        # Each profile system has its own bar prices: "<system>/<role>" by colour.
         key = (
-            PriceKey("steel", "steel")
+            PriceKey("steel", job.system_id)
             if group.role is Role.STEEL
-            else PriceKey("profile", group.role.value, group.colour)
+            else PriceKey("profile", f"{job.system_id}/{group.role.value}", group.colour)
         )
         cost = Cents(book.amount(key, PriceUnit.BAR) * len(plan.bars))
         consumed = _consumed_by_position(group, job.kerf_mm, refs)
@@ -269,21 +272,29 @@ def _bar_costs(job: QuoteJob, book: PriceBook) -> dict[str, list[Line]]:
 
 
 def _material(
-    pos: PositionSpec, cut_list: CutList, bars: list[Line], book: PriceBook, s: PricingSettings
+    pos: PositionSpec,
+    cut_list: CutList,
+    bars: list[Line],
+    job: QuoteJob,
+    book: PriceBook,
+    s: PricingSettings,
 ) -> list[Line]:
+    """Bars, gasket (per system), hardware and consumables (per material), glass (per build)."""
     lines = list(bars)
     gasket_mm = Mm(cut_list.gasket_mm + pct(cut_list.gasket_mm, s.gasket_extra_bp))
     if gasket_mm:
-        rate = book.amount(PriceKey("gasket", "gasket"), PriceUnit.METRE)
+        rate = book.amount(PriceKey("gasket", job.system_id), PriceUnit.METRE)
         lines.append(Line("gasket", per_metre(gasket_mm, rate)))
     for need in cut_list.hardware_sets:
-        rate = book.amount(PriceKey("hardware", need.opening.value), PriceUnit.SET)
+        rate = book.amount(
+            PriceKey("hardware", f"{job.material}/{need.opening.value}"), PriceUnit.SET
+        )
         lines.append(Line(f"hardware {need.opening}", Cents(rate * need.qty)))
     for pane in cut_list.glass:
         rate = book.amount(PriceKey("glass", pane.build), PriceUnit.SQUARE_METRE)
         billable = Mm2(max(pane.width_mm * pane.height_mm, s.glass_min_area_mm2))
         lines.append(Line(f"glass {pane.build}", Cents(per_m2(billable, rate) * pane.qty)))
-    rate = book.amount(PriceKey("consumables", "window"), PriceUnit.PIECE)
+    rate = book.amount(PriceKey("consumables", job.material.value), PriceUnit.PIECE)
     lines.append(Line("consumables", Cents(rate * pos.qty)))
     if s.price_risk_bp:
         lines.append(
@@ -321,10 +332,12 @@ def price_position(
     """Material, margin, labour and installation for one position."""
     area = Mm2(pos.width_mm * pos.height_mm)
     cls = size_class(area, s.size_thresholds)
-    material = _material(pos, cut_list, bars, book, s)
+    material = _material(pos, cut_list, bars, job, book, s)
     material_cents = Cents(sum(line.cents for line in material))
     margin = pct(material_cents, s.margin_bp)
-    labour_rate = book.amount(PriceKey("labour", f"{pos.construction_type}/{cls}"), PriceUnit.PIECE)
+    labour_rate = book.amount(
+        PriceKey("labour", f"{job.material}/{pos.construction_type}/{cls}"), PriceUnit.PIECE
+    )
     labour = Cents(labour_rate * pos.qty)
     installation = _installation(pos, cls, job.installation.get(pos.ref, Installation()), book)
     installation_cents = Cents(sum(line.cents for line in installation))

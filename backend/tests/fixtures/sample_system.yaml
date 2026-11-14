@@ -2,6 +2,8 @@
 # An invented system sheet for tests and the demo workshop. Every value is deliberately fake.
 # Real constants come only from a profile system's sheet entered in the admin screens.
 system_id: sample-not-real
+material: pvc
+reinforced: true
 bar_length_mm:
   frame: 6666
   sash: 6666

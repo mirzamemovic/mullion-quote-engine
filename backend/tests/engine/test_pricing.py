@@ -106,6 +106,8 @@ def a_job(c: SystemConstants, *, at: tuple[PositionSpec, ...] = (), **changes: o
         groups=groups,
         plans=plans,
         kerf_mm=c.kerf_mm,
+        system_id=c.system_id,
+        material=c.material,
         installation={"P1": Installation(ral=True)},
         extras=(Extra(ExtraKind.SILL, "S1", 2, length_mm=Mm(1000), colour=Colour.WHITE),),
         transport_km=20,
@@ -326,7 +328,15 @@ def test_missing_price_is_never_guessed(
 def test_empty_quote_costs_nothing(
     sample_constants: SystemConstants, sample_book: PriceBook
 ) -> None:
-    job = QuoteJob((), {}, (), {}, sample_constants.kerf_mm)
+    job = QuoteJob(
+        (),
+        {},
+        (),
+        {},
+        sample_constants.kerf_mm,
+        sample_constants.system_id,
+        sample_constants.material,
+    )
 
     result = price_job(job, sample_book, SETTINGS)
 
@@ -423,7 +433,7 @@ def test_price_book_refuses_two_prices_for_one_item() -> None:
 
 def test_price_must_be_in_the_expected_unit(sample_book: PriceBook) -> None:
     with pytest.raises(InvalidInput, match="priced per bar, expected m"):
-        sample_book.price(PriceKey("steel", "steel"), PriceUnit.METRE)
+        sample_book.price(PriceKey("steel", "sample-not-real"), PriceUnit.METRE)
 
 
 @pytest.mark.parametrize(("amount", "supplier"), [(-1, "Sample"), (1, " "), (1.5, "Sample")])

@@ -10,7 +10,7 @@ from dataclasses import dataclass
 from datetime import date, timedelta
 
 from quote_engine.engine.errors import InvalidInput
-from quote_engine.engine.model import CutList, PositionSpec, Role
+from quote_engine.engine.model import CutList, Material, PositionSpec, Role
 from quote_engine.engine.optimizer.groups import PieceGroup
 from quote_engine.engine.optimizer.plan import CuttingPlan
 from quote_engine.engine.prices import PriceBook, PriceKey, PriceUnit
@@ -71,6 +71,9 @@ def purchase_list(
     positions: Iterable[PositionSpec],
     book: PriceBook,
     gasket_extra_bp: Bp,
+    *,
+    system_id: str,
+    material: Material,
 ) -> PurchaseList:
     """Bars per profile and colour, steel bars, gasket metres, hardware sets, consumables, glass.
 
@@ -83,28 +86,28 @@ def purchase_list(
         except KeyError:
             raise InvalidInput(f"no cutting plan for group {group.name}") from None
         key = (
-            PriceKey("steel", "steel")
+            PriceKey("steel", system_id)
             if group.role is Role.STEEL
-            else PriceKey("profile", group.role.value, group.colour)
+            else PriceKey("profile", f"{system_id}/{group.role.value}", group.colour)
         )
         wanted.append((key, PriceUnit.BAR, bars))
 
     gasket = sum(cl.gasket_mm + pct(Mm(cl.gasket_mm), gasket_extra_bp) for cl in cut_lists.values())
     if gasket:
-        wanted.append((PriceKey("gasket", "gasket"), PriceUnit.METRE, whole_metres_up(Mm(gasket))))
+        wanted.append((PriceKey("gasket", system_id), PriceUnit.METRE, whole_metres_up(Mm(gasket))))
 
     sets: Counter[str] = Counter()
     for cut_list in cut_lists.values():
         for need in cut_list.hardware_sets:
             sets[need.opening.value] += need.qty
     wanted.extend(
-        (PriceKey("hardware", opening), PriceUnit.SET, count)
+        (PriceKey("hardware", f"{material}/{opening}"), PriceUnit.SET, count)
         for opening, count in sorted(sets.items())
     )
 
     windows = sum(pos.qty for pos in positions)
     if windows:
-        wanted.append((PriceKey("consumables", "window"), PriceUnit.PIECE, windows))
+        wanted.append((PriceKey("consumables", material.value), PriceUnit.PIECE, windows))
 
     lines = tuple(
         PurchaseLine(key, unit, qty, book.price(key, unit).supplier) for key, unit, qty in wanted

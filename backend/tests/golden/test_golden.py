@@ -58,6 +58,8 @@ def plans_for(job: GoldenJob, c: SystemConstants) -> tuple[QuoteJob, dict[str, C
         groups=groups,
         plans=plans,
         kerf_mm=c.kerf_mm,
+        system_id=c.system_id,
+        material=c.material,
         installation=job.installation,
         extras=job.extras,
         transport_km=job.transport_km,

@@ -6,11 +6,13 @@ import pytest
 
 from quote_engine.engine.errors import InvalidInput, MissingPrice
 from quote_engine.engine.lists import glass_order, price_request, purchase_list, quote_summary
-from quote_engine.engine.model import CutList, GlassPane, SystemConstants
+from quote_engine.engine.model import CutList, GlassPane, Material, SystemConstants
 from quote_engine.engine.prices import PriceBook, PriceKey, PriceUnit
 from quote_engine.engine.pricing import price_job
 from quote_engine.engine.units import Bp, Mm
 from tests.engine.test_pricing import SETTINGS, a_cut_list, a_job, a_position
+
+SYSTEM = "sample-not-real"
 
 
 def pane(ref: str, w: int, h: int, qty: int, build: str = "4-16-4") -> GlassPane:
@@ -40,17 +42,30 @@ def test_purchase_list_has_everything_to_buy(
     job = a_job(sample_constants, at=(a_position("P1"), a_position("P2", qty=2)))
 
     bought = purchase_list(
-        job.groups, job.plans, job.cut_lists, job.positions, sample_book, Bp(500)
+        job.groups,
+        job.plans,
+        job.cut_lists,
+        job.positions,
+        sample_book,
+        Bp(500),
+        system_id=SYSTEM,
+        material=Material.PVC,
     )
 
     assert [
         (line.key.kind, line.key.ref, line.unit, line.qty, line.supplier) for line in bought.lines
     ] == [
-        ("profile", "frame", PriceUnit.BAR, 1, "Sample Supplier A"),
-        ("steel", "steel", PriceUnit.BAR, 1, "Sample Supplier A"),
-        ("gasket", "gasket", PriceUnit.METRE, 13, "Sample Supplier A"),  # 12 m + 5% = 12.6, up
-        ("hardware", "tilt_turn_right", PriceUnit.SET, 3, "Sample Supplier B"),
-        ("consumables", "window", PriceUnit.PIECE, 3, "Sample Supplier B"),
+        ("profile", "sample-not-real/frame", PriceUnit.BAR, 1, "Sample Supplier A"),
+        ("steel", "sample-not-real", PriceUnit.BAR, 1, "Sample Supplier A"),
+        (
+            "gasket",
+            "sample-not-real",
+            PriceUnit.METRE,
+            13,
+            "Sample Supplier A",
+        ),  # 12 m + 5% = 12.6, up
+        ("hardware", "pvc/tilt_turn_right", PriceUnit.SET, 3, "Sample Supplier B"),
+        ("consumables", "pvc", PriceUnit.PIECE, 3, "Sample Supplier B"),
     ]
     assert [(g.qty, g.positions) for g in bought.glass] == [(3, ("P1", "P2"))]
 
@@ -61,7 +76,16 @@ def test_purchase_list_needs_a_plan_per_group(
     job = a_job(sample_constants)
 
     with pytest.raises(InvalidInput, match="no cutting plan"):
-        purchase_list(job.groups, {}, job.cut_lists, job.positions, sample_book, Bp(500))
+        purchase_list(
+            job.groups,
+            {},
+            job.cut_lists,
+            job.positions,
+            sample_book,
+            Bp(500),
+            system_id=SYSTEM,
+            material=Material.PVC,
+        )
 
 
 def test_purchase_list_needs_a_supplier_for_every_line(
@@ -73,11 +97,29 @@ def test_purchase_list_needs_a_supplier_for_every_line(
     )
 
     with pytest.raises(MissingPrice, match="steel"):
-        purchase_list(job.groups, job.plans, job.cut_lists, job.positions, book, Bp(500))
+        purchase_list(
+            job.groups,
+            job.plans,
+            job.cut_lists,
+            job.positions,
+            book,
+            Bp(500),
+            system_id=SYSTEM,
+            material=Material.PVC,
+        )
 
 
 def test_empty_job_buys_nothing(sample_book: PriceBook) -> None:
-    bought = purchase_list((), {}, {"P1": CutList((), (), (), (), Mm(0))}, (), sample_book, Bp(500))
+    bought = purchase_list(
+        (),
+        {},
+        {"P1": CutList((), (), (), (), Mm(0))},
+        (),
+        sample_book,
+        Bp(500),
+        system_id=SYSTEM,
+        material=Material.PVC,
+    )
 
     assert (bought.lines, bought.glass) == ((), ())
 
@@ -87,15 +129,22 @@ def test_price_request_per_supplier(
 ) -> None:
     job = a_job(sample_constants)
     bought = purchase_list(
-        job.groups, job.plans, job.cut_lists, job.positions, sample_book, Bp(500)
+        job.groups,
+        job.plans,
+        job.cut_lists,
+        job.positions,
+        sample_book,
+        Bp(500),
+        system_id=SYSTEM,
+        material=Material.PVC,
     )
 
     requests = price_request(bought)
 
     assert list(requests) == ["Sample Supplier A", "Sample Supplier B"]
     assert [line.key for line in requests["Sample Supplier B"]] == [
-        PriceKey("hardware", "tilt_turn_right"),
-        PriceKey("consumables", "window"),
+        PriceKey("hardware", "pvc/tilt_turn_right"),
+        PriceKey("consumables", "pvc"),
     ]
 
 

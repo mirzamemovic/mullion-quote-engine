@@ -73,7 +73,11 @@ def sash_in_field(
             *welded_ring(pos, Role.SASH, f"{label}", width, height, c, pos.qty),
             *beads(pos, label, "sash", width, height, c, pos.qty),
         ),
-        steel=steel_pair(pos, label, width, height, less(c, "sash_steel"), c, pos.qty),
+        steel=(
+            steel_pair(pos, label, width, height, less(c, "sash_steel"), c, pos.qty)
+            if c.reinforced
+            else ()
+        ),
         glass=pane,
         outer_width_mm=length_from(width)[0],
         outer_height_mm=length_from(height)[0],
@@ -91,7 +95,12 @@ def halves(pos: PositionSpec) -> tuple[list[Term], list[Term]]:
 
 
 def frame_steel(pos: PositionSpec, c: SystemConstants) -> tuple[Piece, ...]:
-    """Steel inside the frame: the window size minus ``frame_steel`` and the shortening."""
+    """Steel inside the frame: the window size minus ``frame_steel`` and the shortening.
+
+    An unreinforced system (aluminium) has none, and needs no steel deductions in its sheet.
+    """
+    if not c.reinforced:
+        return ()
     width, height = [Term("W", pos.width_mm)], [Term("H", pos.height_mm)]
     return steel_pair(pos, "frame", width, height, less(c, "frame_steel"), c, pos.qty)
 

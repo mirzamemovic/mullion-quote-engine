@@ -31,6 +31,10 @@ def cut(pos: PositionSpec, c: SystemConstants) -> CutList:
             sash_in_field(pos, "right sash", right, "field_sash_width", c),
         ],
         pieces=[mechanical_piece(pos, Role.MULLION, "mullion", mullion, pos.qty)],
-        steel=[steel_piece(pos, "mullion steel", [*mullion, less(c, "mullion_steel")], c, pos.qty)],
+        steel=(
+            [steel_piece(pos, "mullion steel", [*mullion, less(c, "mullion_steel")], c, pos.qty)]
+            if c.reinforced
+            else []
+        ),
         extra_gasket_mm=2 * mullion_mm,
     )

@@ -22,6 +22,14 @@ class Colour(StrEnum):
     FOIL_BOTH_SIDES = "foil_both_sides"
 
 
+class Material(StrEnum):
+    """What a profile system is made of. Aluminium corners are crimped, not welded, and need
+    no steel; PVC corners are welded and the profiles carry steel reinforcement."""
+
+    PVC = "pvc"
+    ALUMINIUM = "aluminium"
+
+
 class Role(StrEnum):
     """What a profile or a cut piece is used for."""
 
@@ -92,6 +100,8 @@ class SystemConstants:
     """
 
     system_id: str
+    material: Material
+    reinforced: bool
     bar_length_mm: Mapping[Role, Mm]
     weld_allowance_mm: Mm
     kerf_mm: Mm
@@ -104,6 +114,14 @@ class SystemConstants:
         object.__setattr__(self, "bar_length_mm", ReadOnlyDict(self.bar_length_mm))
         object.__setattr__(self, "deductions", ReadOnlyDict(self.deductions))
         _text(self.system_id, "system_id")
+        _require(
+            isinstance(self.material, Material),
+            f"material must be a Material, got {self.material!r}",
+        )
+        _require(
+            type(self.reinforced) is bool,
+            f"reinforced must be true or false, got {self.reinforced!r}",
+        )
         for role, length in self.bar_length_mm.items():
             _whole(length, f"bar length for {role}", minimum=1)
         for deduction, value in self.deductions.items():

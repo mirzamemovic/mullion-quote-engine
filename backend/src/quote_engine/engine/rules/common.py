@@ -90,8 +90,12 @@ def weld_allowance(c: SystemConstants) -> Term:
 def welded_piece(
     pos: PositionSpec, role: Role, label: str, terms: Sequence[Term], c: SystemConstants, qty: int
 ) -> Piece:
-    """A 45° welded piece (frame, sash): its nominal terms plus the weld allowance at both ends."""
-    length, formula = length_from([*terms, weld_allowance(c)])
+    """A 45° corner piece (frame, sash): its nominal terms plus the weld allowance at both ends.
+
+    Aluminium corners are crimped, not welded: a sheet with no weld allowance prints no ``2a``.
+    """
+    allowance = [weld_allowance(c)] if c.weld_allowance_mm else []
+    length, formula = length_from([*terms, *allowance])
     return Piece(pos.ref, role, label, length, WELDED_ANGLE, WELDED_ANGLE, qty, formula)
 
 
