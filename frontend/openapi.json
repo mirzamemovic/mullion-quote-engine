@@ -1307,6 +1307,15 @@
             "title": "Key",
             "type": "string"
           },
+          "material": {
+            "default": "pvc",
+            "enum": [
+              "pvc",
+              "aluminium"
+            ],
+            "title": "Material",
+            "type": "string"
+          },
           "series": {
             "maxLength": 50,
             "minLength": 1,
@@ -1351,6 +1360,15 @@
             "maxLength": 50,
             "minLength": 1,
             "title": "Key",
+            "type": "string"
+          },
+          "material": {
+            "default": "pvc",
+            "enum": [
+              "pvc",
+              "aluminium"
+            ],
+            "title": "Material",
             "type": "string"
           },
           "series": {

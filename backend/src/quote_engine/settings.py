@@ -20,6 +20,7 @@ class Settings:
     session_idle_days: int
     session_absolute_days: int
     reauth_minutes: int
+    dev_demo: bool = False
 
     @property
     def is_production(self) -> bool:
@@ -50,4 +51,7 @@ def get_settings() -> Settings:
         session_idle_days=_int("QUOTE_ENGINE_SESSION_IDLE_DAYS", 7),
         session_absolute_days=_int("QUOTE_ENGINE_SESSION_ABSOLUTE_DAYS", 30),
         reauth_minutes=_int("QUOTE_ENGINE_REAUTH_MINUTES", 15),
+        # The database-free demo endpoints (api/routes_dev.py): only when asked for, never in
+        # production.
+        dev_demo=os.environ.get("QUOTE_ENGINE_DEV_DEMO") == "1" and environment != "production",
     )

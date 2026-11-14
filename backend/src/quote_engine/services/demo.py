@@ -1,8 +1,9 @@
-"""The demo workshop (PLAN.md sections 5, 7 and 12). SAMPLE - NOT REAL.
+"""The demo workshop (PLAN.md sections 5, 7 and 12).
 
-Everything here is invented for the public demo: the system sheet (the same fake values as
-``tests/fixtures/sample_system.yaml``), the suppliers, every price and the client. None of it is a
-catalogue value or a real price. The demo is wiped and seeded again every night.
+Its catalogue is ``demo_catalogue``: profile systems sold in Kosovo with market-estimate prices
+(public research, see docs/market-prices.md; not any workshop's own prices) and invented sheet
+deductions (SAMPLE - NOT REAL). The client is invented. The demo is wiped and seeded again every
+night.
 """
 
 import secrets
@@ -22,109 +23,21 @@ from quote_engine.db.models import (
     SystemSheetVersion,
     Workshop,
 )
-from quote_engine.engine.model import Colour, Opening, Role
-from quote_engine.engine.pricing import INSTALLATION_SWITCHES, SizeClass
-from quote_engine.engine.rules.registry import TYPES
+from quote_engine.engine.model import Opening
 from quote_engine.services import auth
+from quote_engine.services.demo_catalogue import (
+    DEMO_SMALL_MAX_MM2,
+    DEMO_STANDARD_MAX_MM2,
+    PRICE_NOTE,
+    SUPPLIER_NAMES,
+    SYSTEMS,
+    price_rows,
+)
 from quote_engine.services.workshops import create_user, create_workshop
 
 DEMO_NAME = "Probna radionica (izmišljeni podaci)"
 DEMO_EMAIL = "demo@example.invalid"
-DEMO_SMALL_MAX_MM2 = 1_000_000  # invented
-DEMO_STANDARD_MAX_MM2 = 2_500_000  # invented
-
-# SAMPLE - NOT REAL: deliberately fake numbers, the same as tests/fixtures/sample_system.yaml.
-DEMO_SHEET: dict[str, object] = {
-    "system_id": "sample-not-real",
-    "bar_length_mm": {
-        "frame": 6666,
-        "sash": 6666,
-        "mullion": 6666,
-        "false_mullion": 6666,
-        "bead": 6666,
-        "threshold": 6666,
-        "steel": 5555,
-    },
-    "weld_allowance_mm": 1,
-    "kerf_mm": 2,
-    "bar_end_trim_mm": 3,
-    "steel_shortening_mm": 4,
-    "min_offcut_mm": 555,
-    "deductions": {
-        "sash_width": 44,
-        "sash_height": 44,
-        "glass_in_sash": 88,
-        "sash_bead_horizontal": 86,
-        "sash_bead_vertical": 120,
-        "frame_bead_horizontal": 97,
-        "frame_bead_vertical": 131,
-        "frame_steel": 66,
-        "sash_steel": 55,
-        "fixed_glass": 99,
-        "field_sash_width": 33,
-        "twin_sash_width": 22,
-        "mullion": 77,
-        "mullion_steel": 11,
-        "false_mullion": 50,
-    },
-}
-
-# SAMPLE - NOT REAL: invented prices in cents.
-COLOUR_BAR_CENTS = {Colour.WHITE: 2000, Colour.FOIL_ONE_SIDE: 3000, Colour.FOIL_BOTH_SIDES: 3600}
-SIZE_CENTS = {SizeClass.SMALL: 1500, SizeClass.STANDARD: 2500, SizeClass.LARGE: 3500}
-GLASS_BUILDS = {"4-16-4": 2500, "4-12-4-12-4": 4000}
-
-
-def demo_prices(profile: str, glass: str, other: str) -> list[dict[str, object]]:
-    """One invented price for every key the pricing engine asks for. Supplier ids are given."""
-
-    def entry(
-        kind: str, ref: str, unit: str, cents: int, supplier: str, colour: str | None = None
-    ) -> dict[str, object]:
-        return {
-            "item_kind": kind,
-            "item_ref": ref,
-            "colour": colour,
-            "unit": unit,
-            "amount_cents": cents,
-            "supplier_id": supplier,
-        }
-
-    rows = [
-        entry("profile", role.value, "bar", cents, profile, colour.value)
-        for role in Role
-        if role is not Role.STEEL
-        for colour, cents in COLOUR_BAR_CENTS.items()
-    ]
-    rows += [
-        entry("steel", "steel", "bar", 900, profile),
-        entry("gasket", "gasket", "m", 120, profile),
-        entry("consumables", "window", "piece", 300, other),
-        entry("transport", "flat", "job", 1000, other),
-        entry("transport", "km", "km", 50, other),
-        entry("sill", "200 mm", "m", 1800, other, Colour.WHITE.value),
-        entry("shutter", "standard", "m2", 6000, other),
-        entry("screen", "standard", "m2", 2500, other),
-    ]
-    rows += [
-        entry("hardware", opening.value, "set", 3500, other)
-        for opening in Opening
-        if opening is not Opening.FIXED
-    ]
-    rows += [entry("glass", build, "m2", cents, glass) for build, cents in GLASS_BUILDS.items()]
-    rows += [
-        entry("installation", size.value, "piece", cents + 500, other)
-        for size, cents in SIZE_CENTS.items()
-    ]
-    rows += [
-        entry("installation", switch, "piece", 1000, other) for switch in INSTALLATION_SWITCHES
-    ]
-    rows += [
-        entry("labour", f"{key}/{size.value}", "piece", cents, other)
-        for key in TYPES
-        for size, cents in SIZE_CENTS.items()
-    ]
-    return rows
+SUPPLIER_KINDS = {"profile": "profile", "glass": "glass", "other": "hardware"}
 
 
 def seed_demo(
@@ -151,22 +64,29 @@ def seed_demo(
         db.flush()
         return row
 
-    profile = add(Supplier(name="Probni dobavljač profila", kind="profile"))
-    glass = add(Supplier(name="Probni dobavljač stakla", kind="glass"))
-    other = add(Supplier(name="Probni dobavljač okova", kind="hardware"))
-    system = add(
-        ProfileSystem(
-            key="sample", brand="Probni profil", series="70 (izmišljeni)", depth_mm=70, enabled=True
+    suppliers = {
+        key: add(Supplier(name=name, kind=SUPPLIER_KINDS[key]))
+        for key, name in SUPPLIER_NAMES.items()
+    }
+    for demo_system in SYSTEMS:
+        system = add(
+            ProfileSystem(
+                key=demo_system.key,
+                brand=demo_system.brand,
+                series=demo_system.series,
+                material=demo_system.material.value,
+                depth_mm=demo_system.depth_mm,
+                enabled=True,
+            )
         )
-    )
-    add(
-        SystemSheetVersion(
-            profile_system_id=system.id,
-            version=1,
-            constants=DEMO_SHEET,
-            source_pages={"all": "izmišljeno za demo"},
+        add(
+            SystemSheetVersion(
+                profile_system_id=system.id,
+                version=1,
+                constants=demo_system.sheet(),
+                source_pages={"all": "odbici izmišljeni za demo; cijene: docs/market-prices.md"},
+            )
         )
-    )
     for opening in (Opening.TILT_TURN_LEFT, Opening.TILT_TURN_RIGHT):
         add(
             HardwareSet(
@@ -178,13 +98,12 @@ def seed_demo(
                 max_weight_g=100_000,
             )
         )
-    prices = add(PriceListVersion(valid_from=today, note="Probne cijene, nisu stvarne"))
-    ids = {"profile": profile.id, "glass": glass.id, "other": other.id}
-    for row in demo_prices("profile", "glass", "other"):
-        supplier = ids[str(row.pop("supplier_id"))]
+    prices = add(PriceListVersion(valid_from=today, note=PRICE_NOTE))
+    for row in price_rows("profile", "glass", "other"):
+        supplier = suppliers[str(row.pop("supplier_id"))]
         add(
             PriceEntry(
-                price_list_version_id=prices.id, supplier_id=supplier, quoted_on=today, **row
+                price_list_version_id=prices.id, supplier_id=supplier.id, quoted_on=today, **row
             )
         )
     add(Client(name="Probni klijent", phone="", place="Probno mjesto"))

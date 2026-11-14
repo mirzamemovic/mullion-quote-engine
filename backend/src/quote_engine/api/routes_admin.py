@@ -58,6 +58,7 @@ from quote_engine.db.models import (
     User,
 )
 from quote_engine.db.repository import Scoped
+from quote_engine.engine.errors import InvalidInput
 from quote_engine.engine.optimizer.exact import exact
 from quote_engine.engine.optimizer.ffd import ffd
 from quote_engine.engine.optimizer.plan import CuttingPlan
@@ -109,8 +110,12 @@ def list_sheets(system_id: uuid.UUID, a: LoggedIn) -> list[SheetOut]:
 @router.post("/systems/{system_id}/sheets", status_code=status.HTTP_201_CREATED)
 def create_sheet(system_id: uuid.UUID, body: SheetIn, a: AdminStepUp) -> SheetOut:
     """A new version of a system's sheet. The constants are checked by the engine first."""
-    a.db.get(ProfileSystem, system_id)
-    system_constants_from_mapping(body.constants)  # raises InvalidInput -> 422
+    system = a.db.get(ProfileSystem, system_id)
+    constants = system_constants_from_mapping(body.constants)  # raises InvalidInput -> 422
+    if constants.material.value != system.material:
+        raise InvalidInput(
+            f"this sheet is for {constants.material.value}, the system is {system.material}"
+        )
     latest = a.db.session.scalar(
         select(func.max(SystemSheetVersion.version)).where(
             SystemSheetVersion.workshop_id == a.db.workshop_id,

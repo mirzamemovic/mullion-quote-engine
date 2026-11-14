@@ -36,7 +36,7 @@ from quote_engine.db.models import (
 )
 from quote_engine.db.models import Session as SessionRow
 from quote_engine.db.repository import NotFoundError, Scoped
-from quote_engine.services import auth, calculation, demo, workshops
+from quote_engine.services import auth, calculation, demo, demo_catalogue, workshops
 from quote_engine.services import quotes as svc
 from tests.api.conftest import PASSWORD, SampleWorkshop, log_in
 
@@ -82,7 +82,7 @@ def revision_body(**changes: Any) -> dict[str, Any]:
             },
         ],
         "extras": [
-            {"kind": "sill", "ref": "200 mm", "qty": 1, "colour": "white", "length_mm": 800}
+            {"kind": "sill", "ref": "PVC 200 mm", "qty": 1, "colour": "white", "length_mm": 800}
         ],
     }
     return {**body, **changes}
@@ -533,7 +533,7 @@ def test_a_missing_deduction_is_a_422_naming_it(
 ) -> None:
     admin_login(api, db, shop_a)
     reauth(api)
-    sheet = {**demo.DEMO_SHEET, "deductions": {"sash_width": 1}}
+    sheet = {**demo_catalogue.SYSTEMS[0].sheet(), "deductions": {"sash_width": 1}}
     created = api.post(f"{API}/systems/{system_id(api)}/sheets", json={"constants": sheet})
     assert created.status_code == 201
     assert created.json()["version"] == 2
@@ -551,7 +551,7 @@ def test_a_bad_system_sheet_is_refused(
 ) -> None:
     admin_login(api, db, shop_a)
     reauth(api)
-    bad = {**demo.DEMO_SHEET, "kerf_mm": 2.5}
+    bad = {**demo_catalogue.SYSTEMS[0].sheet(), "kerf_mm": 2.5}
 
     response = api.post(f"{API}/systems/{system_id(api)}/sheets", json={"constants": bad})
 

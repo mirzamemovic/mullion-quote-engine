@@ -244,6 +244,7 @@ class ProfileSystemIn(Model):
     key: Short
     brand: Short
     series: Short
+    material: Literal["pvc", "aluminium"] = "pvc"
     depth_mm: Annotated[int, Field(ge=40, le=150)]
     enabled: bool = True
 

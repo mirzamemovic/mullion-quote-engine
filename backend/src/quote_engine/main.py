@@ -22,6 +22,7 @@ from quote_engine.api import (
     routes_clients,
     routes_quotes,
 )
+from quote_engine.settings import get_settings
 
 API_PREFIX = "/api/v1"
 STATIC_DIR_ENV = "QUOTE_ENGINE_STATIC_DIR"
@@ -69,6 +70,11 @@ def create_app() -> FastAPI:
         routes_admin.router,
     ):
         app.include_router(router, prefix=API_PREFIX)
+    if get_settings().dev_demo:
+        # Development only, never in production: see settings.py and api/routes_dev.py.
+        from quote_engine.api import routes_dev
+
+        app.include_router(routes_dev.router, prefix=API_PREFIX)
     frontend = static_dir()
     if frontend is not None:
         app.mount("/", SinglePageApp(directory=frontend, html=True), name="frontend")

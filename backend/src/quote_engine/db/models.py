@@ -109,6 +109,7 @@ class ProfileSystem(WorkshopScoped, Base):
     key: Mapped[str] = mapped_column(String(SHORT))
     brand: Mapped[str] = mapped_column(String(SHORT))
     series: Mapped[str] = mapped_column(String(SHORT))
+    material: Mapped[str] = mapped_column(String(SHORT), default="pvc", server_default="pvc")
     depth_mm: Mapped[int] = mapped_column(Integer)
     enabled: Mapped[bool] = mapped_column(Boolean, default=True)
 

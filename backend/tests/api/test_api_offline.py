@@ -17,26 +17,11 @@ from quote_engine.api.schemas import PositionIn, RevisionIn, UserIn
 from quote_engine.db.models import Client, Session
 from quote_engine.db.repository import NotFoundError
 from quote_engine.engine.errors import InvalidInput, MissingConstant, MissingPrice
-from quote_engine.engine.model import Colour, Opening, PositionSpec
-from quote_engine.engine.optimizer.ffd import ffd
-from quote_engine.engine.optimizer.groups import group_pieces
-from quote_engine.engine.prices import Price, PriceBook, PriceKey, PriceUnit
-from quote_engine.engine.pricing import (
-    Discount,
-    Extra,
-    ExtraKind,
-    Installation,
-    PricingSettings,
-    QuoteJob,
-    SizeThresholds,
-    price_job,
-)
-from quote_engine.engine.rules.registry import TYPES, cut_position, merge
-from quote_engine.engine.sheet import system_constants_from_mapping
-from quote_engine.engine.units import Bp, Cents, Mm, Mm2
+from quote_engine.engine.model import Colour
+from quote_engine.engine.rules.registry import TYPES
 from quote_engine.export_openapi import schema_text
 from quote_engine.main import create_app
-from quote_engine.services import auth, demo
+from quote_engine.services import auth, demo, demo_catalogue
 from quote_engine.services.quotes import QuoteError
 
 # --- problem details ----------------------------------------------------------------------------
@@ -201,72 +186,140 @@ def test_openapi_file_is_current() -> None:
 # --- demo data ----------------------------------------------------------------------------------
 
 
+@pytest.mark.parametrize("system", demo_catalogue.SYSTEMS, ids=lambda s: s.key)
 @pytest.mark.parametrize("key", TYPES)
 @pytest.mark.parametrize("colour", list(Colour))
-def test_demo_prices_cover_every_type_and_colour(key: str, colour: Colour) -> None:
-    """The demo price list prices a job of every type without a ``MissingPrice``."""
-    today = date(2026, 1, 1)
-    constants = system_constants_from_mapping(demo.DEMO_SHEET)
+def test_the_demo_catalogue_prices_every_system_type_and_colour(
+    system: demo_catalogue.DemoSystem, key: str, colour: Colour
+) -> None:
+    """Every demo system prices every type in every colour with no missing price or value."""
     openings = {
-        "fixed": (Opening.FIXED,),
-        "two_field_t_mullion": (Opening.TILT_TURN_LEFT, Opening.TURN_RIGHT),
-        "two_sash_false_mullion": (Opening.TURN_LEFT, Opening.TILT_TURN_RIGHT),
-    }.get(key, (Opening.TILT_TURN_RIGHT,))
-    pos = PositionSpec("P1", key, Mm(1200), Mm(1400), 2, colour, "4-16-4", openings)
-    cut_lists = {"P1": cut_position(pos, constants)}
-    groups = group_pieces(merge(cut_lists.values()), [pos], constants)
-    plans = {
-        g.name: ffd(g.demands, g.bar_length_mm, constants.kerf_mm, constants.bar_end_trim_mm)
-        for g in groups
+        "fixed": ["fixed"],
+        "two_field_t_mullion": ["tilt_turn_left", "turn_right"],
+        "two_sash_false_mullion": ["turn_left", "tilt_turn_right"],
+    }.get(key, ["tilt_turn_right"])
+    position = {
+        "ref": "P1",
+        "construction_type": key,
+        "width_mm": 1200,
+        "height_mm": 1400 if key != "balcony_door_tilt_turn" else 2200,
+        "qty": 2,
+        "colour": colour.value,
+        "glass_build": "4-16-4",
+        "openings": openings,
+        "readings": None,
+        "installation": {
+            "install": True,
+            "ral": True,
+            "old_window_removal": True,
+            "wall_repair": True,
+        },
     }
-    book = PriceBook.of(
-        today,
-        (
-            Price(
-                PriceKey(
-                    str(r["item_kind"]),
-                    str(r["item_ref"]),
-                    Colour(str(r["colour"])) if r["colour"] else None,
-                ),
-                Cents(int(str(r["amount_cents"]))),
-                PriceUnit(str(r["unit"])),
-                "Sample supplier",
-                today,
-            )
-            for r in demo.demo_prices("p", "g", "o")
-        ),
-    )
-    job = QuoteJob(
-        positions=(pos,),
-        cut_lists=cut_lists,
-        groups=groups,
-        plans=plans,
-        kerf_mm=constants.kerf_mm,
-        installation={"P1": Installation(ral=True, old_window_removal=True, wall_repair=True)},
-        extras=(
-            Extra(ExtraKind.SILL, "200 mm", 1, length_mm=Mm(1200), colour=Colour.WHITE),
-            Extra(ExtraKind.SHUTTER, "standard", 1, area_mm2=Mm2(1_680_000)),
-            Extra(ExtraKind.SCREEN, "standard", 1, area_mm2=Mm2(1_680_000)),
-        ),
-        transport_km=40,
-        discount=Discount(Cents(0), Bp(0)),
-    )
-    settings = PricingSettings(
-        margin_bp=Bp(2500),
-        vat_registered=True,
-        vat_bp=Bp(1800),
-        advance_bp=Bp(5000),
-        glass_min_area_mm2=Mm2(300_000),
-        gasket_extra_bp=Bp(500),
-        size_thresholds=SizeThresholds(
-            Mm2(demo.DEMO_SMALL_MAX_MM2), Mm2(demo.DEMO_STANDARD_MAX_MM2)
-        ),
+    extras = [
+        {"kind": "sill", "ref": "PVC 200 mm", "qty": 1, "colour": "white", "length_mm": 1200},
+        {"kind": "shutter", "ref": "PVC", "qty": 1, "area_mm2": 1_680_000},
+        {"kind": "screen", "ref": "rolo", "qty": 1, "area_mm2": 1_680_000},
+    ]
+
+    result = demo_catalogue.calculate(
+        system.key,
+        {"positions": [position], "extras": extras, "transport_km": 40},
+        date(2026, 11, 14),
     )
 
-    assert price_job(job, book, settings).total_cents > 0
+    assert result["price"]["total_cents"] > 0
+    if system.material.value == "aluminium":
+        assert result["cut_lists"]["P1"]["steel"] == []
+
+
+def test_aluminium_costs_more_than_pvc_and_premium_more_than_budget() -> None:
+    """A sanity check against the market research: thermal-break aluminium is about twice PVC."""
+    position = {
+        "ref": "P1",
+        "construction_type": "two_field_t_mullion",
+        "width_mm": 1400,
+        "height_mm": 1400,
+        "qty": 4,
+        "colour": "white",
+        "glass_build": "4-16-4",
+        "openings": ["turn_left", "tilt_turn_right"],
+        "readings": None,
+        "installation": {
+            "install": True,
+            "ral": False,
+            "old_window_removal": False,
+            "wall_repair": False,
+        },
+    }
+    totals = {
+        s.key: demo_catalogue.calculate(s.key, {"positions": [position]}, date(2026, 11, 14))[
+            "price"
+        ]["total_cents"]
+        for s in demo_catalogue.SYSTEMS
+    }
+
+    assert totals["rehau-euro-design-70"] < totals["salamander-greenevolution-76"]
+    assert totals["salamander-greenevolution-76"] < totals["rehau-synego-80"]
+    assert totals["alumil-m9400"] < totals["alumil-smartia-s67"] < totals["alumil-smartia-m11000"]
+    assert 1.6 < totals["alumil-smartia-s67"] / totals["rehau-euro-design-70"] < 2.4
 
 
 def test_demo_data_is_marked_as_sample() -> None:
     assert "izmišljeni" in demo.DEMO_NAME
     assert demo.DEMO_EMAIL.endswith(".invalid")
-    assert demo.DEMO_SHEET["system_id"] == "sample-not-real"
+    assert "nisu cijene radionice" in demo_catalogue.PRICE_NOTE
+
+
+# --- development demo endpoints -----------------------------------------------------------------
+
+
+def dev_app(monkeypatch: pytest.MonkeyPatch, environment: str, flag: str | None) -> TestClient:
+    from quote_engine.settings import get_settings
+
+    monkeypatch.setenv("QUOTE_ENGINE_ENVIRONMENT", environment)
+    if environment == "production":
+        monkeypatch.setenv("QUOTE_ENGINE_DATABASE_URL", "postgresql+psycopg://x:y@localhost/z")
+    if flag is None:
+        monkeypatch.delenv("QUOTE_ENGINE_DEV_DEMO", raising=False)
+    else:
+        monkeypatch.setenv("QUOTE_ENGINE_DEV_DEMO", flag)
+    get_settings.cache_clear()
+    try:
+        return TestClient(create_app())
+    finally:
+        get_settings.cache_clear()
+
+
+@pytest.mark.parametrize(
+    ("environment", "flag"), [("development", None), ("development", "0"), ("production", "1")]
+)
+def test_dev_endpoints_are_off_unless_asked_and_never_in_production(
+    monkeypatch: pytest.MonkeyPatch, environment: str, flag: str | None
+) -> None:
+    client = dev_app(monkeypatch, environment, flag)
+
+    assert client.get("/api/v1/dev/catalogue").status_code == 404
+
+
+def test_dev_endpoints_price_with_the_real_engine(monkeypatch: pytest.MonkeyPatch) -> None:
+    client = dev_app(monkeypatch, "development", "1")
+    systems = client.get("/api/v1/dev/catalogue").json()["systems"]
+    body = {
+        "system_key": systems[0]["key"],
+        "revision": {"margin_bp": 2500, "valid_days": 15, "positions": [position()]},
+    }
+
+    one = client.post("/api/v1/dev/calculate", json=body).json()["price"]["total_cents"]
+    body["revision"]["positions"] = [position(qty=3)]
+    three = client.post("/api/v1/dev/calculate", json=body).json()["price"]["total_cents"]
+
+    assert {s["material"] for s in systems} == {"pvc", "aluminium"}
+    assert 0 < one < three  # the price follows what was entered
+    measured = client.post(
+        "/api/v1/dev/measure",
+        json={
+            "readings": {"widths": [830, 832, 831], "heights": [1430, 1431, 1430]},
+            "colour": "white",
+        },
+    ).json()
+    assert (measured["width_mm"], measured["height_mm"]) == (810, 1410)
