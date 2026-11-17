@@ -1,0 +1,8 @@
+[Unit]
+Description=Delete expired "Try it" sandbox workshops
+After=docker.service
+Requires=docker.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/quote-engine-purge-sandboxes

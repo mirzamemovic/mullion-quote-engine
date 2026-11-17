@@ -63,6 +63,8 @@ if [[ ! -f "$ETC_DIR/app.env" ]]; then
     cat > "$ETC_DIR/app.env" <<'EOF'
 # Root-only secrets for the app. Fill in every value; never commit this file.
 DOMAIN=
+# https://<DOMAIN>, used in the invite links that `manage.py create-workshop` prints
+QUOTE_ENGINE_PUBLIC_URL=
 POSTGRES_PASSWORD=
 # age public key that backups are encrypted to (the private key stays in a password manager)
 BACKUP_AGE_RECIPIENT=
@@ -82,5 +84,12 @@ install -m 0644 "$(dirname "$0")/systemd/quote-engine-backup.service" /etc/syste
 install -m 0644 "$(dirname "$0")/systemd/quote-engine-backup.timer" /etc/systemd/system/
 systemctl daemon-reload
 systemctl enable --now quote-engine-backup.timer
+
+echo "== hourly sandbox clean-up timer"
+install -m 0755 "$(dirname "$0")/purge-sandboxes.sh" /usr/local/bin/quote-engine-purge-sandboxes
+install -m 0644 "$(dirname "$0")/systemd/quote-engine-sandboxes.service" /etc/systemd/system/
+install -m 0644 "$(dirname "$0")/systemd/quote-engine-sandboxes.timer" /etc/systemd/system/
+systemctl daemon-reload
+systemctl enable --now quote-engine-sandboxes.timer
 
 echo "== done. Next: fill in $ETC_DIR/app.env, configure rclone as root, open 80/443 in OCI."
