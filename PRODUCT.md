@@ -6,18 +6,20 @@
 
 web
 
-Phone-first mobile web (the owner on site), also used at a PC in the workshop. Served by the same FastAPI process as the API, one origin.
+Phone-first mobile web (the owner on site), also used at a PC in the workshop. Served by the same FastAPI process as the API, one origin. Multi-workshop since 2026-11-17: every workshop runs its own quote engine with its own systems, sheets, prices and team (`docs/adr/0008-any-workshop.md`).
 
 ## Users
 
-- **The owner (primary).** Runs a small PVC window workshop in Kosovo. Measures openings on building sites and in clients' homes, on his phone, often in bright sunlight, with dusty or wet hands, sometimes on a ladder. App comfort is Viber/WhatsApp level: he messages and calls daily and uses little else, so every screen must be obvious without explanation. Job on site: measure each opening, turn it into a priced quote, and send it to the client before he leaves.
+- **The owner (primary).** Runs a small window workshop (PVC or aluminium) in the region; the first one is a family-run PVC workshop in Kosovo. Measures openings on building sites and in clients' homes, on his phone, often in bright sunlight, with dusty or wet hands, sometimes on a ladder. App comfort is Viber/WhatsApp level: he messages and calls daily and uses little else, so every screen must be obvious without explanation. Job on site: measure each opening, turn it into a priced quote, and send it to the client before he leaves.
 - **The owner at the workshop PC.** The same person at a laptop or PC: keeps price lists current (a supplier raised prices by X%), reads the cutting plan, checks quotes, records payments.
-- **The admin.** The developer who maintains the technical catalogue: profile systems, system sheets with their deductions, hardware sets, construction types, users and sessions. Uses TOTP.
-- **Demo workshop.** PLAN.md includes a public demo workshop with invented data (`demo@example.invalid`), wiped nightly. Confirmed as a feature, not as a primary design audience.
+- **The owner setting the workshop up.** At the PC, once and then now and then: enters each profile system's sheet (deductions from the manufacturer's catalogue, each with its page), fills the price list (in the app or as a CSV from a spreadsheet, optionally starting from flagged market estimates), invites staff, picks the currency. A checklist says what is still missing, asked of the engine itself.
+- **Staff.** Make quotes, clients and payments; read the catalogue and prices; change nothing else. Same phone flow as the owner.
+- **Visitors trying it ("Try it").** A recruiter or another workshop clicks Try it and gets a private sandbox workshop with sample data for 24 hours, no account. Must understand the product within a minute; a feature, not the primary design audience.
+- **The operator.** The developer runs the platform from the command line only (creating workshops and their first owner's invite); there is no web super-admin.
 
 ## Product Purpose
 
-Mjera (working name) replaces pencil-and-paper quoting. From three width and three height readings per opening it computes the window size, cuts every piece with its formula, packs the pieces onto the fewest stock bars, prices the job layer by layer and produces the client PDF and the workshop cutting plan.
+Mullion replaces pencil-and-paper quoting for window workshops. From three width and three height readings per opening it computes the window size, cuts every piece with its formula, packs the pieces onto the fewest stock bars, prices the job layer by layer and produces the client PDF and the workshop cutting plan.
 
 Success: the client gets a correct, explained price in minutes, on site; the workshop buys fewer bars and cuts with fewer mistakes; a price the client accepted never changes afterwards.
 
@@ -32,19 +34,20 @@ Every number explains itself. Each cut piece carries its formula (`W + 2a = 1200
 - Measuring: three widths and three heights per wall opening; the smallest counts; readings more than 10 mm apart are a warning. Window drawings and opening sides are always shown from inside.
 - Five construction types in v1: single sash tilt-and-turn, two fields with a fixed T-mullion, two sashes with a false mullion, fixed glazing, balcony door. Extras: sills (per metre), roller shutters and insect screens (per m²), manual lines.
 - Units: sizes in whole millimetres, money in euros (stored as cents), percentages shown as %.
-- Language: Bosnian by default, English one tap away. Client PDFs in Bosnian or Albanian.
+- Language: English by default (workshops pick their own), Bosnian one tap away. Client PDFs in English or Bosnian; Albanian later.
+- Money: each workshop picks its currency once (EUR, BAM, RSD, ALL, MKD); amounts are whole minor units.
 - Quote states: draft, sent, accepted, rejected; expired is computed from the validity (15 days by default). Editing a sent quote makes a new revision.
 
 ## Capabilities and Constraints
 
 - Buttons and touch targets at least 44 px; high contrast; one task per screen; sizes always in mm, labelled, with `inputmode="numeric"`.
 - Remember the last profile system, colour and glass; a "copy previous window" action.
-- A "DEMO" banner on every screen in the demo workshop.
+- A banner on every screen of a sandbox: sample data, the hours left, and not to enter real client data.
 - Data through TanStack Query, forms through React Hook Form + Zod, types only from the generated OpenAPI schema (`frontend/openapi.json`); i18next keys in `bs.json` and `en.json`.
 - Content-Security-Policy is `default-src 'self'`: no external fonts, scripts, images or `data:` URIs. Fonts must be bundled with the app.
 - Session by cookie with a CSRF header; the admin passes a TOTP step; sensitive actions (prices, system sheets, export, erase) ask for the password again.
 - No Figma designs exist. Mirza decided (2026-11-13) that the screens are designed from PLAN.md section 7 with Impeccable.
-- Undecided: the product name. "Mjera" (from *po mjeri*, made to measure) is a working name chosen on Mirza's delegation; the workshop's own name from its settings is shown alongside it.
+- The product name is **Mullion** (decided 2026-11-17; it replaced the working name Mjera). The workshop's own name from its profile is shown alongside it.
 
 ## Brand Commitments
 
@@ -62,7 +65,8 @@ Every number explains itself. Each cut piece carries its formula (`W + 2a = 1200
 2. **Built for the site, not the desk.** Sunlight, dust, one hand, a ladder: big targets, strong contrast, the number keypad, one decision per screen.
 3. **Never guess.** A missing catalogue value or price is a clear, fixable stop, never a silent default.
 4. **What the client accepted stays accepted.** Accepted quotes are frozen; changes go through a new revision.
-5. **The workshop's own words.** Bosnian first, the trade's terms, nothing a Viber-level user would have to learn.
+5. **The workshop's own words.** The trade's terms in the workshop's language, nothing a Viber-level user would have to learn.
+6. **Set up once, from the source.** Deductions come from the catalogue page they are printed on and prices from the supplier; estimates are allowed only when flagged, and every quote using one says so.
 
 ## Accessibility & Inclusion
 

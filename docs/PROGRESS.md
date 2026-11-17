@@ -41,7 +41,7 @@ Only Mirza writes "Gate N passed" here.
 | Review `docs/adr/0007-m0-tooling.md` (status: proposed) | docs | ADR decisions are Mirza's (PLAN.md section 13) |
 | Request the Oracle Always Free server, register the domain, and follow `docs/runbook.md` (first setup); add the `DEPLOY_*` secrets once the repository exists | Oracle, Cloudflare, GitHub | M9 going live; PLAN.md asked for the server request in M0 because capacity can take days |
 | Decide how long login attempts and the audit log are kept | `docs/privacy.md` | PLAN.md does not say |
-| Docker Desktop: Windows was restarted on 2026-11-17 and virtualization is on, but Docker Desktop opened an error window at start (its log only says the backend reported an error). Read that window, or approve installing PostgreSQL 18 with `winget` instead. Then run `docker compose up db` and `cd backend && uv run pytest` | this PC | Every database test (auth, CSRF, tenancy, snapshot, invites, sandboxes, roles) is skipped until a PostgreSQL answers |
+| **Resolved 2026-11-17.** PostgreSQL 18 was installed with `winget` (Mirza's choice) and every database test now runs. Docker Desktop itself is optional now: it failed only because it was launched from inside a sandboxed app whose AppData redirect broke its socket; start it from the Start menu if the full compose stack is wanted | this PC | Done: see "The database tests ran for the first time" below |
 | Replace the demo's market-estimate prices with real supplier quotes (EB Group / Salamander, REHAU, Alumil Kosovo, your glass and hardware suppliers) | `docs/market-prices.md`, `backend/src/quote_engine/services/demo_catalogue.py` | Kosovo distributors publish no prices; several values are regional proxies or assumptions |
 | Confirm aluminium rules: corners crimped (no weld allowance), no steel, the same installation gaps as PVC | system sheets (`material`, `reinforced`) | The gap table in the skill is for PVC |
 | Confirm the opening-side convention: `*_left` means hinges on the left, seen from inside (DIN); the drawings put the handle on the other side | `frontend/src/components/WindowDrawing.tsx` | The engine names openings left/right without saying hinge or handle |
@@ -190,7 +190,7 @@ Plan approved 2026-11-17, in phases, each on its own branch stacked on `feat/m8-
 
 | Phase | Branch | Status |
 |---|---|---|
-| 1 Verify the base | `feat/m6-verify` | Clean-ups committed; the database tests still wait for PostgreSQL |
+| 1 Verify the base | `feat/m6-verify`, verified on `feat/m6-catalogue-setup` | Done 2026-11-17: every database test ran against PostgreSQL 18 for the first time |
 | 2 Workshops, roles, invites, sandbox | `feat/m6-workshops` | Built; offline tests pass; database tests written, not run |
 | 3 Setup checklist, drafts, CSV prices | `feat/m6-catalogue-setup` | Backend built; offline tests pass; database tests written, not run; screens come in phase 4 |
 | 4 Admin panel and remaining screens | `feat/m8-admin-panel` | todo |
@@ -206,3 +206,14 @@ Checks (2026-11-17): ruff, format, mypy strict, import-linter pass; `pytest` 542
 Phase 3 files (under `backend/src/quote_engine/`): `engine/readiness.py` (the checklist asks the real rules and pricing: probe windows of every type, both opening sides and every reachable size class, with a recording price book; `TrackingBook` for the estimate warning), `engine/warnings.py` (`prices_estimated`), migration `0004` (draft or published price lists and sheets; `price_entries.is_estimate`), `services/setup.py` (checklist, starter prices), `services/price_csv.py` (CSV import and export), `api/routes_setup.py` (`/setup/status`, `/setup/price-template.csv`, `/setup/starter-prices`, draft price lists with entries, publish, delete and CSV, draft sheets and publish, `/engine/cut-preview`). Quotes use published versions only. Demo prices are flagged as estimates, so demo quotes carry the warning.
 
 Checks (2026-11-17): ruff, format, mypy strict, import-linter pass; `pytest` 587 passed, 74 skipped (71 database cases, 3 golden); engine coverage above the 95% floor; frontend lint, typecheck and tests pass.
+
+### The database tests ran for the first time (2026-11-17)
+
+PostgreSQL 18.7 was installed with `winget` at Mirza's go-ahead, as the Windows service `postgresql-18` on port 5432. It accepts connections from this machine only (`pg_hba.conf` allows 127.0.0.1 and ::1). The local role `quote_engine` and the databases `quote_engine` and `quote_engine_test` use the local-development password that `compose.yaml` already documents.
+
+First run: 68 of 71 database tests passed. The three failures were real:
+- A system sheet could be published without the deductions its construction types need. Both ways of publishing now ask the engine (`services/setup.py: require_complete_sheet`); a type switched on later still stops a quote with "missing catalogue value".
+- With no sheet yet, the readiness probe assumed aluminium was reinforced and asked for steel prices. PVC is now assumed reinforced and aluminium not, until the sheet says.
+- An M6 test picked the first system in the list, which became an aluminium one when aluminium was added on 2026-11-14; it had never run. It now picks its system by key and checks the rule above.
+
+After the fixes, with `QUOTE_ENGINE_REQUIRE_DATABASE=1`: `pytest --cov` 659 passed, 3 skipped (the golden jobs), total coverage 93.3% (floor 80%).
