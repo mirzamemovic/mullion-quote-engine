@@ -192,7 +192,7 @@ Plan approved 2026-11-17, in phases, each on its own branch stacked on `feat/m8-
 |---|---|---|
 | 1 Verify the base | `feat/m6-verify` | Clean-ups committed; the database tests still wait for PostgreSQL |
 | 2 Workshops, roles, invites, sandbox | `feat/m6-workshops` | Built; offline tests pass; database tests written, not run |
-| 3 Setup checklist, drafts, CSV prices | `feat/m6-catalogue-setup` | todo |
+| 3 Setup checklist, drafts, CSV prices | `feat/m6-catalogue-setup` | Backend built; offline tests pass; database tests written, not run; screens come in phase 4 |
 | 4 Admin panel and remaining screens | `feat/m8-admin-panel` | todo |
 | 5 PDFs | `feat/m7-pdfs` | todo |
 | 6 Pricing policy and quality | `feat/m5-pricing-policy`, `feat/m9-quality` | todo |
@@ -202,3 +202,7 @@ Plan approved 2026-11-17, in phases, each on its own branch stacked on `feat/m8-
 Phase 2 files (under `backend/src/quote_engine/`): migration `0003` (workshop email, currency, language, sandbox expiry; `invites`; `sandbox_requests`; former admins become owners), `services/workshops.py` (currencies, roles, one active owner, invites), `services/sandbox.py` (create, limits, purge), `services/auth.py` (`open_session`, optional TOTP, password change), `api/routes_me.py`, `api/routes_workshop.py`, `api/routes_join.py`, owner-only rights in `api/routes_admin.py` and client export/erase, `manage.py` (`create-workshop` prints the owner's invite link, `invite`, `purge-sandboxes`), `infra/purge-sandboxes.sh` with an hourly systemd timer.
 
 Checks (2026-11-17): ruff, format, mypy strict, import-linter pass; `pytest` 542 passed, 66 skipped (63 database cases, 3 golden); frontend lint, typecheck, 24 tests and build pass. The new database tests (invites, team, roles, sandboxes, currency, password, two-step) have not run.
+
+Phase 3 files (under `backend/src/quote_engine/`): `engine/readiness.py` (the checklist asks the real rules and pricing: probe windows of every type, both opening sides and every reachable size class, with a recording price book; `TrackingBook` for the estimate warning), `engine/warnings.py` (`prices_estimated`), migration `0004` (draft or published price lists and sheets; `price_entries.is_estimate`), `services/setup.py` (checklist, starter prices), `services/price_csv.py` (CSV import and export), `api/routes_setup.py` (`/setup/status`, `/setup/price-template.csv`, `/setup/starter-prices`, draft price lists with entries, publish, delete and CSV, draft sheets and publish, `/engine/cut-preview`). Quotes use published versions only. Demo prices are flagged as estimates, so demo quotes carry the warning.
+
+Checks (2026-11-17): ruff, format, mypy strict, import-linter pass; `pytest` 587 passed, 74 skipped (71 database cases, 3 golden); engine coverage above the 95% floor; frontend lint, typecheck and tests pass.
