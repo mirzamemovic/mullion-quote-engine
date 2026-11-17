@@ -2451,6 +2451,40 @@
         "title": "SheetDraftIn",
         "type": "object"
       },
+      "SheetFieldsOut": {
+        "additionalProperties": false,
+        "description": "The values a system sheet needs: the five lengths, bar lengths per role, deductions.",
+        "properties": {
+          "bar_roles": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Bar Roles",
+            "type": "array"
+          },
+          "deductions": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Deductions",
+            "type": "array"
+          },
+          "lengths": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Lengths",
+            "type": "array"
+          }
+        },
+        "required": [
+          "lengths",
+          "bar_roles",
+          "deductions"
+        ],
+        "title": "SheetFieldsOut",
+        "type": "object"
+      },
       "SheetIn": {
         "additionalProperties": false,
         "properties": {
@@ -5663,6 +5697,60 @@
         "summary": "Update System",
         "tags": [
           "admin"
+        ]
+      }
+    },
+    "/api/v1/systems/{system_id}/sheet-fields": {
+      "get": {
+        "description": "Which deductions and bar lengths this system's sheet needs, asked of the cut rules for the\nworkshop's enabled construction types (the sheet editor shows exactly these fields).",
+        "operationId": "sheet_fields_api_v1_systems__system_id__sheet_fields_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "system_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "System Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "reinforced",
+            "required": false,
+            "schema": {
+              "default": true,
+              "title": "Reinforced",
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SheetFieldsOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Sheet Fields",
+        "tags": [
+          "setup"
         ]
       }
     },

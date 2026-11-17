@@ -62,7 +62,7 @@ from quote_engine.engine.optimizer.plan import CuttingPlan
 from quote_engine.engine.rules.registry import TYPES
 from quote_engine.engine.sheet import system_constants_from_mapping
 from quote_engine.engine.units import Bp, Cents, pct
-from quote_engine.services import auth, calculation, workshops
+from quote_engine.services import auth, calculation, setup, workshops
 from quote_engine.services import quotes as svc
 
 router = APIRouter(tags=["admin"])
@@ -109,6 +109,7 @@ def create_sheet(system_id: uuid.UUID, body: SheetIn, a: OwnerStepUp) -> SheetOu
     """A new version of a system's sheet. The constants are checked by the engine first."""
     system = a.db.get(ProfileSystem, system_id)
     constants = system_constants_from_mapping(body.constants)  # raises InvalidInput -> 422
+    setup.require_complete_sheet(a.db, system, body.constants)
     if constants.material.value != system.material:
         raise InvalidInput(
             f"this sheet is for {constants.material.value}, the system is {system.material}"

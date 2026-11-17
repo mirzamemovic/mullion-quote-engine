@@ -39,6 +39,7 @@ from quote_engine.db.models import (
 )
 from quote_engine.db.models import Session as SessionRow
 from quote_engine.db.repository import NotFoundError, Scoped
+from quote_engine.engine.rules.registry import TYPES
 from quote_engine.services import (
     auth,
     calculation,
@@ -568,17 +569,36 @@ def test_preview_cuts_one_position(api: TestClient, shop_a: SampleWorkshop) -> N
     assert response.json()["warnings"] == []
 
 
-def test_a_missing_deduction_is_a_422_naming_it(api: TestClient, shop_a: SampleWorkshop) -> None:
+def system_with_key(api: TestClient, key: str) -> str:
+    return str(next(s["id"] for s in api.get(f"{API}/systems").json() if s["key"] == key))
+
+
+def test_a_sheet_must_hold_every_deduction_its_types_need(
+    api: TestClient, shop_a: SampleWorkshop
+) -> None:
+    """Publishing checks the enabled types; a type switched on later still stops a quote."""
     log_in(api, shop_a.email)
     reauth(api)
-    sheet = {**demo_catalogue.SYSTEMS[0].sheet(), "deductions": {"sash_width": 1}}
-    created = api.post(f"{API}/systems/{system_id(api)}/sheets", json={"constants": sheet})
-    assert created.status_code == 201
+    pvc = demo_catalogue.SYSTEMS[0]
+    target = system_with_key(api, pvc.key)
+    fixed_only = {
+        k: v for k, v in pvc.sheet()["deductions"].items() if k.startswith(("fixed", "frame"))
+    }
+    sheet = {**pvc.sheet(), "deductions": fixed_only}
+
+    refused = api.post(f"{API}/systems/{target}/sheets", json={"constants": sheet})
+    assert refused.status_code == 422
+    assert refused.json()["title"] == "missing catalogue value"
+    for key in TYPES:
+        api.put(f"{API}/construction-types", json={"key": key, "enabled": key == "fixed"})
+    created = api.post(f"{API}/systems/{target}/sheets", json={"constants": sheet})
+    assert created.status_code == 201, created.text
     assert created.json()["version"] == 2
 
+    api.put(f"{API}/construction-types", json={"key": "single_sash_tilt_turn", "enabled": True})
     position = revision_body()["positions"][0]
     response = api.post(
-        f"{API}/engine/preview", json={"profile_system_id": system_id(api), "position": position}
+        f"{API}/engine/preview", json={"profile_system_id": target, "position": position}
     )
     assert response.status_code == 422
     assert response.json()["title"] == "missing catalogue value"
@@ -1062,3 +1082,18 @@ def test_a_sheet_is_drafted_checked_and_published(api: TestClient, shop_a: Sampl
     assert api.post(publish).json()["status"] == "published"
     assert api.post(publish).status_code == 409
     assert api.post(drafts, json={"constants": {"colour_of_the_sky": 1}}).status_code == 422
+
+
+def test_the_sheet_editor_is_told_which_values_to_ask_for(
+    api: TestClient, shop_a: SampleWorkshop
+) -> None:
+    log_in(api, shop_a.email)
+    pvc = system_with_key(api, demo_catalogue.SYSTEMS[0].key)
+    alu = next(s for s in api.get(f"{API}/systems").json() if s["material"] == "aluminium")
+
+    fields = api.get(f"{API}/systems/{pvc}/sheet-fields").json()
+    assert "kerf_mm" in fields["lengths"]
+    assert "frame" in fields["bar_roles"]
+    assert {"sash_width", "frame_steel", "fixed_glass"} <= set(fields["deductions"])
+    unreinforced = api.get(f"{API}/systems/{alu['id']}/sheet-fields?reinforced=false").json()
+    assert not [d for d in unreinforced["deductions"] if "steel" in d]

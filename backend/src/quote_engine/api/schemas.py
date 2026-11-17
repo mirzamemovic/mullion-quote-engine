@@ -499,6 +499,14 @@ class CsvIn(Model):
     content_base64: Annotated[str, Field(min_length=1, max_length=1_400_000)]
 
 
+class SheetFieldsOut(Model):
+    """The values a system sheet needs: the five lengths, bar lengths per role, deductions."""
+
+    lengths: list[str]
+    bar_roles: list[str]
+    deductions: list[str]
+
+
 class SheetDraftIn(Model):
     """A system sheet being written: any of the sheet's keys, complete or not."""
 

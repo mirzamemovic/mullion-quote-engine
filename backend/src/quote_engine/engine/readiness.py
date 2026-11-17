@@ -60,8 +60,7 @@ MIRRORED = {
     Opening.FIXED: Opening.FIXED,
 }
 
-# Stand-ins for a probe only (see the module docstring). Lengths need any whole value; the
-# reinforced default asks for the steel deductions too, so nothing a real sheet needs is missed.
+# Stand-ins for a probe only (see the module docstring). Lengths need any whole value.
 _STAND_IN_LENGTH = {
     "weld_allowance_mm": 3,
     "kerf_mm": 4,
@@ -139,7 +138,8 @@ def probe_constants(sheet: Mapping[str, object], construction_types: Iterable[st
     constants = SystemConstants(
         system_id=str(sheet.get("system_id") or "draft"),
         material=material,
-        reinforced=reinforced if isinstance(reinforced, bool) else True,
+        # Until the sheet says, PVC is assumed reinforced (steel is asked for) and aluminium not.
+        reinforced=reinforced if isinstance(reinforced, bool) else material is Material.PVC,
         bar_length_mm=bars,
         deductions=deductions,
         weld_allowance_mm=lengths["weld_allowance_mm"],

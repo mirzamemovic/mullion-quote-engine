@@ -1008,6 +1008,27 @@ export interface paths {
         patch: operations["update_system_api_v1_systems__system_id__patch"];
         trace?: never;
     };
+    "/api/v1/systems/{system_id}/sheet-fields": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Sheet Fields
+         * @description Which deductions and bar lengths this system's sheet needs, asked of the cut rules for the
+         *     workshop's enabled construction types (the sheet editor shows exactly these fields).
+         */
+        get: operations["sheet_fields_api_v1_systems__system_id__sheet_fields_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/systems/{system_id}/sheets": {
         parameters: {
             query?: never;
@@ -2125,6 +2146,18 @@ export interface components {
             source_pages: {
                 [key: string]: string;
             };
+        };
+        /**
+         * SheetFieldsOut
+         * @description The values a system sheet needs: the five lengths, bar lengths per role, deductions.
+         */
+        SheetFieldsOut: {
+            /** Bar Roles */
+            bar_roles: string[];
+            /** Deductions */
+            deductions: string[];
+            /** Lengths */
+            lengths: string[];
         };
         /** SheetIn */
         SheetIn: {
@@ -4374,6 +4407,39 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ProfileSystemOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    sheet_fields_api_v1_systems__system_id__sheet_fields_get: {
+        parameters: {
+            query?: {
+                reinforced?: boolean;
+            };
+            header?: never;
+            path: {
+                system_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SheetFieldsOut"];
                 };
             };
             /** @description Validation Error */

@@ -25,6 +25,7 @@ from quote_engine.api.schemas import (
     PublishIn,
     SetupStatusOut,
     SheetDraftIn,
+    SheetFieldsOut,
     SheetOut,
     StarterIn,
 )
@@ -40,9 +41,9 @@ from quote_engine.db.models import (
 from quote_engine.db.repository import Scoped
 from quote_engine.engine.errors import InvalidInput
 from quote_engine.engine.model import Colour, PositionSpec
-from quote_engine.engine.readiness import PROBE_OPENINGS
+from quote_engine.engine.readiness import PROBE_OPENINGS, probe_constants
 from quote_engine.engine.rules.registry import cut_position
-from quote_engine.engine.sheet import ALL_KEYS, system_constants_from_mapping
+from quote_engine.engine.sheet import ALL_KEYS, LENGTH_KEYS, system_constants_from_mapping
 from quote_engine.engine.units import Mm
 from quote_engine.services import price_csv, setup
 from quote_engine.services import quotes as svc
@@ -277,6 +278,7 @@ def publish_sheet(system_id: uuid.UUID, version: int, a: OwnerStepUp) -> SheetOu
     if row.status != DRAFT:
         raise svc.QuoteError("this sheet is already published")
     constants = system_constants_from_mapping(row.constants)  # MissingConstant -> 422
+    setup.require_complete_sheet(a.db, system, row.constants)
     if constants.material.value != system.material:
         raise InvalidInput(
             f"this sheet is for {constants.material.value}, the system is {system.material}"
@@ -284,6 +286,24 @@ def publish_sheet(system_id: uuid.UUID, version: int, a: OwnerStepUp) -> SheetOu
     row.status = PUBLISHED
     svc.audit(a.db, a.user.id, "publish", "system_sheet", row.id, {"version": row.version})
     return SheetOut.model_validate(row)
+
+
+@router.get("/systems/{system_id}/sheet-fields")
+def sheet_fields(system_id: uuid.UUID, a: LoggedIn, reinforced: bool = True) -> SheetFieldsOut:
+    """Which deductions and bar lengths this system's sheet needs, asked of the cut rules for the
+    workshop's enabled construction types (the sheet editor shows exactly these fields)."""
+    system = a.db.get(ProfileSystem, system_id)
+    bare = {"system_id": system.key, "material": system.material, "reinforced": reinforced}
+    names = probe_constants(bare, setup.enabled_types(a.db)).missing
+
+    def named(prefix: str) -> list[str]:
+        return [n.removeprefix(prefix) for n in names if n.startswith(prefix)]
+
+    return SheetFieldsOut(
+        lengths=list(LENGTH_KEYS),
+        bar_roles=named("bar_length_mm."),
+        deductions=named("deductions."),
+    )
 
 
 @router.post("/engine/cut-preview")

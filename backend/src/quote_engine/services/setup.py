@@ -30,7 +30,7 @@ from quote_engine.db.models import (
     Workshop,
 )
 from quote_engine.db.repository import Scoped
-from quote_engine.engine.errors import InvalidInput
+from quote_engine.engine.errors import InvalidInput, MissingConstant
 from quote_engine.engine.model import Colour, Opening
 from quote_engine.engine.pricing import SizeThresholds
 from quote_engine.engine.readiness import PROBE_GLASS, NeededPrice, prices_needed, probe_constants
@@ -127,6 +127,17 @@ def latest_sheet(db: Scoped, system_id: uuid.UUID) -> SystemSheetVersion | None:
 def sheet_mapping(system: ProfileSystem, constants: dict[str, Any]) -> dict[str, Any]:
     """A sheet's constants, with the system's own key and (if unset) its material."""
     return {"material": system.material, **constants, "system_id": system.key}
+
+
+def require_complete_sheet(db: Scoped, system: ProfileSystem, constants: dict[str, Any]) -> None:
+    """Refuse to publish a sheet that lacks a value the enabled construction types need.
+
+    Raises ``MissingConstant`` naming the first one (a 422 the sheet editor can point at). A
+    type switched on later can still need more; a quote then stops with the same error.
+    """
+    missing = probe_constants(sheet_mapping(system, constants), enabled_types(db)).missing
+    if missing:
+        raise MissingConstant(system.key, missing[0])
 
 
 def setup_status(db: Scoped, today: date, price_list_id: uuid.UUID | None = None) -> SetupStatus:
