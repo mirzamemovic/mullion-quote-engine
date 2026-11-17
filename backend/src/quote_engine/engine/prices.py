@@ -63,6 +63,8 @@ class Price:
     unit: PriceUnit
     supplier: str
     quoted_on: date
+    # A starter price (market estimate) rather than a supplier's quote; quotes using it warn.
+    estimate: bool = False
 
     def __post_init__(self) -> None:
         if type(self.amount_cents) is not int or self.amount_cents < 0:

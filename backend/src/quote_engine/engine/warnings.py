@@ -12,6 +12,7 @@ from enum import StrEnum
 from quote_engine.engine.errors import MissingConstant
 from quote_engine.engine.measuring import Measurement
 from quote_engine.engine.model import Opening, PositionSpec
+from quote_engine.engine.prices import Price
 from quote_engine.engine.units import Bp, Mm, Mm2, grams_for_area, grams_for_length
 
 
@@ -26,6 +27,7 @@ class WarningCode(StrEnum):
     SIZE_OUTSIDE_SYSTEM = "size_outside_system"
     PRICE_LIST_OLD = "price_list_old"
     MARGIN_LOW = "margin_low"
+    PRICES_ESTIMATED = "prices_estimated"
 
 
 @dataclass(frozen=True)
@@ -142,6 +144,18 @@ def price_list_age_warning(valid_from: date, today: date, warn_days: int) -> Quo
         return None
     return QuoteWarning(
         WarningCode.PRICE_LIST_OLD, f"the price list is {age} days old (more than {warn_days})"
+    )
+
+
+def estimate_warning(used: Iterable[Price]) -> QuoteWarning | None:
+    """A warning when a quote uses prices marked as estimates (a starter list, not a supplier)."""
+    estimated = sorted({f"{p.key.kind} {p.key.ref}" for p in used if p.estimate})
+    if not estimated:
+        return None
+    shown = ", ".join(estimated[:3]) + (", ..." if len(estimated) > 3 else "")
+    return QuoteWarning(
+        WarningCode.PRICES_ESTIMATED,
+        f"{len(estimated)} prices are estimates, not your suppliers' prices ({shown})",
     )
 
 
