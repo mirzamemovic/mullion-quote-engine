@@ -20,7 +20,10 @@ from quote_engine.api import (
     routes_admin,
     routes_auth,
     routes_clients,
+    routes_join,
+    routes_me,
     routes_quotes,
+    routes_workshop,
 )
 from quote_engine.settings import get_settings
 
@@ -65,6 +68,9 @@ def create_app() -> FastAPI:
     for router in (
         health.router,
         routes_auth.router,
+        routes_me.router,
+        routes_join.router,
+        routes_workshop.router,
         routes_clients.router,
         routes_quotes.router,
         routes_admin.router,

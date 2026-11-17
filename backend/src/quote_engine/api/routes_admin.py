@@ -1,13 +1,12 @@
-"""Admin endpoints: systems, sheets, profiles, hardware, prices, suppliers, settings, users.
+"""A workshop's own setup: systems, sheets, profiles, hardware, prices, suppliers, settings, team.
 
-Who may do what (PLAN.md sections 6 and 9):
+Who may do what (decided 2026-11-17; each workshop runs its own quote engine):
 
 - Reading the catalogue (systems, sheets, profiles, hardware sets, construction types, price
-  lists, suppliers, settings): any logged-in user, because quoting needs it.
-- Prices, suppliers and settings are the owner's business: any logged-in user may change them;
-  a new price list, a supplier bump and changed settings also need a recent password check.
-- The technical catalogue (systems, system sheets, profiles, hardware sets, construction types),
-  users and sessions: the admin only. A new system sheet also needs the password check.
+  lists, suppliers, settings): anyone in the workshop, because quoting needs it.
+- Changing any of it, and the team and its sessions: the owner only. Staff make quotes.
+- A new price list, a supplier bump, changed settings, a new system sheet, deleting a hardware
+  set and changing someone's login also need a recent password check.
 
 Versions are never edited: a new system sheet or price list is a new version, so a quote keeps
 the exact numbers it was made with.
@@ -19,7 +18,7 @@ from typing import Any
 from fastapi import APIRouter, status
 from sqlalchemy import delete, func, select
 
-from quote_engine.api.deps import Admin, AdminStepUp, LoggedIn, StepUp
+from quote_engine.api.deps import LoggedIn, Owner, OwnerStepUp
 from quote_engine.api.schemas import (
     BumpIn,
     CompareIn,
@@ -39,8 +38,6 @@ from quote_engine.api.schemas import (
     SheetOut,
     SupplierIn,
     SupplierOut,
-    UserCreated,
-    UserIn,
     UserOut,
     UserPatch,
 )
@@ -81,14 +78,14 @@ def list_systems(a: LoggedIn) -> list[ProfileSystemOut]:
 
 
 @router.post("/systems", status_code=status.HTTP_201_CREATED)
-def create_system(body: ProfileSystemIn, a: Admin) -> ProfileSystemOut:
+def create_system(body: ProfileSystemIn, a: Owner) -> ProfileSystemOut:
     row = a.db.add(ProfileSystem(**body.model_dump()))
     svc.audit(a.db, a.user.id, "create", "profile_system", row.id)
     return ProfileSystemOut.model_validate(row)
 
 
 @router.patch("/systems/{system_id}")
-def update_system(system_id: uuid.UUID, body: ProfileSystemIn, a: Admin) -> ProfileSystemOut:
+def update_system(system_id: uuid.UUID, body: ProfileSystemIn, a: Owner) -> ProfileSystemOut:
     row = a.db.get(ProfileSystem, system_id)
     for name, value in body.model_dump().items():
         setattr(row, name, value)
@@ -108,7 +105,7 @@ def list_sheets(system_id: uuid.UUID, a: LoggedIn) -> list[SheetOut]:
 
 
 @router.post("/systems/{system_id}/sheets", status_code=status.HTTP_201_CREATED)
-def create_sheet(system_id: uuid.UUID, body: SheetIn, a: AdminStepUp) -> SheetOut:
+def create_sheet(system_id: uuid.UUID, body: SheetIn, a: OwnerStepUp) -> SheetOut:
     """A new version of a system's sheet. The constants are checked by the engine first."""
     system = a.db.get(ProfileSystem, system_id)
     constants = system_constants_from_mapping(body.constants)  # raises InvalidInput -> 422
@@ -145,7 +142,7 @@ def list_profiles(a: LoggedIn, system_id: uuid.UUID | None = None) -> list[Profi
 
 
 @router.post("/profiles", status_code=status.HTTP_201_CREATED)
-def create_profile(body: ProfileIn, a: Admin) -> ProfileOut:
+def create_profile(body: ProfileIn, a: Owner) -> ProfileOut:
     a.db.get(ProfileSystem, body.profile_system_id)
     row = a.db.add(Profile(**{**body.model_dump(), "role": body.role.value}))
     svc.audit(a.db, a.user.id, "create", "profile", row.id)
@@ -159,14 +156,14 @@ def list_hardware_sets(a: LoggedIn) -> list[HardwareSetOut]:
 
 
 @router.post("/hardware-sets", status_code=status.HTTP_201_CREATED)
-def create_hardware_set(body: HardwareSetIn, a: Admin) -> HardwareSetOut:
+def create_hardware_set(body: HardwareSetIn, a: Owner) -> HardwareSetOut:
     row = a.db.add(HardwareSet(**{**body.model_dump(), "opening_type": body.opening_type.value}))
     svc.audit(a.db, a.user.id, "create", "hardware_set", row.id)
     return HardwareSetOut.model_validate(row)
 
 
 @router.put("/hardware-sets/{set_id}")
-def update_hardware_set(set_id: uuid.UUID, body: HardwareSetIn, a: Admin) -> HardwareSetOut:
+def update_hardware_set(set_id: uuid.UUID, body: HardwareSetIn, a: Owner) -> HardwareSetOut:
     row = a.db.get(HardwareSet, set_id)
     for name, value in {**body.model_dump(), "opening_type": body.opening_type.value}.items():
         setattr(row, name, value)
@@ -175,7 +172,7 @@ def update_hardware_set(set_id: uuid.UUID, body: HardwareSetIn, a: Admin) -> Har
 
 
 @router.delete("/hardware-sets/{set_id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_hardware_set(set_id: uuid.UUID, a: AdminStepUp) -> None:
+def delete_hardware_set(set_id: uuid.UUID, a: OwnerStepUp) -> None:
     row = a.db.get(HardwareSet, set_id)
     a.db.delete(row)
     svc.audit(a.db, a.user.id, "delete", "hardware_set", set_id)
@@ -189,7 +186,7 @@ def list_construction_types(a: LoggedIn) -> list[ConstructionTypeIO]:
 
 
 @router.put("/construction-types")
-def set_construction_type(body: ConstructionTypeIO, a: Admin) -> ConstructionTypeIO:
+def set_construction_type(body: ConstructionTypeIO, a: Owner) -> ConstructionTypeIO:
     if body.key not in TYPES:
         raise svc.QuoteError(f"unknown construction type {body.key!r}")
     row = a.db.first(ConstructionType, ConstructionType.key == body.key)
@@ -228,7 +225,7 @@ def get_price_list(list_id: uuid.UUID, a: LoggedIn) -> PriceListOut:
 
 
 @router.post("/price-lists", status_code=status.HTTP_201_CREATED)
-def create_price_list(body: PriceListIn, a: StepUp) -> PriceListOut:
+def create_price_list(body: PriceListIn, a: OwnerStepUp) -> PriceListOut:
     """A new price-list version, valid from its start date. Older versions stay as they are."""
     _check_suppliers(a.db, {e.supplier_id for e in body.entries})
     entries = [
@@ -245,7 +242,7 @@ def create_price_list(body: PriceListIn, a: StepUp) -> PriceListOut:
 
 
 @router.post("/price-lists/{list_id}/bump", status_code=status.HTTP_201_CREATED)
-def bump_price_list(list_id: uuid.UUID, body: BumpIn, a: StepUp) -> PriceListOut:
+def bump_price_list(list_id: uuid.UUID, body: BumpIn, a: OwnerStepUp) -> PriceListOut:
     """A copy of a price list with one supplier's prices changed by ``bp`` (rounded half up)."""
     source = a.db.get(PriceListVersion, list_id)
     supplier = a.db.get(Supplier, body.supplier_id)
@@ -280,14 +277,14 @@ def list_suppliers(a: LoggedIn) -> list[SupplierOut]:
 
 
 @router.post("/suppliers", status_code=status.HTTP_201_CREATED)
-def create_supplier(body: SupplierIn, a: LoggedIn) -> SupplierOut:
+def create_supplier(body: SupplierIn, a: Owner) -> SupplierOut:
     row = a.db.add(Supplier(**body.model_dump()))
     svc.audit(a.db, a.user.id, "create", "supplier", row.id)
     return SupplierOut.model_validate(row)
 
 
 @router.patch("/suppliers/{supplier_id}")
-def update_supplier(supplier_id: uuid.UUID, body: SupplierIn, a: LoggedIn) -> SupplierOut:
+def update_supplier(supplier_id: uuid.UUID, body: SupplierIn, a: Owner) -> SupplierOut:
     row = a.db.get(Supplier, supplier_id)
     row.name, row.phone, row.kind = body.name, body.phone, body.kind
     svc.audit(a.db, a.user.id, "update", "supplier", row.id)
@@ -303,7 +300,7 @@ def get_settings_(a: LoggedIn) -> SettingsIO:
 
 
 @router.put("/settings")
-def put_settings(body: SettingsIO, a: StepUp) -> SettingsIO:
+def put_settings(body: SettingsIO, a: OwnerStepUp) -> SettingsIO:
     if body.small_max_mm2 >= body.standard_max_mm2:
         raise svc.QuoteError("the small size class must end below the standard one")
     row = svc.settings_of(a.db)
@@ -320,50 +317,39 @@ def put_settings(body: SettingsIO, a: StepUp) -> SettingsIO:
 
 
 @router.get("/users")
-def list_users(a: Admin) -> list[UserOut]:
+def list_users(a: Owner) -> list[UserOut]:
     return [UserOut.model_validate(r) for r in a.db.all(User, order_by=User.email)]
 
 
-@router.post("/users", status_code=status.HTTP_201_CREATED)
-def create_user(body: UserIn, a: AdminStepUp) -> UserCreated:
-    """A new login. An admin gets a TOTP secret, returned once as an ``otpauth://`` link."""
-    try:
-        created = workshops.create_user(
-            a.db.session, a.db.workshop_id, body.email, body.password, body.role
-        )
-    except workshops.SetupError as error:
-        raise svc.QuoteError(str(error)) from None
-    svc.audit(a.db, a.user.id, "create", "user", created.user.id, {"role": body.role})
-    return UserCreated(
-        **UserOut.model_validate(created.user).model_dump(), totp_uri=created.totp_uri
-    )
-
-
 @router.patch("/users/{user_id}")
-def update_user(user_id: uuid.UUID, body: UserPatch, a: AdminStepUp) -> UserOut:
-    """Turn a login on or off. Turning it off also ends all its sessions."""
+def update_user(user_id: uuid.UUID, body: UserPatch, a: OwnerStepUp) -> UserOut:
+    """Turn a login on or off, or change its role. Turning it off also ends all its sessions.
+
+    New people join through an invite link (``POST /invites``), never with a password the owner
+    picked for them.
+    """
     row = a.db.get(User, user_id)
-    if row.id == a.user.id and not body.is_active:
-        raise svc.QuoteError("you cannot turn off your own login")
-    row.is_active = body.is_active
-    if not body.is_active:
+    if row.id == a.user.id:
+        raise svc.QuoteError("you cannot change your own login here")
+    workshops.change_user(a.db.session, row, is_active=body.is_active, role=body.role)
+    if body.is_active is False:
         a.db.session.execute(
             delete(Session).where(
                 Session.workshop_id == a.db.workshop_id, Session.user_id == row.id
             )
         )
-    svc.audit(a.db, a.user.id, "update", "user", row.id, {"is_active": body.is_active})
+    svc.audit(a.db, a.user.id, "update", "user", row.id, body.model_dump(exclude_none=True))
     return UserOut.model_validate(row)
 
 
 @router.get("/sessions")
-def list_sessions(a: Admin) -> list[SessionOut]:
+def list_sessions(a: Owner) -> list[SessionOut]:
     rows = a.db.all(Session, order_by=Session.last_seen_at.desc())
     return [SessionOut.model_validate(r) for r in rows]
 
 
 @router.delete("/sessions/{session_id}", status_code=status.HTTP_204_NO_CONTENT)
-def revoke_session(session_id: uuid.UUID, a: Admin) -> None:
+def revoke_session(session_id: uuid.UUID, a: Owner) -> None:
     if not auth.revoke(a.db.session, a.db.workshop_id, session_id):
         a.db.get(Session, session_id)  # raises NotFoundError -> 404
     svc.audit(a.db, a.user.id, "revoke", "session", session_id)
@@ -377,7 +363,7 @@ def _largest_offcut(plan: CuttingPlan) -> int:
 
 
 @router.post("/admin/compare-optimizer")
-def compare_optimizer(body: CompareIn, a: Admin) -> CompareOut:
+def compare_optimizer(body: CompareIn, a: Owner) -> CompareOut:
     """FFD (what quotes use) against the exact solver, for one bar group of one revision."""
     rev = svc.revision(a.db, a.db.get(Quote, body.quote_id), body.revision_no)
     cuts = calculation.cut_revision(calculation.load_inputs(a.db, rev))

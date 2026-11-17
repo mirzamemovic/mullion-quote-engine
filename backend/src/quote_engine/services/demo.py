@@ -7,7 +7,9 @@ night.
 """
 
 import secrets
-from datetime import date
+import uuid
+from collections.abc import Sequence
+from datetime import date, datetime
 
 from sqlalchemy import delete, select
 from sqlalchemy.orm import Session as DbSession
@@ -47,14 +49,22 @@ def seed_demo(
     email: str = DEMO_EMAIL,
     *,
     is_demo: bool = True,
+    name: str = DEMO_NAME,
+    expires_at: datetime | None = None,
 ) -> tuple[Workshop, str]:
-    """Create the demo workshop with its owner login. Returns the workshop and the password.
+    """Create a workshop from the sample data with its owner login; returns it and the password.
 
-    Tests use ``email`` and ``is_demo=False`` to build several workshops from the same sample data.
+    Tests use ``email`` and ``is_demo=False`` to build several workshops from the same sample data;
+    "Try it" sandboxes pass their own name and ``expires_at``.
     """
     password = password or secrets.token_urlsafe(12)
     workshop = create_workshop(
-        db, DEMO_NAME, DEMO_SMALL_MAX_MM2, DEMO_STANDARD_MAX_MM2, is_demo=is_demo
+        db,
+        name,
+        DEMO_SMALL_MAX_MM2,
+        DEMO_STANDARD_MAX_MM2,
+        is_demo=is_demo,
+        expires_at=expires_at,
     )
     create_user(db, workshop.id, email, password, auth.ROLE_OWNER)
 
@@ -112,11 +122,15 @@ def seed_demo(
 
 def wipe_demo(db: DbSession) -> int:
     """Delete every demo workshop and all its rows. Returns how many workshops were removed."""
-    demo_ids = list(db.scalars(select(Workshop.id).where(Workshop.is_demo.is_(True))))
-    if not demo_ids:
+    return delete_workshops(db, list(db.scalars(select(Workshop.id).where(Workshop.is_demo))))
+
+
+def delete_workshops(db: DbSession, workshop_ids: Sequence[uuid.UUID]) -> int:
+    """Delete workshops with every row they own, children before parents."""
+    if not workshop_ids:
         return 0
     for model in reversed(WORKSHOP_SCOPED):
-        db.execute(delete(model).where(model.workshop_id.in_(demo_ids)))  # type: ignore[attr-defined]
-    db.execute(delete(Workshop).where(Workshop.id.in_(demo_ids)))
+        db.execute(delete(model).where(model.workshop_id.in_(workshop_ids)))  # type: ignore[attr-defined]
+    db.execute(delete(Workshop).where(Workshop.id.in_(workshop_ids)))
     db.flush()
-    return len(demo_ids)
+    return len(workshop_ids)

@@ -586,6 +586,141 @@
         "title": "InstallationIn",
         "type": "object"
       },
+      "InviteAcceptIn": {
+        "additionalProperties": false,
+        "properties": {
+          "email": {
+            "maxLength": 200,
+            "minLength": 3,
+            "pattern": "^[^@\\s]+@[^@\\s]+$",
+            "title": "Email",
+            "type": "string"
+          },
+          "password": {
+            "maxLength": 200,
+            "minLength": 12,
+            "title": "Password",
+            "type": "string"
+          }
+        },
+        "required": [
+          "email",
+          "password"
+        ],
+        "title": "InviteAcceptIn",
+        "type": "object"
+      },
+      "InviteCreated": {
+        "description": "The token is shown once; the app turns it into the ``/join/<token>`` link.",
+        "properties": {
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "expires_at": {
+            "format": "date-time",
+            "title": "Expires At",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "role": {
+            "title": "Role",
+            "type": "string"
+          },
+          "token": {
+            "title": "Token",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "role",
+          "expires_at",
+          "created_at",
+          "token"
+        ],
+        "title": "InviteCreated",
+        "type": "object"
+      },
+      "InviteIn": {
+        "additionalProperties": false,
+        "properties": {
+          "role": {
+            "enum": [
+              "owner",
+              "staff"
+            ],
+            "title": "Role",
+            "type": "string"
+          }
+        },
+        "required": [
+          "role"
+        ],
+        "title": "InviteIn",
+        "type": "object"
+      },
+      "InviteInfo": {
+        "additionalProperties": false,
+        "properties": {
+          "expires_at": {
+            "format": "date-time",
+            "title": "Expires At",
+            "type": "string"
+          },
+          "role": {
+            "title": "Role",
+            "type": "string"
+          },
+          "workshop_name": {
+            "title": "Workshop Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "workshop_name",
+          "role",
+          "expires_at"
+        ],
+        "title": "InviteInfo",
+        "type": "object"
+      },
+      "InviteOut": {
+        "properties": {
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "expires_at": {
+            "format": "date-time",
+            "title": "Expires At",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "role": {
+            "title": "Role",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "role",
+          "expires_at",
+          "created_at"
+        ],
+        "title": "InviteOut",
+        "type": "object"
+      },
       "LoginIn": {
         "additionalProperties": false,
         "properties": {
@@ -616,6 +751,10 @@
             "title": "Csrf Token",
             "type": "string"
           },
+          "currency": {
+            "title": "Currency",
+            "type": "string"
+          },
           "email": {
             "title": "Email",
             "type": "string"
@@ -624,9 +763,29 @@
             "title": "Is Demo",
             "type": "boolean"
           },
+          "language": {
+            "title": "Language",
+            "type": "string"
+          },
           "role": {
             "title": "Role",
             "type": "string"
+          },
+          "sandbox_expires_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sandbox Expires At"
+          },
+          "totp_enabled": {
+            "title": "Totp Enabled",
+            "type": "boolean"
           },
           "totp_ok": {
             "title": "Totp Ok",
@@ -654,6 +813,10 @@
           "workshop_id",
           "workshop_name",
           "is_demo",
+          "sandbox_expires_at",
+          "currency",
+          "language",
+          "totp_enabled",
           "totp_ok",
           "csrf_token"
         ],
@@ -746,6 +909,29 @@
         ],
         "title": "Opening",
         "type": "string"
+      },
+      "PasswordChangeIn": {
+        "additionalProperties": false,
+        "properties": {
+          "current_password": {
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Current Password",
+            "type": "string"
+          },
+          "new_password": {
+            "maxLength": 200,
+            "minLength": 12,
+            "title": "New Password",
+            "type": "string"
+          }
+        },
+        "required": [
+          "current_password",
+          "new_password"
+        ],
+        "title": "PasswordChangeIn",
+        "type": "object"
       },
       "PasswordIn": {
         "additionalProperties": false,
@@ -1808,6 +1994,23 @@
         "title": "Role",
         "type": "string"
       },
+      "SandboxIn": {
+        "additionalProperties": false,
+        "description": "A JSON body is required, so a plain cross-site form cannot open a sandbox.",
+        "properties": {
+          "language": {
+            "default": "en",
+            "enum": [
+              "en",
+              "bs"
+            ],
+            "title": "Language",
+            "type": "string"
+          }
+        },
+        "title": "SandboxIn",
+        "type": "object"
+      },
       "SessionOut": {
         "properties": {
           "created_at": {
@@ -2085,77 +2288,45 @@
         "title": "SupplierOut",
         "type": "object"
       },
-      "UserCreated": {
-        "description": "A new user. ``totp_uri`` is shown once, for an admin to add to an authenticator app.",
-        "properties": {
-          "email": {
-            "title": "Email",
-            "type": "string"
-          },
-          "id": {
-            "format": "uuid",
-            "title": "Id",
-            "type": "string"
-          },
-          "is_active": {
-            "title": "Is Active",
-            "type": "boolean"
-          },
-          "role": {
-            "title": "Role",
-            "type": "string"
-          },
-          "totp_uri": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Totp Uri"
-          }
-        },
-        "required": [
-          "id",
-          "email",
-          "role",
-          "is_active"
-        ],
-        "title": "UserCreated",
-        "type": "object"
-      },
-      "UserIn": {
+      "TotpEnableIn": {
         "additionalProperties": false,
         "properties": {
-          "email": {
-            "maxLength": 200,
-            "minLength": 3,
-            "title": "Email",
+          "code": {
+            "pattern": "^\\s*\\d{6}\\s*$",
+            "title": "Code",
             "type": "string"
           },
-          "password": {
-            "maxLength": 200,
-            "minLength": 12,
-            "title": "Password",
-            "type": "string"
-          },
-          "role": {
-            "enum": [
-              "owner",
-              "admin"
-            ],
-            "title": "Role",
+          "secret": {
+            "pattern": "^[A-Z2-7]{16,64}$",
+            "title": "Secret",
             "type": "string"
           }
         },
         "required": [
-          "email",
-          "password",
-          "role"
+          "secret",
+          "code"
         ],
-        "title": "UserIn",
+        "title": "TotpEnableIn",
+        "type": "object"
+      },
+      "TotpSetupOut": {
+        "additionalProperties": false,
+        "description": "A new two-step secret, shown once; it is saved only after a code from it is confirmed.",
+        "properties": {
+          "otpauth_uri": {
+            "title": "Otpauth Uri",
+            "type": "string"
+          },
+          "secret": {
+            "title": "Secret",
+            "type": "string"
+          }
+        },
+        "required": [
+          "secret",
+          "otpauth_uri"
+        ],
+        "title": "TotpSetupOut",
         "type": "object"
       },
       "UserOut": {
@@ -2191,13 +2362,32 @@
         "additionalProperties": false,
         "properties": {
           "is_active": {
-            "title": "Is Active",
-            "type": "boolean"
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Is Active"
+          },
+          "role": {
+            "anyOf": [
+              {
+                "enum": [
+                  "owner",
+                  "staff"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Role"
           }
         },
-        "required": [
-          "is_active"
-        ],
         "title": "UserPatch",
         "type": "object"
       },
@@ -2239,6 +2429,72 @@
           "type"
         ],
         "title": "ValidationError",
+        "type": "object"
+      },
+      "WorkshopIO": {
+        "additionalProperties": false,
+        "properties": {
+          "address": {
+            "default": "",
+            "maxLength": 200,
+            "title": "Address",
+            "type": "string"
+          },
+          "currency": {
+            "default": "EUR",
+            "enum": [
+              "EUR",
+              "BAM",
+              "RSD",
+              "ALL",
+              "MKD"
+            ],
+            "title": "Currency",
+            "type": "string"
+          },
+          "email": {
+            "default": "",
+            "maxLength": 200,
+            "title": "Email",
+            "type": "string"
+          },
+          "language": {
+            "default": "en",
+            "enum": [
+              "en",
+              "bs"
+            ],
+            "title": "Language",
+            "type": "string"
+          },
+          "name": {
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          },
+          "phone": {
+            "default": "",
+            "maxLength": 50,
+            "title": "Phone",
+            "type": "string"
+          },
+          "vat_number": {
+            "default": "",
+            "maxLength": 50,
+            "title": "Vat Number",
+            "type": "string"
+          },
+          "vat_registered": {
+            "default": false,
+            "title": "Vat Registered",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "title": "WorkshopIO",
         "type": "object"
       }
     }
@@ -2412,7 +2668,7 @@
     },
     "/api/v1/auth/totp": {
       "post": {
-        "description": "The admin's second step: a 6-digit code from the authenticator app.",
+        "description": "The second step for people who turned two-step login on: a 6-digit code.",
         "operationId": "totp_api_v1_auth_totp_post",
         "requestBody": {
           "content": {
@@ -3054,6 +3310,322 @@
         "summary": "Read Health",
         "tags": [
           "health"
+        ]
+      }
+    },
+    "/api/v1/invites": {
+      "get": {
+        "description": "Invite links that can still be used.",
+        "operationId": "list_invites_api_v1_invites_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/InviteOut"
+                  },
+                  "title": "Response List Invites Api V1 Invites Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "List Invites",
+        "tags": [
+          "workshop"
+        ]
+      },
+      "post": {
+        "description": "A one-time link (valid 7 days) for a new owner or staff member. The token is shown once.",
+        "operationId": "create_invite_api_v1_invites_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InviteIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InviteCreated"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Create Invite",
+        "tags": [
+          "workshop"
+        ]
+      }
+    },
+    "/api/v1/invites/{invite_id}": {
+      "delete": {
+        "operationId": "revoke_invite_api_v1_invites__invite_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "invite_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Invite Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Revoke Invite",
+        "tags": [
+          "workshop"
+        ]
+      }
+    },
+    "/api/v1/join/{token}": {
+      "get": {
+        "description": "What the link is for, so the page can say which workshop the person is joining.",
+        "operationId": "invite_info_api_v1_join__token__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "token",
+            "required": true,
+            "schema": {
+              "title": "Token",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InviteInfo"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Invite Info",
+        "tags": [
+          "join"
+        ]
+      },
+      "post": {
+        "description": "Create the login the invite is for and log the new person in.",
+        "operationId": "accept_invite_api_v1_join__token__post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "token",
+            "required": true,
+            "schema": {
+              "title": "Token",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InviteAcceptIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MeOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Accept Invite",
+        "tags": [
+          "join"
+        ]
+      }
+    },
+    "/api/v1/me/password": {
+      "post": {
+        "description": "A new password. Every other session of this person ends; this one stays.",
+        "operationId": "change_password_api_v1_me_password_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PasswordChangeIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Change Password",
+        "tags": [
+          "me"
+        ]
+      }
+    },
+    "/api/v1/me/totp/disable": {
+      "post": {
+        "operationId": "totp_disable_api_v1_me_totp_disable_post",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MeOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Totp Disable",
+        "tags": [
+          "me"
+        ]
+      }
+    },
+    "/api/v1/me/totp/enable": {
+      "post": {
+        "description": "Turn two-step login on with the secret from ``/me/totp/setup`` and a code from the app.",
+        "operationId": "totp_enable_api_v1_me_totp_enable_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TotpEnableIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MeOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Totp Enable",
+        "tags": [
+          "me"
+        ]
+      }
+    },
+    "/api/v1/me/totp/setup": {
+      "post": {
+        "description": "A new secret for the authenticator app. Nothing changes until a code from it is confirmed.",
+        "operationId": "totp_setup_api_v1_me_totp_setup_post",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TotpSetupOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Totp Setup",
+        "tags": [
+          "me"
         ]
       }
     },
@@ -3830,6 +4402,48 @@
         ]
       }
     },
+    "/api/v1/sandbox": {
+      "post": {
+        "description": "A private workshop with sample data for this visitor, deleted after 24 hours.",
+        "operationId": "create_sandbox_api_v1_sandbox_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SandboxIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MeOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Create Sandbox",
+        "tags": [
+          "join"
+        ]
+      }
+    },
     "/api/v1/sessions": {
       "get": {
         "operationId": "list_sessions_api_v1_sessions_get",
@@ -4307,51 +4921,11 @@
         "tags": [
           "admin"
         ]
-      },
-      "post": {
-        "description": "A new login. An admin gets a TOTP secret, returned once as an ``otpauth://`` link.",
-        "operationId": "create_user_api_v1_users_post",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/UserIn"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "201": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/UserCreated"
-                }
-              }
-            },
-            "description": "Successful Response"
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            },
-            "description": "Validation Error"
-          }
-        },
-        "summary": "Create User",
-        "tags": [
-          "admin"
-        ]
       }
     },
     "/api/v1/users/{user_id}": {
       "patch": {
-        "description": "Turn a login on or off. Turning it off also ends all its sessions.",
+        "description": "Turn a login on or off, or change its role. Turning it off also ends all its sessions.\n\nNew people join through an invite link (``POST /invites``), never with a password the owner\npicked for them.",
         "operationId": "update_user_api_v1_users__user_id__patch",
         "parameters": [
           {
@@ -4400,6 +4974,67 @@
         "summary": "Update User",
         "tags": [
           "admin"
+        ]
+      }
+    },
+    "/api/v1/workshop": {
+      "get": {
+        "operationId": "get_workshop_api_v1_workshop_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkshopIO"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Get Workshop",
+        "tags": [
+          "workshop"
+        ]
+      },
+      "put": {
+        "description": "Name, contact details, VAT, language and (before the first quote) the currency.",
+        "operationId": "put_workshop_api_v1_workshop_put",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WorkshopIO"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkshopIO"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Put Workshop",
+        "tags": [
+          "workshop"
         ]
       }
     }

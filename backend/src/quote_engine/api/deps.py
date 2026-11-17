@@ -1,4 +1,4 @@
-"""Request dependencies: database, the logged-in user, CSRF, admin and step-up checks."""
+"""Request dependencies: database, the logged-in user, CSRF, owner and step-up checks."""
 
 from collections.abc import Iterator
 from dataclasses import dataclass
@@ -55,36 +55,42 @@ def current_auth(request: Request, db: DB, settings: AppSettings) -> Auth:
 
 
 def partial_auth(request: Request, db: DB, settings: AppSettings) -> Auth:
-    """Like ``current_auth``, before the admin's TOTP step (only the TOTP endpoints use it)."""
+    """Like ``current_auth``, before a two-step code is entered (login-step endpoints only)."""
     return current_auth(request, db, settings)
 
 
 def logged_in(auth_: Annotated[Auth, Depends(current_auth)]) -> Auth:
-    """A fully logged-in user: an admin must also have passed TOTP."""
+    """A fully logged-in user: with two-step login on, the code was entered too."""
     if not auth_.session.totp_ok:
-        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "enter your TOTP code first")
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "enter your two-step code first")
     return auth_
 
 
-def admin(auth_: Annotated[Auth, Depends(logged_in)]) -> Auth:
-    if auth_.user.role != auth.ROLE_ADMIN:
-        raise HTTPException(status.HTTP_403_FORBIDDEN, "admin only")
+def owner(auth_: Annotated[Auth, Depends(logged_in)]) -> Auth:
+    """The workshop's owner: catalogue, prices, settings, people. Staff only make quotes."""
+    if auth_.user.role != auth.ROLE_OWNER:
+        raise HTTPException(status.HTTP_403_FORBIDDEN, "only the workshop owner can do this")
     return auth_
 
 
 def step_up(auth_: Annotated[Auth, Depends(logged_in)], settings: AppSettings) -> Auth:
-    """For prices, system sheets, deleting, exporting and erasing: a recent password check."""
+    """For sensitive changes: a password check in the last few minutes."""
     if not auth.recently_reauthenticated(auth_.session, settings):
         raise HTTPException(status.HTTP_403_FORBIDDEN, "confirm your password first")
     return auth_
 
 
-def admin_step_up(auth_: Annotated[Auth, Depends(admin)], settings: AppSettings) -> Auth:
+def owner_step_up(auth_: Annotated[Auth, Depends(owner)], settings: AppSettings) -> Auth:
     return step_up(auth_, settings)
 
 
 LoggedIn: TypeAlias = Annotated[Auth, Depends(logged_in)]
-Admin: TypeAlias = Annotated[Auth, Depends(admin)]
+Owner: TypeAlias = Annotated[Auth, Depends(owner)]
 StepUp: TypeAlias = Annotated[Auth, Depends(step_up)]
-AdminStepUp: TypeAlias = Annotated[Auth, Depends(admin_step_up)]
+OwnerStepUp: TypeAlias = Annotated[Auth, Depends(owner_step_up)]
 Partial: TypeAlias = Annotated[Auth, Depends(partial_auth)]
+
+
+def client_ip(request: Request) -> str:
+    """The caller's address (behind Caddy, uvicorn's proxy headers make this the real client)."""
+    return request.client.host if request.client else "unknown"

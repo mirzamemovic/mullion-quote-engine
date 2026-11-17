@@ -109,7 +109,7 @@ export interface paths {
         put?: never;
         /**
          * Totp
-         * @description The admin's second step: a 6-digit code from the authenticator app.
+         * @description The second step for people who turned two-step login on: a 6-digit code.
          */
         post: operations["totp_api_v1_auth_totp_post"];
         delete?: never;
@@ -308,6 +308,148 @@ export interface paths {
         get: operations["read_health_api_v1_health_get"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/invites": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Invites
+         * @description Invite links that can still be used.
+         */
+        get: operations["list_invites_api_v1_invites_get"];
+        put?: never;
+        /**
+         * Create Invite
+         * @description A one-time link (valid 7 days) for a new owner or staff member. The token is shown once.
+         */
+        post: operations["create_invite_api_v1_invites_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/invites/{invite_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Revoke Invite */
+        delete: operations["revoke_invite_api_v1_invites__invite_id__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/join/{token}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Invite Info
+         * @description What the link is for, so the page can say which workshop the person is joining.
+         */
+        get: operations["invite_info_api_v1_join__token__get"];
+        put?: never;
+        /**
+         * Accept Invite
+         * @description Create the login the invite is for and log the new person in.
+         */
+        post: operations["accept_invite_api_v1_join__token__post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/me/password": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Change Password
+         * @description A new password. Every other session of this person ends; this one stays.
+         */
+        post: operations["change_password_api_v1_me_password_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/me/totp/disable": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Totp Disable */
+        post: operations["totp_disable_api_v1_me_totp_disable_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/me/totp/enable": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Totp Enable
+         * @description Turn two-step login on with the secret from ``/me/totp/setup`` and a code from the app.
+         */
+        post: operations["totp_enable_api_v1_me_totp_enable_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/me/totp/setup": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Totp Setup
+         * @description A new secret for the authenticator app. Nothing changes until a code from it is confirmed.
+         */
+        post: operations["totp_setup_api_v1_me_totp_setup_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -539,6 +681,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/sandbox": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Create Sandbox
+         * @description A private workshop with sample data for this visitor, deleted after 24 hours.
+         */
+        post: operations["create_sandbox_api_v1_sandbox_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/sessions": {
         parameters: {
             query?: never;
@@ -692,11 +854,7 @@ export interface paths {
         /** List Users */
         get: operations["list_users_api_v1_users_get"];
         put?: never;
-        /**
-         * Create User
-         * @description A new login. An admin gets a TOTP secret, returned once as an ``otpauth://`` link.
-         */
-        post: operations["create_user_api_v1_users_post"];
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -718,9 +876,33 @@ export interface paths {
         head?: never;
         /**
          * Update User
-         * @description Turn a login on or off. Turning it off also ends all its sessions.
+         * @description Turn a login on or off, or change its role. Turning it off also ends all its sessions.
+         *
+         *     New people join through an invite link (``POST /invites``), never with a password the owner
+         *     picked for them.
          */
         patch: operations["update_user_api_v1_users__user_id__patch"];
+        trace?: never;
+    };
+    "/api/v1/workshop": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Workshop */
+        get: operations["get_workshop_api_v1_workshop_get"];
+        /**
+         * Put Workshop
+         * @description Name, contact details, VAT, language and (before the first quote) the currency.
+         */
+        put: operations["put_workshop_api_v1_workshop_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
 }
@@ -950,6 +1132,78 @@ export interface components {
              */
             wall_repair: boolean;
         };
+        /** InviteAcceptIn */
+        InviteAcceptIn: {
+            /** Email */
+            email: string;
+            /** Password */
+            password: string;
+        };
+        /**
+         * InviteCreated
+         * @description The token is shown once; the app turns it into the ``/join/<token>`` link.
+         */
+        InviteCreated: {
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Expires At
+             * Format: date-time
+             */
+            expires_at: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Role */
+            role: string;
+            /** Token */
+            token: string;
+        };
+        /** InviteIn */
+        InviteIn: {
+            /**
+             * Role
+             * @enum {string}
+             */
+            role: "owner" | "staff";
+        };
+        /** InviteInfo */
+        InviteInfo: {
+            /**
+             * Expires At
+             * Format: date-time
+             */
+            expires_at: string;
+            /** Role */
+            role: string;
+            /** Workshop Name */
+            workshop_name: string;
+        };
+        /** InviteOut */
+        InviteOut: {
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Expires At
+             * Format: date-time
+             */
+            expires_at: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Role */
+            role: string;
+        };
         /** LoginIn */
         LoginIn: {
             /** Email */
@@ -961,12 +1215,20 @@ export interface components {
         MeOut: {
             /** Csrf Token */
             csrf_token: string;
+            /** Currency */
+            currency: string;
             /** Email */
             email: string;
             /** Is Demo */
             is_demo: boolean;
+            /** Language */
+            language: string;
             /** Role */
             role: string;
+            /** Sandbox Expires At */
+            sandbox_expires_at: string | null;
+            /** Totp Enabled */
+            totp_enabled: boolean;
             /** Totp Ok */
             totp_ok: boolean;
             /**
@@ -1017,6 +1279,13 @@ export interface components {
          * @enum {string}
          */
         Opening: "fixed" | "tilt_turn_left" | "tilt_turn_right" | "turn_left" | "turn_right";
+        /** PasswordChangeIn */
+        PasswordChangeIn: {
+            /** Current Password */
+            current_password: string;
+            /** New Password */
+            new_password: string;
+        };
         /** PasswordIn */
         PasswordIn: {
             /** Password */
@@ -1439,6 +1708,18 @@ export interface components {
          * @enum {string}
          */
         Role: "frame" | "sash" | "mullion" | "false_mullion" | "bead" | "threshold" | "steel";
+        /**
+         * SandboxIn
+         * @description A JSON body is required, so a plain cross-site form cannot open a sandbox.
+         */
+        SandboxIn: {
+            /**
+             * Language
+             * @default en
+             * @enum {string}
+             */
+            language: "en" | "bs";
+        };
         /** SessionOut */
         SessionOut: {
             /**
@@ -1574,36 +1855,22 @@ export interface components {
              */
             phone: string;
         };
-        /**
-         * UserCreated
-         * @description A new user. ``totp_uri`` is shown once, for an admin to add to an authenticator app.
-         */
-        UserCreated: {
-            /** Email */
-            email: string;
-            /**
-             * Id
-             * Format: uuid
-             */
-            id: string;
-            /** Is Active */
-            is_active: boolean;
-            /** Role */
-            role: string;
-            /** Totp Uri */
-            totp_uri?: string | null;
+        /** TotpEnableIn */
+        TotpEnableIn: {
+            /** Code */
+            code: string;
+            /** Secret */
+            secret: string;
         };
-        /** UserIn */
-        UserIn: {
-            /** Email */
-            email: string;
-            /** Password */
-            password: string;
-            /**
-             * Role
-             * @enum {string}
-             */
-            role: "owner" | "admin";
+        /**
+         * TotpSetupOut
+         * @description A new two-step secret, shown once; it is saved only after a code from it is confirmed.
+         */
+        TotpSetupOut: {
+            /** Otpauth Uri */
+            otpauth_uri: string;
+            /** Secret */
+            secret: string;
         };
         /** UserOut */
         UserOut: {
@@ -1622,7 +1889,9 @@ export interface components {
         /** UserPatch */
         UserPatch: {
             /** Is Active */
-            is_active: boolean;
+            is_active?: boolean | null;
+            /** Role */
+            role?: ("owner" | "staff") | null;
         };
         /** ValidationError */
         ValidationError: {
@@ -1636,6 +1905,48 @@ export interface components {
             msg: string;
             /** Error Type */
             type: string;
+        };
+        /** WorkshopIO */
+        WorkshopIO: {
+            /**
+             * Address
+             * @default
+             */
+            address: string;
+            /**
+             * Currency
+             * @default EUR
+             * @enum {string}
+             */
+            currency: "EUR" | "BAM" | "RSD" | "ALL" | "MKD";
+            /**
+             * Email
+             * @default
+             */
+            email: string;
+            /**
+             * Language
+             * @default en
+             * @enum {string}
+             */
+            language: "en" | "bs";
+            /** Name */
+            name: string;
+            /**
+             * Phone
+             * @default
+             */
+            phone: string;
+            /**
+             * Vat Number
+             * @default
+             */
+            vat_number: string;
+            /**
+             * Vat Registered
+             * @default false
+             */
+            vat_registered: boolean;
         };
     };
     responses: never;
@@ -2277,6 +2588,258 @@ export interface operations {
             };
         };
     };
+    list_invites_api_v1_invites_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InviteOut"][];
+                };
+            };
+        };
+    };
+    create_invite_api_v1_invites_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["InviteIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InviteCreated"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    revoke_invite_api_v1_invites__invite_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                invite_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    invite_info_api_v1_join__token__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                token: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InviteInfo"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    accept_invite_api_v1_join__token__post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                token: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["InviteAcceptIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MeOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    change_password_api_v1_me_password_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PasswordChangeIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    totp_disable_api_v1_me_totp_disable_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MeOut"];
+                };
+            };
+        };
+    };
+    totp_enable_api_v1_me_totp_enable_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TotpEnableIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MeOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    totp_setup_api_v1_me_totp_setup_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TotpSetupOut"];
+                };
+            };
+        };
+    };
     list_price_lists_api_v1_price_lists_get: {
         parameters: {
             query?: never;
@@ -2793,6 +3356,39 @@ export interface operations {
             };
         };
     };
+    create_sandbox_api_v1_sandbox_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SandboxIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MeOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     list_sessions_api_v1_sessions_get: {
         parameters: {
             query?: never;
@@ -3157,39 +3753,6 @@ export interface operations {
             };
         };
     };
-    create_user_api_v1_users_post: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["UserIn"];
-            };
-        };
-        responses: {
-            /** @description Successful Response */
-            201: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["UserCreated"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
     update_user_api_v1_users__user_id__patch: {
         parameters: {
             query?: never;
@@ -3212,6 +3775,59 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["UserOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_workshop_api_v1_workshop_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WorkshopIO"];
+                };
+            };
+        };
+    };
+    put_workshop_api_v1_workshop_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["WorkshopIO"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WorkshopIO"];
                 };
             };
             /** @description Validation Error */

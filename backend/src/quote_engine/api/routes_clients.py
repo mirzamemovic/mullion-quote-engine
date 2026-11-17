@@ -6,7 +6,7 @@ from typing import Any
 from fastapi import APIRouter, status
 from sqlalchemy import or_
 
-from quote_engine.api.deps import LoggedIn, StepUp
+from quote_engine.api.deps import LoggedIn, OwnerStepUp
 from quote_engine.api.schemas import ClientIn, ClientOut
 from quote_engine.db.models import Client, Quote
 from quote_engine.services.quotes import audit, utc_now
@@ -49,7 +49,7 @@ def update_client(client_id: uuid.UUID, body: ClientIn, a: LoggedIn) -> ClientOu
 
 
 @router.get("/{client_id}/export")
-def export_client(client_id: uuid.UUID, a: StepUp) -> dict[str, Any]:
+def export_client(client_id: uuid.UUID, a: OwnerStepUp) -> dict[str, Any]:
     """Everything kept about one client (data-protection export), behind a password re-check."""
     client = a.db.get(Client, client_id)
     quotes = a.db.all(Quote, Quote.client_id == client.id, order_by=Quote.number)
@@ -69,7 +69,7 @@ def export_client(client_id: uuid.UUID, a: StepUp) -> dict[str, Any]:
 
 
 @router.post("/{client_id}/erase")
-def erase_client(client_id: uuid.UUID, a: StepUp) -> ClientOut:
+def erase_client(client_id: uuid.UUID, a: OwnerStepUp) -> ClientOut:
     """Blank the name, phone and place; quotes and totals stay (PLAN.md section 5)."""
     client = a.db.get(Client, client_id)
     client.name, client.phone, client.place = ERASED, "", ""

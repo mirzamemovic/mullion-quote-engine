@@ -87,7 +87,7 @@ def test_deploy_runs_only_after_ci_passes_on_main() -> None:
     assert "head_repository.full_name == github.repository" in condition
 
 
-@pytest.mark.parametrize("script", ["deploy.sh", "backup.sh", "restore.sh"])
+@pytest.mark.parametrize("script", ["deploy.sh", "backup.sh", "restore.sh", "purge-sandboxes.sh"])
 def test_scripts_set_the_image_before_using_compose(script: str) -> None:
     # compose.prod.yaml refuses to load without APP_IMAGE, even for `exec`.
     text = (INFRA / script).read_text(encoding="utf-8")
@@ -96,6 +96,15 @@ def test_scripts_set_the_image_before_using_compose(script: str) -> None:
     assert text.index("export APP_IMAGE") < text.index(
         "compose ", text.index("export APP_IMAGE") - 1
     )
+
+
+def test_server_setup_installs_every_timer_it_names() -> None:
+    setup = (INFRA / "setup-server.sh").read_text(encoding="utf-8")
+
+    for unit in ("quote-engine-backup", "quote-engine-sandboxes"):
+        assert (INFRA / "systemd" / f"{unit}.service").is_file()
+        assert (INFRA / "systemd" / f"{unit}.timer").is_file()
+        assert f"systemctl enable --now {unit}.timer" in setup
 
 
 def test_dockerignore_keeps_env_files_out_everywhere() -> None:

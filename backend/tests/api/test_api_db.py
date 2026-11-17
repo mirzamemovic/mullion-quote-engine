@@ -5,7 +5,7 @@ see ``conftest.py``.
 """
 
 import uuid
-from datetime import UTC, date, datetime
+from datetime import UTC, date, datetime, timedelta
 from typing import Any
 
 import pyotp
@@ -23,6 +23,7 @@ from quote_engine.db.models import (
     AuditLog,
     Client,
     ConstructionType,
+    Invite,
     LoginAttempt,
     PriceEntry,
     PriceListVersion,
@@ -30,13 +31,14 @@ from quote_engine.db.models import (
     ProfileSystem,
     Quote,
     QuoteRevision,
+    SandboxRequest,
     Supplier,
     User,
     Workshop,
 )
 from quote_engine.db.models import Session as SessionRow
 from quote_engine.db.repository import NotFoundError, Scoped
-from quote_engine.services import auth, calculation, demo, demo_catalogue, workshops
+from quote_engine.services import auth, calculation, demo, demo_catalogue, sandbox, workshops
 from quote_engine.services import quotes as svc
 from tests.api.conftest import PASSWORD, SampleWorkshop, log_in
 
@@ -104,17 +106,21 @@ def reauth(api: TestClient) -> None:
     assert api.post(f"{API}/auth/reauth", json={"password": PASSWORD}).status_code == 200
 
 
-def admin_login(api: TestClient, db: Session, shop: SampleWorkshop) -> None:
-    """Add an admin to ``shop``, log in and pass the TOTP step."""
-    created = workshops.create_user(
-        db, shop.workshop.id, "admin@example.invalid", PASSWORD, auth.ROLE_ADMIN
-    )
+def add_user(
+    db: Session, shop: SampleWorkshop, email: str, role: str, *, two_step: bool = False
+) -> User:
+    """Another login in ``shop``; with ``two_step`` it has a TOTP secret already."""
+    user = workshops.create_user(db, shop.workshop.id, email, PASSWORD, role)
+    if two_step:
+        user.totp_secret = auth.new_totp_secret()
     db.commit()
-    log_in(api, "admin@example.invalid")
-    secret = created.user.totp_secret
-    assert secret is not None
-    response = api.post(f"{API}/auth/totp", json={"code": pyotp.TOTP(secret).now()})
-    assert response.status_code == 200, response.text
+    return user
+
+
+def staff_login(api: TestClient, db: Session, shop: SampleWorkshop) -> User:
+    user = add_user(db, shop, "staff@example.invalid", auth.ROLE_STAFF)
+    log_in(api, user.email)
+    return user
 
 
 # --- migrations ---------------------------------------------------------------------------------
@@ -231,27 +237,54 @@ def test_a_disabled_user_is_logged_out(
 # --- roles, TOTP, step-up -----------------------------------------------------------------------
 
 
-def test_the_admin_needs_a_totp_code(api: TestClient, db: Session, shop_a: SampleWorkshop) -> None:
-    created = workshops.create_user(
-        db, shop_a.workshop.id, "admin@example.invalid", PASSWORD, auth.ROLE_ADMIN
-    )
-    db.commit()
-    log_in(api, "admin@example.invalid")
+def test_two_step_login_needs_a_code(api: TestClient, db: Session, shop_a: SampleWorkshop) -> None:
+    user = add_user(db, shop_a, "second@example.invalid", auth.ROLE_OWNER, two_step=True)
+    me = log_in(api, user.email)
 
+    assert me["totp_enabled"] is True
+    assert me["totp_ok"] is False
     assert api.get(f"{API}/clients").status_code == 401
-    secret = created.user.totp_secret
+    secret = user.totp_secret
     assert secret is not None
     assert api.post(f"{API}/auth/totp", json={"code": pyotp.TOTP(secret).now()}).status_code == 200
     assert api.get(f"{API}/clients").status_code == 200
 
 
-def test_the_owner_cannot_use_admin_endpoints(api: TestClient, shop_a: SampleWorkshop) -> None:
-    log_in(api, shop_a.email)
+def test_without_two_step_login_no_code_is_asked(api: TestClient, shop_a: SampleWorkshop) -> None:
+    me = log_in(api, shop_a.email)
 
-    assert api.get(f"{API}/users").status_code == 403
-    assert api.get(f"{API}/sessions").status_code == 403
-    body = {"key": "x", "brand": "x", "series": "x", "depth_mm": 70}
-    assert api.post(f"{API}/systems", json=body).status_code == 403
+    assert me["totp_enabled"] is False
+    assert api.get(f"{API}/clients").status_code == 200
+
+
+def test_staff_make_quotes_but_cannot_change_the_workshop(
+    api: TestClient, db: Session, shop_a: SampleWorkshop
+) -> None:
+    staff_login(api, db, shop_a)
+    reauth(api)
+
+    assert api.get(f"{API}/systems").status_code == 200
+    assert api.get(f"{API}/price-lists").status_code == 200
+    quote = new_quote(api)
+    put = api.put(f"{API}/quotes/{quote['id']}/revisions/1", json=revision_body())
+    assert put.status_code == 200, put.text
+
+    system = {"key": "x", "brand": "x", "series": "x", "depth_mm": 70}
+    supplier = {"name": "x", "kind": "glass"}
+    settings = api.get(f"{API}/settings").json()
+    client_id = quote["client_id"]
+    refused = [
+        api.get(f"{API}/users"),
+        api.get(f"{API}/sessions"),
+        api.get(f"{API}/invites"),
+        api.post(f"{API}/invites", json={"role": "staff"}),
+        api.post(f"{API}/systems", json=system),
+        api.post(f"{API}/suppliers", json=supplier),
+        api.put(f"{API}/settings", json=settings),
+        api.put(f"{API}/workshop", json=api.get(f"{API}/workshop").json()),
+        api.get(f"{API}/clients/{client_id}/export"),
+    ]
+    assert [r.status_code for r in refused] == [403] * len(refused)
 
 
 def test_export_and_erase_right_after_login(api: TestClient, shop_a: SampleWorkshop) -> None:
@@ -305,13 +338,10 @@ def test_guessing_the_step_up_password_ends_the_session(
 def test_guessing_totp_codes_ends_the_session(
     api: TestClient, db: Session, shop_a: SampleWorkshop
 ) -> None:
-    created = workshops.create_user(
-        db, shop_a.workshop.id, "admin@example.invalid", PASSWORD, auth.ROLE_ADMIN
-    )
-    db.commit()
-    secret = created.user.totp_secret
+    user = add_user(db, shop_a, "second@example.invalid", auth.ROLE_OWNER, two_step=True)
+    secret = user.totp_secret
     assert secret is not None
-    log_in(api, "admin@example.invalid")
+    log_in(api, user.email)
     current = pyotp.TOTP(secret)
     wrong = next(
         code for code in ("000000", "111111", "222222") if not current.verify(code, valid_window=1)
@@ -354,6 +384,7 @@ def fill_every_table(db: Session, shop: SampleWorkshop, api: TestClient) -> None
         )
     )
     db.add(ConstructionType(workshop_id=shop.workshop.id, key="fixed", enabled=True))
+    workshops.create_invite(db, shop.workshop.id, auth.ROLE_STAFF, None)
     db.commit()
     api.cookies.clear()
 
@@ -419,9 +450,7 @@ def test_the_api_answers_404_for_another_workshops_ids(
 # --- quotes, calculation, snapshot --------------------------------------------------------------
 
 
-def test_a_quote_from_draft_to_accepted(
-    api: TestClient, db: Session, shop_a: SampleWorkshop
-) -> None:
+def test_a_quote_from_draft_to_accepted(api: TestClient, shop_a: SampleWorkshop) -> None:
     log_in(api, shop_a.email)
     quote = new_quote(api)
     assert quote["number"] == f"{today().year}-0001"
@@ -528,10 +557,8 @@ def test_preview_cuts_one_position(api: TestClient, shop_a: SampleWorkshop) -> N
     assert response.json()["warnings"] == []
 
 
-def test_a_missing_deduction_is_a_422_naming_it(
-    api: TestClient, db: Session, shop_a: SampleWorkshop
-) -> None:
-    admin_login(api, db, shop_a)
+def test_a_missing_deduction_is_a_422_naming_it(api: TestClient, shop_a: SampleWorkshop) -> None:
+    log_in(api, shop_a.email)
     reauth(api)
     sheet = {**demo_catalogue.SYSTEMS[0].sheet(), "deductions": {"sash_width": 1}}
     created = api.post(f"{API}/systems/{system_id(api)}/sheets", json={"constants": sheet})
@@ -546,10 +573,8 @@ def test_a_missing_deduction_is_a_422_naming_it(
     assert response.json()["title"] == "missing catalogue value"
 
 
-def test_a_bad_system_sheet_is_refused(
-    api: TestClient, db: Session, shop_a: SampleWorkshop
-) -> None:
-    admin_login(api, db, shop_a)
+def test_a_bad_system_sheet_is_refused(api: TestClient, shop_a: SampleWorkshop) -> None:
+    log_in(api, shop_a.email)
     reauth(api)
     bad = {**demo_catalogue.SYSTEMS[0].sheet(), "kerf_mm": 2.5}
 
@@ -606,28 +631,207 @@ def test_changing_prices_needs_a_recent_password_check(
     assert api.put(f"{API}/settings", json=api.get(f"{API}/settings").json()).status_code == 403
 
 
-# --- admin --------------------------------------------------------------------------------------
+# --- the team: invites, roles, sessions ---------------------------------------------------------
 
 
-def test_the_admin_manages_users_and_sessions(
+def invite_token(api: TestClient, role: str = "staff") -> str:
+    created = api.post(f"{API}/invites", json={"role": role})
+    assert created.status_code == 201, created.text
+    return str(created.json()["token"])
+
+
+def test_an_invite_link_lets_one_person_join(api: TestClient, shop_a: SampleWorkshop) -> None:
+    log_in(api, shop_a.email)
+    token = invite_token(api)
+    api.cookies.clear()
+
+    info = api.get(f"{API}/join/{token}")
+    assert info.status_code == 200
+    assert info.json()["role"] == "staff"
+    join = {"email": "new-staff@example.invalid", "password": "a-long-enough-password"}
+    joined = api.post(f"{API}/join/{token}", json=join)
+    assert joined.status_code == 201, joined.text
+    assert joined.json()["role"] == "staff"
+    assert joined.json()["workshop_id"] == str(shop_a.workshop.id)
+    api.headers[CSRF_HEADER] = joined.json()["csrf_token"]
+    assert api.get(f"{API}/clients").status_code == 200
+
+    api.cookies.clear()
+    again = {"email": "someone-else@example.invalid", "password": "a-long-enough-password"}
+    assert api.post(f"{API}/join/{token}", json=again).status_code == 404
+    assert api.get(f"{API}/join/{token}").status_code == 404
+
+
+def test_an_expired_or_unknown_invite_is_refused(
     api: TestClient, db: Session, shop_a: SampleWorkshop
 ) -> None:
-    admin_login(api, db, shop_a)
+    created = workshops.create_invite(
+        db, shop_a.workshop.id, "staff", None, at=datetime(2020, 1, 1, tzinfo=UTC)
+    )
+    db.commit()
+    join = {"email": "late@example.invalid", "password": "a-long-enough-password"}
+
+    assert api.post(f"{API}/join/{created.token}", json=join).status_code == 404
+    assert api.post(f"{API}/join/not-a-real-token", json=join).status_code == 404
+    short = {"email": "late@example.invalid", "password": "short"}
+    assert api.post(f"{API}/join/{created.token}", json=short).status_code == 422
+
+
+def test_only_the_invite_hash_is_stored(
+    api: TestClient, db: Session, shop_a: SampleWorkshop
+) -> None:
+    log_in(api, shop_a.email)
+    token = invite_token(api)
+
+    stored = db.scalars(select(Invite.token_hash)).all()
+    assert token not in stored
+    assert auth.hash_token(token) in stored
+
+
+def test_the_owner_manages_the_team(api: TestClient, db: Session, shop_a: SampleWorkshop) -> None:
+    staff = add_user(db, shop_a, "staff@example.invalid", auth.ROLE_STAFF)
+    owner = log_in(api, shop_a.email)
     reauth(api)
-    new = {"email": "second@example.invalid", "password": "another-long-password", "role": "owner"}
 
-    created = api.post(f"{API}/users", json=new)
-    assert created.status_code == 201
-    assert created.json()["totp_uri"] is None
-    sessions = api.get(f"{API}/sessions").json()
-    assert sessions
-    owner = next(u for u in api.get(f"{API}/users").json() if u["email"] == shop_a.email)
-    assert api.patch(f"{API}/users/{owner['id']}", json={"is_active": False}).status_code == 200
+    users = {u["email"]: u for u in api.get(f"{API}/users").json()}
+    assert set(users) == {shop_a.email, staff.email}
+    promoted = api.patch(f"{API}/users/{staff.id}", json={"role": "owner"})
+    assert promoted.status_code == 200
+    assert promoted.json()["role"] == "owner"
+    off = api.patch(f"{API}/users/{staff.id}", json={"is_active": False})
+    assert off.status_code == 200
+    assert (
+        api.patch(f"{API}/users/{owner['user_id']}", json={"is_active": False}).status_code == 409
+    )
+    assert api.get(f"{API}/sessions").json()
     assert api.delete(f"{API}/sessions/{uuid.uuid4()}").status_code == 404
+    pending = invite_token(api)
+    listed = api.get(f"{API}/invites").json()
+    assert len(listed) == 1
+    assert "token" not in listed[0]
+    assert api.delete(f"{API}/invites/{listed[0]['id']}").status_code == 204
+    assert api.get(f"{API}/join/{pending}").status_code == 404
 
 
-def test_compare_optimizer(api: TestClient, db: Session, shop_a: SampleWorkshop) -> None:
-    admin_login(api, db, shop_a)
+def test_a_workshop_keeps_one_active_owner(db: Session, shop_a: SampleWorkshop) -> None:
+    owner = db.scalars(select(User).where(User.email == shop_a.email)).one()
+
+    with pytest.raises(workshops.SetupError, match="one active owner"):
+        workshops.change_user(db, owner, role=auth.ROLE_STAFF)
+    with pytest.raises(workshops.SetupError, match="one active owner"):
+        workshops.change_user(db, owner, is_active=False)
+    second = add_user(db, shop_a, "second@example.invalid", auth.ROLE_OWNER)
+    assert workshops.change_user(db, owner, role=auth.ROLE_STAFF).role == auth.ROLE_STAFF
+    assert second.role == auth.ROLE_OWNER
+
+
+# --- the person's own login ---------------------------------------------------------------------
+
+
+def test_changing_the_password_ends_the_other_sessions(
+    api: TestClient, shop_a: SampleWorkshop
+) -> None:
+    other = TestClient(api.app, base_url="https://testserver")
+    log_in(other, shop_a.email)
+    log_in(api, shop_a.email)
+    change = {"current_password": PASSWORD, "new_password": "a-brand-new-long-password"}
+
+    assert api.post(f"{API}/me/password", json=change).status_code == 204
+    assert api.get(f"{API}/auth/me").status_code == 200
+    assert other.get(f"{API}/auth/me").status_code == 401
+    wrong = {"current_password": "nope", "new_password": "another-long-password"}
+    assert api.post(f"{API}/me/password", json=wrong).status_code == 401
+
+
+def test_turning_two_step_login_on_and_off(api: TestClient, shop_a: SampleWorkshop) -> None:
+    log_in(api, shop_a.email)
+    setup = api.post(f"{API}/me/totp/setup")
+    assert setup.status_code == 200
+    secret = setup.json()["secret"]
+    assert setup.json()["otpauth_uri"].startswith("otpauth://totp/")
+
+    wrong = next(
+        c for c in ("000000", "111111") if not pyotp.TOTP(secret).verify(c, valid_window=1)
+    )
+    assert (
+        api.post(f"{API}/me/totp/enable", json={"secret": secret, "code": wrong}).status_code == 401
+    )
+    code = pyotp.TOTP(secret).now()
+    enabled = api.post(f"{API}/me/totp/enable", json={"secret": secret, "code": code})
+    assert enabled.status_code == 200
+    assert enabled.json()["totp_enabled"] is True
+
+    api.cookies.clear()
+    assert log_in(api, shop_a.email)["totp_ok"] is False
+    assert api.post(f"{API}/auth/totp", json={"code": pyotp.TOTP(secret).now()}).status_code == 200
+    assert api.post(f"{API}/me/totp/disable").json()["totp_enabled"] is False
+
+
+# --- the workshop profile and currency ----------------------------------------------------------
+
+
+def test_the_currency_is_locked_after_the_first_quote(
+    api: TestClient, shop_a: SampleWorkshop
+) -> None:
+    log_in(api, shop_a.email)
+    profile = api.get(f"{API}/workshop").json()
+    assert profile["currency"] == "EUR"
+
+    changed = api.put(f"{API}/workshop", json={**profile, "currency": "BAM", "phone": "000"})
+    assert changed.status_code == 200
+    assert changed.json()["currency"] == "BAM"
+    assert api.get(f"{API}/auth/me").json()["currency"] == "BAM"
+    new_quote(api)
+    locked = api.put(f"{API}/workshop", json={**profile, "currency": "EUR"})
+    assert locked.status_code == 409
+    assert api.put(f"{API}/workshop", json={**profile, "currency": "USD"}).status_code == 422
+
+
+# --- "Try it" sandboxes -------------------------------------------------------------------------
+
+
+def test_a_sandbox_opens_logged_in_with_sample_data(api: TestClient) -> None:
+    opened = api.post(f"{API}/sandbox", json={"language": "bs"})
+
+    assert opened.status_code == 201, opened.text
+    me = opened.json()
+    assert me["is_demo"] is True
+    assert me["sandbox_expires_at"] is not None
+    assert me["language"] == "bs"
+    assert me["role"] == "owner"
+    api.headers[CSRF_HEADER] = me["csrf_token"]
+    assert len(api.get(f"{API}/systems").json()) == len(demo_catalogue.SYSTEMS)
+    assert api.post(f"{API}/invites", json={"role": "staff"}).status_code == 409
+    assert api.post(f"{API}/sandbox", data="language=en").status_code == 422
+
+
+def test_sandboxes_are_limited_per_address_and_purged(db: Session) -> None:
+    at = datetime(2026, 11, 17, 12, tzinfo=UTC)
+    for _ in range(sandbox.MAX_PER_ADDRESS_PER_DAY):
+        sandbox.create_sandbox(db, "198.51.100.7", "test", at)
+    with pytest.raises(sandbox.SandboxLimitError):
+        sandbox.create_sandbox(db, "198.51.100.7", "test", at)
+    sandbox.create_sandbox(db, "198.51.100.8", "test", at)
+
+    later = at + timedelta(hours=sandbox.SANDBOX_HOURS, minutes=1)
+    assert sandbox.purge_expired(db, later) == sandbox.MAX_PER_ADDRESS_PER_DAY + 1
+    assert db.scalar(select(func.count()).select_from(Workshop).where(Workshop.is_demo)) == 0
+    assert db.scalar(select(func.count()).select_from(SandboxRequest)) == 0
+    sandbox.create_sandbox(db, "198.51.100.7", "test", later)
+
+
+def test_a_real_workshop_is_never_purged(db: Session, shop_a: SampleWorkshop) -> None:
+    far = datetime(2100, 1, 1, tzinfo=UTC)
+
+    assert sandbox.purge_expired(db, far) == 0
+    assert db.get(Workshop, shop_a.workshop.id) is not None
+
+
+# --- admin tools --------------------------------------------------------------------------------
+
+
+def test_compare_optimizer(api: TestClient, shop_a: SampleWorkshop) -> None:
+    log_in(api, shop_a.email)
     quote = new_quote(api)
     api.put(f"{API}/quotes/{quote['id']}/revisions/1", json=revision_body())
     body = {"quote_id": quote["id"], "revision_no": 1, "group": "frame/white", "time_limit_s": 5}

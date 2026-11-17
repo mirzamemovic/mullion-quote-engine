@@ -11,6 +11,8 @@ from quote_engine.db.repository import NotFoundError
 from quote_engine.engine.errors import InvalidInput, MissingConstant, MissingPrice
 from quote_engine.services.auth import AuthError, RateLimitedError
 from quote_engine.services.quotes import QuoteError
+from quote_engine.services.sandbox import SandboxError, SandboxFullError, SandboxLimitError
+from quote_engine.services.workshops import SetupError
 
 PROBLEM = "application/problem+json"
 
@@ -62,3 +64,14 @@ def install(app: FastAPI) -> None:
     @app.exception_handler(AuthError)
     async def auth_error(_: Request, error: AuthError) -> JSONResponse:
         return problem(401, "login failed", str(error))
+
+    @app.exception_handler(SetupError)
+    async def setup_error(_: Request, error: SetupError) -> JSONResponse:
+        return problem(409, "not allowed now", str(error))
+
+    @app.exception_handler(SandboxError)
+    async def sandbox_error(_: Request, error: SandboxError) -> JSONResponse:
+        if isinstance(error, SandboxLimitError):
+            return problem(429, "too many sandboxes", str(error))
+        status = 503 if isinstance(error, SandboxFullError) else 409
+        return problem(status, "no sandbox now", str(error))

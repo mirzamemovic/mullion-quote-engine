@@ -1,19 +1,28 @@
-"""Login, logout, TOTP, step-up and the current user (PLAN.md sections 6 and 9)."""
+"""Login, logout, the two-step code, step-up and the current user (PLAN.md sections 6 and 9)."""
 
 from datetime import timedelta
 
 from fastapi import APIRouter, HTTPException, Request, Response, status
+from sqlalchemy.orm import Session as DbSession
 
-from quote_engine.api.deps import CSRF_COOKIE, DB, SESSION_COOKIE, AppSettings, Partial
+from quote_engine.api.deps import (
+    CSRF_COOKIE,
+    DB,
+    SESSION_COOKIE,
+    AppSettings,
+    Partial,
+    client_ip,
+)
 from quote_engine.api.schemas import CodeIn, LoginIn, MeOut, PasswordIn
 from quote_engine.db.models import Session, User, Workshop
 from quote_engine.db.repository import NotFoundError
 from quote_engine.services import auth
+from quote_engine.settings import Settings
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
 
-def _me(db: DB, user: User, row: Session) -> MeOut:
+def me_out(db: DbSession, user: User, row: Session) -> MeOut:
     workshop = db.get(Workshop, user.workshop_id)
     if workshop is None:
         raise NotFoundError(Workshop, user.workshop_id)
@@ -24,16 +33,21 @@ def _me(db: DB, user: User, row: Session) -> MeOut:
         workshop_id=workshop.id,
         workshop_name=workshop.name,
         is_demo=workshop.is_demo,
+        sandbox_expires_at=workshop.expires_at,
+        currency=workshop.currency,
+        language=workshop.language,
+        totp_enabled=user.totp_secret is not None,
         totp_ok=row.totp_ok,
         csrf_token=row.csrf_token,
     )
 
 
-def _set_cookies(response: Response, token: str, csrf: str, settings: AppSettings) -> None:
+def set_session_cookies(response: Response, opened: auth.NewSession, settings: Settings) -> None:
+    """The session cookie (HttpOnly) and the CSRF cookie the app copies into a header."""
     max_age = int(timedelta(days=settings.session_absolute_days).total_seconds())
     response.set_cookie(
         SESSION_COOKIE,
-        token,
+        opened.token,
         max_age=max_age,
         path="/",
         secure=True,
@@ -41,7 +55,13 @@ def _set_cookies(response: Response, token: str, csrf: str, settings: AppSetting
         samesite="lax",
     )
     response.set_cookie(
-        CSRF_COOKIE, csrf, max_age=max_age, path="/", secure=True, httponly=False, samesite="lax"
+        CSRF_COOKIE,
+        opened.csrf_token,
+        max_age=max_age,
+        path="/",
+        secure=True,
+        httponly=False,
+        samesite="lax",
     )
 
 
@@ -55,48 +75,42 @@ def login(
             db,
             body.email,
             body.password,
-            _client_ip(request),
+            client_ip(request),
             request.headers.get("user-agent", ""),
         )
     finally:
         db.commit()  # the login attempt is recorded even when the login fails
-    _set_cookies(response, opened.token, opened.csrf_token, settings)
-    return _me(db, opened.user, opened.row)
-
-
-def _client_ip(request: Request) -> str:
-    return request.client.host if request.client else "unknown"
+    set_session_cookies(response, opened, settings)
+    return me_out(db, opened.user, opened.row)
 
 
 @router.post("/totp")
 def totp(body: CodeIn, request: Request, a: Partial) -> MeOut:
-    """The admin's second step: a 6-digit code from the authenticator app."""
+    """The second step for people who turned two-step login on: a 6-digit code."""
     try:
-        ok = auth.confirm_totp(a.db.session, a.session, a.user, body.code, _client_ip(request))
+        ok = auth.confirm_totp(a.db.session, a.session, a.user, body.code, client_ip(request))
     finally:
         a.db.session.commit()  # a wrong code is recorded even though the request fails
     if not ok:
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, "wrong code")
-    return _me(a.db.session, a.user, a.session)
+    return me_out(a.db.session, a.user, a.session)
 
 
 @router.post("/reauth")
 def reauth(body: PasswordIn, request: Request, a: Partial) -> MeOut:
     """Confirm the password again before a sensitive action (valid 15 minutes)."""
     try:
-        ok = auth.reauthenticate(
-            a.db.session, a.session, a.user, body.password, _client_ip(request)
-        )
+        ok = auth.reauthenticate(a.db.session, a.session, a.user, body.password, client_ip(request))
     finally:
         a.db.session.commit()  # a wrong password is recorded even though the request fails
     if not ok:
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, "wrong password")
-    return _me(a.db.session, a.user, a.session)
+    return me_out(a.db.session, a.user, a.session)
 
 
 @router.get("/me")
 def me(a: Partial) -> MeOut:
-    return _me(a.db.session, a.user, a.session)
+    return me_out(a.db.session, a.user, a.session)
 
 
 @router.post("/logout", status_code=status.HTTP_204_NO_CONTENT)

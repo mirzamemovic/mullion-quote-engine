@@ -13,7 +13,7 @@ from fastapi.testclient import TestClient
 from pydantic import ValidationError
 
 from quote_engine.api import problems
-from quote_engine.api.schemas import PositionIn, RevisionIn, UserIn
+from quote_engine.api.schemas import InviteAcceptIn, PositionIn, RevisionIn, WorkshopIO
 from quote_engine.db.models import Client, Session
 from quote_engine.db.repository import NotFoundError
 from quote_engine.engine.errors import InvalidInput, MissingConstant, MissingPrice
@@ -21,7 +21,7 @@ from quote_engine.engine.model import Colour
 from quote_engine.engine.rules.registry import TYPES
 from quote_engine.export_openapi import schema_text
 from quote_engine.main import create_app
-from quote_engine.services import auth, demo, demo_catalogue
+from quote_engine.services import auth, demo, demo_catalogue, sandbox, workshops
 from quote_engine.services.quotes import QuoteError
 
 # --- problem details ----------------------------------------------------------------------------
@@ -48,6 +48,9 @@ def app_raising(error: Exception) -> TestClient:
         (QuoteError("an accepted quote cannot change"), 409, "not allowed now"),
         (auth.RateLimitedError("too many"), 429, "too many attempts"),
         (auth.AuthError("wrong email or password"), 401, "login failed"),
+        (workshops.SetupError("a workshop needs an owner"), 409, "not allowed now"),
+        (sandbox.SandboxLimitError("too many"), 429, "too many sandboxes"),
+        (sandbox.SandboxFullError("full"), 503, "no sandbox now"),
     ],
 )
 def test_errors_are_problem_json(error: Exception, status: int, title: str) -> None:
@@ -135,9 +138,33 @@ def test_revision_refs_must_be_unique_and_a_discount_is_one_kind() -> None:
         )
 
 
-def test_a_new_user_needs_a_long_password() -> None:
+def test_a_new_person_needs_a_long_password_and_a_real_email() -> None:
     with pytest.raises(ValidationError):
-        UserIn.model_validate({"email": "a@example.invalid", "password": "short", "role": "owner"})
+        InviteAcceptIn.model_validate({"email": "a@example.invalid", "password": "short"})
+    with pytest.raises(ValidationError):
+        InviteAcceptIn.model_validate({"email": "not-an-email", "password": "x" * 12})
+    assert InviteAcceptIn.model_validate({"email": "a@example.invalid", "password": "x" * 12})
+
+
+def test_a_workshop_picks_a_supported_currency_and_language() -> None:
+    base = {"name": "Sample workshop"}
+    assert WorkshopIO.model_validate({**base, "currency": "BAM"}).currency == "BAM"
+    for bad in ({"currency": "USD"}, {"language": "fr"}, {"unexpected": 1}):
+        with pytest.raises(ValidationError):
+            WorkshopIO.model_validate({**base, **bad})
+    assert set(workshops.CURRENCIES) == {"EUR", "BAM", "RSD", "ALL", "MKD"}
+
+
+def test_invites_never_come_from_a_sandbox_and_roles_are_checked() -> None:
+    """The service refuses before touching the database when the role is wrong."""
+    with pytest.raises(workshops.SetupError, match="role"):
+        workshops.create_invite(None, uuid.uuid4(), "admin", None)  # type: ignore[arg-type]
+
+
+def test_a_sandbox_request_must_be_json() -> None:
+    client = TestClient(create_app(), base_url="https://testserver")
+
+    assert client.post("/api/v1/sandbox", data={"language": "en"}).status_code == 422
 
 
 # --- auth helpers -------------------------------------------------------------------------------

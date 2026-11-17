@@ -21,6 +21,8 @@ class Settings:
     session_absolute_days: int
     reauth_minutes: int
     dev_demo: bool = False
+    # Where people open the app; used to print invite links from the command line.
+    public_url: str = "http://localhost:8000"
 
     @property
     def is_production(self) -> bool:
@@ -54,4 +56,5 @@ def get_settings() -> Settings:
         # The database-free demo endpoints (api/routes_dev.py): only when asked for, never in
         # production.
         dev_demo=os.environ.get("QUOTE_ENGINE_DEV_DEMO") == "1" and environment != "production",
+        public_url=os.environ.get("QUOTE_ENGINE_PUBLIC_URL", "http://localhost:8000"),
     )

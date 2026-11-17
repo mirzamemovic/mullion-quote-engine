@@ -51,8 +51,79 @@ class MeOut(Model):
     workshop_id: uuid.UUID
     workshop_name: str
     is_demo: bool
+    # Set for a "Try it" sandbox: when it is deleted.
+    sandbox_expires_at: datetime | None
+    currency: str
+    language: str
+    totp_enabled: bool
     totp_ok: bool
     csrf_token: str
+
+
+NewPassword = Annotated[str, Field(min_length=12, max_length=200)]
+
+
+class PasswordChangeIn(Model):
+    current_password: Annotated[str, Field(min_length=1, max_length=200)]
+    new_password: NewPassword
+
+
+class TotpSetupOut(Model):
+    """A new two-step secret, shown once; it is saved only after a code from it is confirmed."""
+
+    secret: str
+    otpauth_uri: str
+
+
+class TotpEnableIn(Model):
+    secret: Annotated[str, Field(pattern=r"^[A-Z2-7]{16,64}$")]
+    code: Annotated[str, Field(pattern=r"^\s*\d{6}\s*$")]
+
+
+class SandboxIn(Model):
+    """A JSON body is required, so a plain cross-site form cannot open a sandbox."""
+
+    language: Literal["en", "bs"] = "en"
+
+
+class InviteIn(Model):
+    role: Literal["owner", "staff"]
+
+
+class InviteOut(Model):
+    model_config = ConfigDict(extra="ignore", from_attributes=True)
+    id: uuid.UUID
+    role: str
+    expires_at: datetime
+    created_at: datetime
+
+
+class InviteCreated(InviteOut):
+    """The token is shown once; the app turns it into the ``/join/<token>`` link."""
+
+    token: str
+
+
+class InviteInfo(Model):
+    workshop_name: str
+    role: str
+    expires_at: datetime
+
+
+class InviteAcceptIn(Model):
+    email: Annotated[str, Field(min_length=3, max_length=200, pattern=r"^[^@\s]+@[^@\s]+$")]
+    password: NewPassword
+
+
+class WorkshopIO(Model):
+    name: Annotated[str, Field(min_length=1, max_length=200)]
+    address: Text = ""
+    phone: Annotated[str, Field(max_length=50)] = ""
+    email: Text = ""
+    vat_number: Annotated[str, Field(max_length=50)] = ""
+    vat_registered: bool = False
+    currency: Literal["EUR", "BAM", "RSD", "ALL", "MKD"] = "EUR"
+    language: Literal["en", "bs"] = "en"
 
 
 # --- clients ------------------------------------------------------------------------------------
@@ -320,12 +391,6 @@ class SettingsIO(Model):
     standard_max_mm2: Annotated[int, Field(ge=1, le=50_000_000)]
 
 
-class UserIn(Model):
-    email: Annotated[str, Field(min_length=3, max_length=200)]
-    password: Annotated[str, Field(min_length=12, max_length=200)]
-    role: Literal["owner", "admin"]
-
-
 class UserOut(Model):
     model_config = ConfigDict(extra="ignore", from_attributes=True)
     id: uuid.UUID
@@ -375,14 +440,9 @@ class ProfileOut(ProfileIn):
     id: uuid.UUID
 
 
-class UserCreated(UserOut):
-    """A new user. ``totp_uri`` is shown once, for an admin to add to an authenticator app."""
-
-    totp_uri: str | None = None
-
-
 class UserPatch(Model):
-    is_active: bool
+    is_active: bool | None = None
+    role: Literal["owner", "staff"] | None = None
 
 
 class CompareIn(Model):

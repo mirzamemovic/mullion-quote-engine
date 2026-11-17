@@ -39,6 +39,12 @@ class Workshop(Base):
     vat_number: Mapped[str] = mapped_column(String(SHORT), default="")
     vat_registered: Mapped[bool] = mapped_column(Boolean, default=False)
     is_demo: Mapped[bool] = mapped_column(Boolean, default=False)
+    email: Mapped[str] = mapped_column(String(NAME), default="", server_default="")
+    # ISO 4217 code. Amounts are whole minor units (cents); every supported currency has two.
+    currency: Mapped[str] = mapped_column(String(3), default="EUR", server_default="EUR")
+    language: Mapped[str] = mapped_column(String(SHORT), default="en", server_default="en")
+    # A "Try it" sandbox is deleted after this moment; a real workshop has none.
+    expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), default=None)
 
 
 class User(WorkshopScoped, Base):
@@ -47,7 +53,7 @@ class User(WorkshopScoped, Base):
 
     email: Mapped[str] = mapped_column(String(NAME))
     password_hash: Mapped[str] = mapped_column(String(NAME))
-    role: Mapped[str] = mapped_column(String(SHORT))  # owner | admin
+    role: Mapped[str] = mapped_column(String(SHORT))  # owner | staff
     totp_secret: Mapped[str | None] = mapped_column(String(SHORT), default=None)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
 
@@ -62,6 +68,27 @@ class Session(WorkshopScoped, Base):
     totp_ok: Mapped[bool] = mapped_column(Boolean, default=False)
     csrf_token: Mapped[str] = mapped_column(String(64))
     user_agent: Mapped[str] = mapped_column(String(NAME), default="")
+
+
+class Invite(WorkshopScoped, Base):
+    """A one-time link that lets a new person join a workshop. Only the token's hash is stored."""
+
+    __tablename__ = "invites"
+
+    role: Mapped[str] = mapped_column(String(SHORT))  # owner | staff
+    token_hash: Mapped[str] = mapped_column(String(64), unique=True)
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    accepted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), default=None)
+    created_by: Mapped[uuid.UUID | None] = mapped_column(Uuid, default=None)
+
+
+class SandboxRequest(Base):
+    """Not workshop-scoped: counts "Try it" sandboxes per address; rows are kept one day."""
+
+    __tablename__ = "sandbox_requests"
+
+    ip: Mapped[str] = mapped_column(String(SHORT), index=True)
+    at: Mapped[datetime] = mapped_column(DateTime(timezone=True), index=True)
 
 
 class LoginAttempt(Base):
@@ -288,6 +315,7 @@ class Payment(WorkshopScoped, Base):
 WORKSHOP_SCOPED: tuple[type[Base], ...] = (
     User,
     Session,
+    Invite,
     AuditLog,
     Client,
     Supplier,

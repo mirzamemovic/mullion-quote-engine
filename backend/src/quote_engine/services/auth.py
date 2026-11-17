@@ -3,8 +3,10 @@
 - Passwords: Argon2id (argon2-cffi defaults).
 - Sessions: 32 random bytes; only the SHA-256 hash is stored. Idle timeout and absolute lifetime
   from settings (7 and 30 days). A new token on every login; logout deletes the row.
-- Rate limit: 5 failed logins per 15 minutes per username, 20 per IP.
-- The admin needs a TOTP code after the password before the session is usable.
+- Rate limit: 5 failed logins per 15 minutes per username, 20 per IP. Wrong TOTP codes and
+  wrong re-check passwords count too.
+- Two-step login (TOTP) is optional for every user; once turned on, a code is needed after the
+  password before the session is usable.
 - Step-up: sensitive actions need a password re-check within the last 15 minutes.
 """
 
@@ -28,8 +30,11 @@ from quote_engine.settings import Settings
 RATE_WINDOW = timedelta(minutes=15)
 MAX_FAILURES_PER_USERNAME = 5
 MAX_FAILURES_PER_IP = 20
-ROLE_ADMIN = "admin"
-ROLE_OWNER = "owner"
+ROLE_OWNER = "owner"  # everything inside their own workshop
+ROLE_STAFF = "staff"  # quotes, clients and payments; reads the catalogue and prices
+ROLES = (ROLE_OWNER, ROLE_STAFF)
+MIN_PASSWORD = 12
+TOTP_ISSUER = "Mullion"
 
 _hasher = PasswordHasher()
 # Verified against when the email is unknown, so a wrong email takes as long as a wrong password.
@@ -137,7 +142,15 @@ def login(
     db.flush()
     if not success or user is None:
         raise AuthError("wrong email or password")
+    return open_session(db, user, user_agent, at)
 
+
+def open_session(db: DbSession, user: User, user_agent: str, at: datetime) -> NewSession:
+    """A new session for a user whose password (or invite, or sandbox) was just checked.
+
+    A user who turned on two-step login must still enter a code before the session is usable.
+    The check itself counts as a recent password check (step-up) for its first minutes.
+    """
     token = secrets.token_urlsafe(32)
     csrf = secrets.token_urlsafe(32)
     row = Session(
@@ -146,13 +159,55 @@ def login(
         user_id=user.id,
         last_seen_at=at,
         reauth_at=at,
-        totp_ok=user.role != ROLE_ADMIN,
+        totp_ok=user.totp_secret is None,
         csrf_token=csrf,
         user_agent=user_agent[:200],
     )
     db.add(row)
     db.flush()
     return NewSession(token, csrf, row, user)
+
+
+def check_new_password(password: str) -> None:
+    if len(password) < MIN_PASSWORD:
+        raise AuthError(f"the password needs at least {MIN_PASSWORD} characters")
+
+
+def change_password(
+    db: DbSession, row: Session, user: User, current: str, new: str, ip: str
+) -> None:
+    """Replace the password. Every other session of the user ends; this one stays.
+
+    A wrong current password counts towards the login limit, like a wrong step-up password.
+    """
+    if not verify_password(user.password_hash, current):
+        _fail_inside_session(db, row, user, ip)
+        raise AuthError("wrong password")
+    check_new_password(new)
+    user.password_hash = hash_password(new)
+    db.execute(delete(Session).where(Session.user_id == user.id, Session.id != row.id))
+    db.flush()
+
+
+def totp_setup(user: User) -> tuple[str, str]:
+    """A new secret and its ``otpauth://`` link, not saved until a code from it is confirmed."""
+    secret = new_totp_secret()
+    return secret, pyotp.TOTP(secret).provisioning_uri(user.email, issuer_name=TOTP_ISSUER)
+
+
+def enable_totp(db: DbSession, row: Session, user: User, secret: str, code: str, ip: str) -> bool:
+    """Turn two-step login on once a code from the new secret checks out."""
+    if not totp_ok(secret, code):
+        _fail_inside_session(db, row, user, ip)
+        return False
+    user.totp_secret = secret
+    db.flush()
+    return True
+
+
+def disable_totp(db: DbSession, user: User) -> None:
+    user.totp_secret = None
+    db.flush()
 
 
 def session_for(
