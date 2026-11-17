@@ -4,7 +4,7 @@ import uuid
 
 from fastapi import APIRouter, status
 
-from quote_engine.api.deps import LoggedIn, Owner
+from quote_engine.api.deps import LoggedIn, Owner, OwnerStepUp
 from quote_engine.api.schemas import InviteCreated, InviteIn, InviteOut, WorkshopIO
 from quote_engine.db.models import Invite, Workshop
 from quote_engine.db.repository import NotFoundError
@@ -27,7 +27,7 @@ def get_workshop(a: LoggedIn) -> WorkshopIO:
 
 
 @router.put("/workshop")
-def put_workshop(body: WorkshopIO, a: Owner) -> WorkshopIO:
+def put_workshop(body: WorkshopIO, a: OwnerStepUp) -> WorkshopIO:
     """Name, contact details, VAT, language and (before the first quote) the currency."""
     row = _workshop(a)
     workshops.change_currency(a.db.session, row, body.currency)

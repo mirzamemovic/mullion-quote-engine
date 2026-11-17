@@ -355,24 +355,43 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/join/{token}": {
+    "/api/v1/join": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        /**
-         * Invite Info
-         * @description What the link is for, so the page can say which workshop the person is joining.
-         */
-        get: operations["invite_info_api_v1_join__token__get"];
+        get?: never;
         put?: never;
         /**
          * Accept Invite
          * @description Create the login the invite is for and log the new person in.
          */
-        post: operations["accept_invite_api_v1_join__token__post"];
+        post: operations["accept_invite_api_v1_join_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/join/info": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Invite Info
+         * @description What a link is for, so the page can say which workshop the person is joining.
+         *
+         *     The link is ``/join#<token>``: the part after ``#`` never reaches the server, so the page
+         *     sends the token here in the body.
+         */
+        post: operations["invite_info_api_v1_join_info_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1138,6 +1157,8 @@ export interface components {
             email: string;
             /** Password */
             password: string;
+            /** Token */
+            token: string;
         };
         /**
          * InviteCreated
@@ -1203,6 +1224,14 @@ export interface components {
             id: string;
             /** Role */
             role: string;
+        };
+        /**
+         * InviteTokenIn
+         * @description The token travels in the body, never in a URL, so it stays out of access logs.
+         */
+        InviteTokenIn: {
+            /** Token */
+            token: string;
         };
         /** LoginIn */
         LoginIn: {
@@ -2670,44 +2699,11 @@ export interface operations {
             };
         };
     };
-    invite_info_api_v1_join__token__get: {
+    accept_invite_api_v1_join_post: {
         parameters: {
             query?: never;
             header?: never;
-            path: {
-                token: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["InviteInfo"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    accept_invite_api_v1_join__token__post: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                token: string;
-            };
+            path?: never;
             cookie?: never;
         };
         requestBody: {
@@ -2723,6 +2719,39 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["MeOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    invite_info_api_v1_join_info_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["InviteTokenIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InviteInfo"];
                 };
             };
             /** @description Validation Error */

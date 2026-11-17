@@ -110,7 +110,17 @@ class InviteInfo(Model):
     expires_at: datetime
 
 
+InviteToken = Annotated[str, Field(pattern=r"^[A-Za-z0-9_-]{20,100}$")]
+
+
+class InviteTokenIn(Model):
+    """The token travels in the body, never in a URL, so it stays out of access logs."""
+
+    token: InviteToken
+
+
 class InviteAcceptIn(Model):
+    token: InviteToken
     email: Annotated[str, Field(min_length=3, max_length=200, pattern=r"^[^@\s]+@[^@\s]+$")]
     password: NewPassword
 

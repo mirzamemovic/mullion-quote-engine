@@ -8,7 +8,7 @@ from fastapi import APIRouter, HTTPException, Request, Response, status
 
 from quote_engine.api.deps import DB, AppSettings, client_ip
 from quote_engine.api.routes_auth import me_out, set_session_cookies
-from quote_engine.api.schemas import InviteAcceptIn, InviteInfo, MeOut, SandboxIn
+from quote_engine.api.schemas import InviteAcceptIn, InviteInfo, InviteTokenIn, MeOut, SandboxIn
 from quote_engine.db.models import Workshop
 from quote_engine.services import auth, sandbox, workshops
 
@@ -31,12 +31,16 @@ def create_sandbox(
     return me_out(db, opened.user, opened.row)
 
 
-@router.get("/join/{token}")
-def invite_info(token: str, db: DB) -> InviteInfo:
-    """What the link is for, so the page can say which workshop the person is joining."""
+@router.post("/join/info")
+def invite_info(body: InviteTokenIn, db: DB) -> InviteInfo:
+    """What a link is for, so the page can say which workshop the person is joining.
+
+    The link is ``/join#<token>``: the part after ``#`` never reaches the server, so the page
+    sends the token here in the body.
+    """
     try:
-        invite = workshops.open_invite(db, token)
-    except workshops.SetupError:
+        invite = workshops.open_invite(db, body.token)
+    except workshops.InviteInvalidError:
         raise HTTPException(status.HTTP_404_NOT_FOUND, INVALID_LINK) from None
     workshop = db.get(Workshop, invite.workshop_id)
     if workshop is None:
@@ -44,21 +48,15 @@ def invite_info(token: str, db: DB) -> InviteInfo:
     return InviteInfo(workshop_name=workshop.name, role=invite.role, expires_at=invite.expires_at)
 
 
-@router.post("/join/{token}", status_code=status.HTTP_201_CREATED)
+@router.post("/join", status_code=status.HTTP_201_CREATED)
 def accept_invite(
-    token: str,
-    body: InviteAcceptIn,
-    request: Request,
-    response: Response,
-    db: DB,
-    settings: AppSettings,
+    body: InviteAcceptIn, request: Request, response: Response, db: DB, settings: AppSettings
 ) -> MeOut:
     """Create the login the invite is for and log the new person in."""
     try:
-        workshops.open_invite(db, token)
-    except workshops.SetupError:
+        user = workshops.accept_invite(db, body.token, body.email, body.password)
+    except workshops.InviteInvalidError:
         raise HTTPException(status.HTTP_404_NOT_FOUND, INVALID_LINK) from None
-    user = workshops.accept_invite(db, token, body.email, body.password)
     opened = auth.open_session(db, user, request.headers.get("user-agent", ""), auth.now())
     db.commit()
     set_session_cookies(response, opened, settings)

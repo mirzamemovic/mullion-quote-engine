@@ -601,9 +601,15 @@
             "minLength": 12,
             "title": "Password",
             "type": "string"
+          },
+          "token": {
+            "pattern": "^[A-Za-z0-9_-]{20,100}$",
+            "title": "Token",
+            "type": "string"
           }
         },
         "required": [
+          "token",
           "email",
           "password"
         ],
@@ -719,6 +725,22 @@
           "created_at"
         ],
         "title": "InviteOut",
+        "type": "object"
+      },
+      "InviteTokenIn": {
+        "additionalProperties": false,
+        "description": "The token travels in the body, never in a URL, so it stays out of access logs.",
+        "properties": {
+          "token": {
+            "pattern": "^[A-Za-z0-9_-]{20,100}$",
+            "title": "Token",
+            "type": "string"
+          }
+        },
+        "required": [
+          "token"
+        ],
+        "title": "InviteTokenIn",
         "type": "object"
       },
       "LoginIn": {
@@ -3415,62 +3437,10 @@
         ]
       }
     },
-    "/api/v1/join/{token}": {
-      "get": {
-        "description": "What the link is for, so the page can say which workshop the person is joining.",
-        "operationId": "invite_info_api_v1_join__token__get",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "token",
-            "required": true,
-            "schema": {
-              "title": "Token",
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/InviteInfo"
-                }
-              }
-            },
-            "description": "Successful Response"
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            },
-            "description": "Validation Error"
-          }
-        },
-        "summary": "Invite Info",
-        "tags": [
-          "join"
-        ]
-      },
+    "/api/v1/join": {
       "post": {
         "description": "Create the login the invite is for and log the new person in.",
-        "operationId": "accept_invite_api_v1_join__token__post",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "token",
-            "required": true,
-            "schema": {
-              "title": "Token",
-              "type": "string"
-            }
-          }
-        ],
+        "operationId": "accept_invite_api_v1_join_post",
         "requestBody": {
           "content": {
             "application/json": {
@@ -3504,6 +3474,48 @@
           }
         },
         "summary": "Accept Invite",
+        "tags": [
+          "join"
+        ]
+      }
+    },
+    "/api/v1/join/info": {
+      "post": {
+        "description": "What a link is for, so the page can say which workshop the person is joining.\n\nThe link is ``/join#<token>``: the part after ``#`` never reaches the server, so the page\nsends the token here in the body.",
+        "operationId": "invite_info_api_v1_join_info_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InviteTokenIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InviteInfo"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Invite Info",
         "tags": [
           "join"
         ]

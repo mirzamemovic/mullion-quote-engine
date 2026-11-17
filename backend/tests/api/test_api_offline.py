@@ -139,11 +139,27 @@ def test_revision_refs_must_be_unique_and_a_discount_is_one_kind() -> None:
 
 
 def test_a_new_person_needs_a_long_password_and_a_real_email() -> None:
+    token = "t" * 43
     with pytest.raises(ValidationError):
-        InviteAcceptIn.model_validate({"email": "a@example.invalid", "password": "short"})
+        InviteAcceptIn.model_validate(
+            {"token": token, "email": "a@example.invalid", "password": "short"}
+        )
     with pytest.raises(ValidationError):
-        InviteAcceptIn.model_validate({"email": "not-an-email", "password": "x" * 12})
-    assert InviteAcceptIn.model_validate({"email": "a@example.invalid", "password": "x" * 12})
+        InviteAcceptIn.model_validate(
+            {"token": token, "email": "not-an-email", "password": "x" * 12}
+        )
+    with pytest.raises(ValidationError):
+        InviteAcceptIn.model_validate(
+            {"token": "a/b", "email": "a@example.invalid", "password": "x" * 12}
+        )
+    ok = {"token": token, "email": "a@example.invalid", "password": "x" * 12}
+    assert InviteAcceptIn.model_validate(ok)
+
+
+def test_invite_links_keep_the_token_out_of_the_url_path() -> None:
+    link = workshops.invite_link("https://mullion.example/", "abc_DEF-123")
+
+    assert link == "https://mullion.example/join#abc_DEF-123"
 
 
 def test_a_workshop_picks_a_supported_currency_and_language() -> None:

@@ -14,6 +14,7 @@ from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 
 from sqlalchemy import func, select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session as DbSession
 
 from quote_engine.db.models import Invite, Quote, User, Workshop, WorkshopSettings
@@ -210,13 +211,22 @@ def create_invite(
     return NewInvite(invite, token)
 
 
-def open_invite(db: DbSession, token: str, at: datetime | None = None) -> Invite:
-    """The unused, unexpired invite for ``token``; every other case is the same error."""
-    invite = db.scalars(
-        select(Invite).where(Invite.token_hash == auth.hash_token(token))
-    ).one_or_none()
+class InviteInvalidError(SetupError):
+    """Unknown, used or expired: the same answer for all three, so links cannot be probed."""
+
+
+def open_invite(
+    db: DbSession, token: str, at: datetime | None = None, *, lock: bool = False
+) -> Invite:
+    """The unused, unexpired invite for ``token``; every other case is the same error.
+
+    ``lock`` holds the row until the transaction ends, so two people opening the same link at
+    the same moment cannot both join.
+    """
+    query = select(Invite).where(Invite.token_hash == auth.hash_token(token))
+    invite = db.scalars(query.with_for_update() if lock else query).one_or_none()
     if invite is None or invite.accepted_at is not None or invite.expires_at <= (at or now()):
-        raise SetupError("this invite link is not valid any more")
+        raise InviteInvalidError("this invite link is not valid any more")
     return invite
 
 
@@ -225,12 +235,18 @@ def accept_invite(
 ) -> User:
     """Create the new person's login from the invite and use the invite up."""
     at = at or now()
-    invite = open_invite(db, token, at)
-    user = create_user(db, invite.workshop_id, email, password, invite.role)
+    invite = open_invite(db, token, at, lock=True)
+    try:
+        user = create_user(db, invite.workshop_id, email, password, invite.role)
+    except IntegrityError:
+        # Someone took the same email between the check and the insert. The request's
+        # transaction is rolled back by the caller.
+        raise SetupError("that email is already used") from None
     invite.accepted_at = at
     db.flush()
     return user
 
 
 def invite_link(public_url: str, token: str) -> str:
-    return f"{public_url.rstrip('/')}/join/{token}"
+    """The token goes after ``#``: browsers never send that part, so it stays out of every log."""
+    return f"{public_url.rstrip('/')}/join#{token}"

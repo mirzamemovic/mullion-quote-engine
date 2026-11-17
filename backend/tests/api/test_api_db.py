@@ -645,11 +645,11 @@ def test_an_invite_link_lets_one_person_join(api: TestClient, shop_a: SampleWork
     token = invite_token(api)
     api.cookies.clear()
 
-    info = api.get(f"{API}/join/{token}")
+    info = api.post(f"{API}/join/info", json={"token": token})
     assert info.status_code == 200
     assert info.json()["role"] == "staff"
     join = {"email": "new-staff@example.invalid", "password": "a-long-enough-password"}
-    joined = api.post(f"{API}/join/{token}", json=join)
+    joined = api.post(f"{API}/join", json={**join, "token": token})
     assert joined.status_code == 201, joined.text
     assert joined.json()["role"] == "staff"
     assert joined.json()["workshop_id"] == str(shop_a.workshop.id)
@@ -658,8 +658,8 @@ def test_an_invite_link_lets_one_person_join(api: TestClient, shop_a: SampleWork
 
     api.cookies.clear()
     again = {"email": "someone-else@example.invalid", "password": "a-long-enough-password"}
-    assert api.post(f"{API}/join/{token}", json=again).status_code == 404
-    assert api.get(f"{API}/join/{token}").status_code == 404
+    assert api.post(f"{API}/join", json={**again, "token": token}).status_code == 404
+    assert api.post(f"{API}/join/info", json={"token": token}).status_code == 404
 
 
 def test_an_expired_or_unknown_invite_is_refused(
@@ -671,10 +671,10 @@ def test_an_expired_or_unknown_invite_is_refused(
     db.commit()
     join = {"email": "late@example.invalid", "password": "a-long-enough-password"}
 
-    assert api.post(f"{API}/join/{created.token}", json=join).status_code == 404
-    assert api.post(f"{API}/join/not-a-real-token", json=join).status_code == 404
+    assert api.post(f"{API}/join", json={**join, "token": created.token}).status_code == 404
+    assert api.post(f"{API}/join", json={**join, "token": "x" * 43}).status_code == 404
     short = {"email": "late@example.invalid", "password": "short"}
-    assert api.post(f"{API}/join/{created.token}", json=short).status_code == 422
+    assert api.post(f"{API}/join", json={**short, "token": created.token}).status_code == 422
 
 
 def test_only_the_invite_hash_is_stored(
@@ -710,7 +710,7 @@ def test_the_owner_manages_the_team(api: TestClient, db: Session, shop_a: Sample
     assert len(listed) == 1
     assert "token" not in listed[0]
     assert api.delete(f"{API}/invites/{listed[0]['id']}").status_code == 204
-    assert api.get(f"{API}/join/{pending}").status_code == 404
+    assert api.post(f"{API}/join/info", json={"token": pending}).status_code == 404
 
 
 def test_a_workshop_keeps_one_active_owner(db: Session, shop_a: SampleWorkshop) -> None:
