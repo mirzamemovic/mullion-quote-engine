@@ -401,7 +401,7 @@ def calculate(system_key: str, content: dict[str, Any], today: date) -> dict[str
         positions=tuple(calculation.position_spec(p) for p in positions),
         readings={p.ref: p.readings for p in positions if p.readings},
         installation={p.ref: Installation(**(p.installation or {})) for p in positions},
-        extras=tuple(calculation.extra(e) for e in extras),  # noqa: S610 (not Django)  # noqa: S610 (not Django)  # noqa: S610 (not Django)  # noqa: S610 (not Django)  # noqa: S610 (not Django)
+        extras=tuple(calculation.extra(e) for e in extras),  # noqa: S610 (not Django)
         sheet=sheet,
         price_list=prices,
         entries=tuple(entries),
