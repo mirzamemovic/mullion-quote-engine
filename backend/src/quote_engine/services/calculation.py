@@ -39,11 +39,13 @@ from quote_engine.engine.pricing import (
     SizeThresholds,
     price_job,
 )
+from quote_engine.engine.readiness import TrackingBook
 from quote_engine.engine.rules.registry import cut_position, merge
 from quote_engine.engine.sheet import system_constants_from_mapping
 from quote_engine.engine.units import Bp, Cents, Mm, Mm2
 from quote_engine.engine.warnings import (
     QuoteWarning,
+    estimate_warning,
     margin_warning,
     price_list_age_warning,
     readings_warnings,
@@ -142,6 +144,7 @@ def price_book(inputs: Inputs) -> PriceBook:
                 PriceUnit(e.unit),
                 inputs.suppliers.get(str(e.supplier_id), "unknown supplier"),
                 e.quoted_on,
+                e.is_estimate,
             )
             for e in inputs.entries
         ),
@@ -198,7 +201,8 @@ def calculate(revision: QuoteRevision, inputs: Inputs, today: date) -> dict[str,
         transport_km=revision.transport_km,
         discount=Discount(Cents(revision.discount_cents), Bp(revision.discount_bp)),
     )
-    price = price_job(job, price_book(inputs), pricing_settings(revision, inputs.settings))
+    book = TrackingBook(price_book(inputs))
+    price = price_job(job, book, pricing_settings(revision, inputs.settings))
 
     warnings: list[QuoteWarning] = []
     for ref, readings in inputs.readings.items():
@@ -211,7 +215,8 @@ def calculate(revision: QuoteRevision, inputs: Inputs, today: date) -> dict[str,
         inputs.price_list.valid_from, today, inputs.settings.price_age_warn_days
     )
     margin = margin_warning(Bp(revision.margin_bp), Bp(inputs.settings.margin_warn_bp))
-    warnings.extend(w for w in (age, margin) if w is not None)
+    estimated = estimate_warning(book.used.values())
+    warnings.extend(w for w in (age, margin, estimated) if w is not None)
 
     return plain_dict(
         {

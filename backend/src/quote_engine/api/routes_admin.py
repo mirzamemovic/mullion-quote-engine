@@ -260,6 +260,7 @@ def bump_price_list(list_id: uuid.UUID, body: BumpIn, a: OwnerStepUp) -> PriceLi
                 "unit": e.unit,
                 "amount_cents": amount,
                 "quoted_on": body.valid_from if e.supplier_id == supplier.id else e.quoted_on,
+                "is_estimate": e.is_estimate,  # a +X% bump does not make an estimate real
             }
         )
     sign = "+" if body.bp >= 0 else "-"

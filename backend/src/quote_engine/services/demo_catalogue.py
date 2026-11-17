@@ -383,6 +383,7 @@ def calculate(system_key: str, content: dict[str, Any], today: date) -> dict[str
         PriceEntry(
             id=uuid.uuid4(),
             quoted_on=today,
+            is_estimate=True,  # market research, not a supplier's quote
             **{**row, "supplier_id": SUPPLIER_IDS[str(row["supplier_id"])]},
         )
         for row in price_rows("profile", "glass", "other")

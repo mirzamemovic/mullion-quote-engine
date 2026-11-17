@@ -113,7 +113,11 @@ def seed_demo(
         supplier = suppliers[str(row.pop("supplier_id"))]
         add(
             PriceEntry(
-                price_list_version_id=prices.id, supplier_id=supplier.id, quoted_on=today, **row
+                price_list_version_id=prices.id,
+                supplier_id=supplier.id,
+                quoted_on=today,
+                is_estimate=True,  # market research, not a supplier's quote
+                **row,
             )
         )
     add(Client(name="Probni klijent", phone="", place="Probno mjesto"))

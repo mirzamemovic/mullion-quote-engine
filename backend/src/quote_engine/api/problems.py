@@ -10,6 +10,7 @@ from starlette.exceptions import HTTPException
 from quote_engine.db.repository import NotFoundError
 from quote_engine.engine.errors import InvalidInput, MissingConstant, MissingPrice
 from quote_engine.services.auth import AuthError, RateLimitedError
+from quote_engine.services.price_csv import CsvError
 from quote_engine.services.quotes import QuoteError
 from quote_engine.services.sandbox import SandboxError, SandboxFullError, SandboxLimitError
 from quote_engine.services.workshops import SetupError
@@ -64,6 +65,13 @@ def install(app: FastAPI) -> None:
     @app.exception_handler(AuthError)
     async def auth_error(_: Request, error: AuthError) -> JSONResponse:
         return problem(401, "login failed", str(error))
+
+    @app.exception_handler(CsvError)
+    async def csv_error(_: Request, error: CsvError) -> JSONResponse:
+        problems = [
+            {"row": p.row, "column": p.column, "message": p.message} for p in error.problems[:200]
+        ]
+        return problem(422, "the file has problems", str(error), problems=problems)
 
     @app.exception_handler(SetupError)
     async def setup_error(_: Request, error: SetupError) -> JSONResponse:

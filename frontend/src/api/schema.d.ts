@@ -218,6 +218,27 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/engine/cut-preview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Cut Preview
+         * @description One window cut with a sheet still being written: a missing value comes back as a 422
+         *     that names it, so the sheet editor can point at the field.
+         */
+        post: operations["cut_preview_api_v1_engine_cut_preview_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/engine/measure": {
         parameters: {
             query?: never;
@@ -496,6 +517,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/price-lists/drafts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Create Draft
+         * @description A draft price list: empty, or a copy of another list to change.
+         */
+        post: operations["create_draft_api_v1_price_lists_drafts_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/price-lists/{list_id}": {
         parameters: {
             query?: never;
@@ -507,7 +548,8 @@ export interface paths {
         get: operations["get_price_list_api_v1_price_lists__list_id__get"];
         put?: never;
         post?: never;
-        delete?: never;
+        /** Delete Draft */
+        delete: operations["delete_draft_api_v1_price_lists__list_id__delete"];
         options?: never;
         head?: never;
         patch?: never;
@@ -527,6 +569,70 @@ export interface paths {
          * @description A copy of a price list with one supplier's prices changed by ``bp`` (rounded half up).
          */
         post: operations["bump_price_list_api_v1_price_lists__list_id__bump_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/price-lists/{list_id}/csv": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Export Csv
+         * @description A price list as a CSV file for a spreadsheet (formula-looking cells are escaped).
+         */
+        get: operations["export_csv_api_v1_price_lists__list_id__csv_get"];
+        put?: never;
+        /**
+         * Import Csv
+         * @description Replace a draft's prices with a CSV file: all or nothing, every problem listed.
+         */
+        post: operations["import_csv_api_v1_price_lists__list_id__csv_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/price-lists/{list_id}/entries": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Put Entries
+         * @description Replace every price of a draft.
+         */
+        put: operations["put_entries_api_v1_price_lists__list_id__entries_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/price-lists/{list_id}/publish": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Publish Price List
+         * @description Make a draft the price list for quotes from ``valid_from``. It never changes after.
+         */
+        post: operations["publish_price_list_api_v1_price_lists__list_id__publish_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -772,6 +878,66 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/setup/price-template.csv": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Price Template
+         * @description A CSV of every price still missing, amounts empty, ready to fill in a spreadsheet.
+         */
+        get: operations["price_template_api_v1_setup_price_template_csv_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/setup/starter-prices": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Starter Prices
+         * @description A draft of market-estimate prices, each flagged as an estimate, to edit and publish.
+         */
+        post: operations["starter_prices_api_v1_setup_starter_prices_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/setup/status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Setup Status
+         * @description What the workshop still has to enter before it can quote (asked of the engine itself).
+         */
+        get: operations["setup_status_api_v1_setup_status_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/suppliers": {
         parameters: {
             query?: never;
@@ -857,6 +1023,46 @@ export interface paths {
          * @description A new version of a system's sheet. The constants are checked by the engine first.
          */
         post: operations["create_sheet_api_v1_systems__system_id__sheets_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/systems/{system_id}/sheets/draft": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Save Sheet Draft
+         * @description Save the system's draft sheet (one per system). It may be incomplete until published.
+         */
+        post: operations["save_sheet_draft_api_v1_systems__system_id__sheets_draft_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/systems/{system_id}/sheets/{version}/publish": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Publish Sheet
+         * @description Check a draft sheet with the engine and make it the one new quotes use.
+         */
+        post: operations["publish_sheet_api_v1_systems__system_id__sheets__version__publish_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1025,6 +1231,30 @@ export interface components {
             enabled: boolean;
             /** Key */
             key: string;
+        };
+        /**
+         * CsvIn
+         * @description The file's bytes in base64: the server works out the encoding (UTF-8 or Windows-1250).
+         */
+        CsvIn: {
+            /** Content Base64 */
+            content_base64: string;
+        };
+        /**
+         * CutPreviewIn
+         * @description Cut one window with a sheet that has not been saved, to check its deductions.
+         */
+        CutPreviewIn: {
+            /** Constants */
+            constants: {
+                [key: string]: unknown;
+            };
+            /** Construction Type */
+            construction_type: string;
+            /** Height Mm */
+            height_mm: number;
+            /** Width Mm */
+            width_mm: number;
         };
         /** ExtraIn */
         ExtraIn: {
@@ -1417,11 +1647,49 @@ export interface components {
              */
             profile_system_id: string;
         };
+        /** PriceCheckOut */
+        PriceCheckOut: {
+            /** Colour */
+            colour: string | null;
+            /** Kind */
+            kind: string;
+            /** Ref */
+            ref: string;
+            /** State */
+            state: string;
+            /** Systems */
+            systems: string[];
+            /** Unit */
+            unit: string;
+        };
+        /**
+         * PriceDraftIn
+         * @description A new draft price list, empty or copied from an existing list.
+         */
+        PriceDraftIn: {
+            /** Copy From */
+            copy_from?: string | null;
+            /**
+             * Note
+             * @default
+             */
+            note: string;
+        };
+        /** PriceEntriesIn */
+        PriceEntriesIn: {
+            /** Entries */
+            entries: components["schemas"]["PriceEntryIn"][];
+        };
         /** PriceEntryIn */
         PriceEntryIn: {
             /** Amount Cents */
             amount_cents: number;
             colour?: components["schemas"]["Colour"] | null;
+            /**
+             * Is Estimate
+             * @default false
+             */
+            is_estimate: boolean;
             /** Item Kind */
             item_kind: string;
             /** Item Ref */
@@ -1448,6 +1716,11 @@ export interface components {
              * Format: uuid
              */
             id: string;
+            /**
+             * Is Estimate
+             * @default false
+             */
+            is_estimate: boolean;
             /** Item Kind */
             item_kind: string;
             /** Item Ref */
@@ -1492,6 +1765,8 @@ export interface components {
             locked: boolean;
             /** Note */
             note: string;
+            /** Status */
+            status: string;
             /**
              * Valid From
              * Format: date
@@ -1583,6 +1858,14 @@ export interface components {
             material: "pvc" | "aluminium";
             /** Series */
             series: string;
+        };
+        /** PublishIn */
+        PublishIn: {
+            /**
+             * Valid From
+             * Format: date
+             */
+            valid_from: string;
         };
         /** QuoteCreate */
         QuoteCreate: {
@@ -1797,6 +2080,52 @@ export interface components {
             /** Vat Bp */
             vat_bp: number;
         };
+        /** SetupStatusOut */
+        SetupStatusOut: {
+            /** Construction Types */
+            construction_types: string[];
+            /** Estimates */
+            estimates: number;
+            /** Foil Prices Missing */
+            foil_prices_missing: components["schemas"]["PriceCheckOut"][];
+            /** Glass Priced */
+            glass_priced: boolean;
+            /** Openings Without Hardware Set */
+            openings_without_hardware_set: string[];
+            /** Percent */
+            percent: number;
+            /** Price List Id */
+            price_list_id: string | null;
+            /** Price List Status */
+            price_list_status: string | null;
+            /** Prices Missing */
+            prices_missing: components["schemas"]["PriceCheckOut"][];
+            /** Prices Needed */
+            prices_needed: number;
+            /** Ready */
+            ready: boolean;
+            /** Suppliers */
+            suppliers: number;
+            /** Systems */
+            systems: components["schemas"]["SystemCheckOut"][];
+        };
+        /**
+         * SheetDraftIn
+         * @description A system sheet being written: any of the sheet's keys, complete or not.
+         */
+        SheetDraftIn: {
+            /** Constants */
+            constants: {
+                [key: string]: unknown;
+            };
+            /**
+             * Source Pages
+             * @default {}
+             */
+            source_pages: {
+                [key: string]: string;
+            };
+        };
         /** SheetIn */
         SheetIn: {
             /** Constants */
@@ -1838,8 +2167,18 @@ export interface components {
             source_pages: {
                 [key: string]: unknown;
             };
+            /** Status */
+            status: string;
             /** Version */
             version: number;
+        };
+        /** StarterIn */
+        StarterIn: {
+            /**
+             * With Systems
+             * @default false
+             */
+            with_systems: boolean;
         };
         /** StatusIn */
         StatusIn: {
@@ -1883,6 +2222,30 @@ export interface components {
              * @default
              */
             phone: string;
+        };
+        /** SystemCheckOut */
+        SystemCheckOut: {
+            /** Done */
+            done: boolean;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Key */
+            key: string;
+            /** Material */
+            material: string;
+            /** Missing */
+            missing: string[];
+            /** Name */
+            name: string;
+            /** Problem */
+            problem: string | null;
+            /** Sheet */
+            sheet: string;
+            /** Sheet Version */
+            sheet_version: number | null;
         };
         /** TotpEnableIn */
         TotpEnableIn: {
@@ -2390,6 +2753,41 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ConstructionTypeIO"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    cut_preview_api_v1_engine_cut_preview_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CutPreviewIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
                 };
             };
             /** @description Validation Error */
@@ -2922,6 +3320,39 @@ export interface operations {
             };
         };
     };
+    create_draft_api_v1_price_lists_drafts_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PriceDraftIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PriceListOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     get_price_list_api_v1_price_lists__list_id__get: {
         parameters: {
             query?: never;
@@ -2953,6 +3384,35 @@ export interface operations {
             };
         };
     };
+    delete_draft_api_v1_price_lists__list_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                list_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     bump_price_list_api_v1_price_lists__list_id__bump_post: {
         parameters: {
             query?: never;
@@ -2970,6 +3430,142 @@ export interface operations {
         responses: {
             /** @description Successful Response */
             201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PriceListOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    export_csv_api_v1_price_lists__list_id__csv_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                list_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    import_csv_api_v1_price_lists__list_id__csv_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                list_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CsvIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PriceListOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    put_entries_api_v1_price_lists__list_id__entries_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                list_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PriceEntriesIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PriceListOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    publish_price_list_api_v1_price_lists__list_id__publish_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                list_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PublishIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -3520,6 +4116,101 @@ export interface operations {
             };
         };
     };
+    price_template_api_v1_setup_price_template_csv_get: {
+        parameters: {
+            query?: {
+                price_list_id?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    starter_prices_api_v1_setup_starter_prices_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StarterIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PriceListOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    setup_status_api_v1_setup_status_get: {
+        parameters: {
+            query?: {
+                price_list_id?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SetupStatusOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     list_suppliers_api_v1_suppliers_get: {
         parameters: {
             query?: never;
@@ -3744,6 +4435,73 @@ export interface operations {
         responses: {
             /** @description Successful Response */
             201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SheetOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    save_sheet_draft_api_v1_systems__system_id__sheets_draft_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                system_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SheetDraftIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SheetOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    publish_sheet_api_v1_systems__system_id__sheets__version__publish_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                system_id: string;
+                version: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
                 headers: {
                     [name: string]: unknown;
                 };

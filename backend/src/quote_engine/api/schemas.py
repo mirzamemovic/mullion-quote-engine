@@ -348,6 +348,7 @@ class SheetOut(Model):
     constants: dict[str, Any]
     source_pages: dict[str, Any]
     locked: bool
+    status: str
     created_at: datetime
 
 
@@ -359,6 +360,7 @@ class PriceEntryIn(Model):
     unit: PriceUnit
     amount_cents: Cents
     quoted_on: date
+    is_estimate: bool = False
 
 
 class PriceEntryOut(PriceEntryIn):
@@ -377,6 +379,7 @@ class PriceListOut(Model):
     id: uuid.UUID
     valid_from: date
     locked: bool
+    status: str
     note: str
     entries: list[PriceEntryOut]
 
@@ -470,3 +473,93 @@ class CompareOut(Model):
     exact_largest_offcut_mm: int | None
     proven_optimal: bool
     status: str
+
+
+# --- setup: drafts, CSV, checklist, starter prices -----------------------------------------------
+
+
+class PriceDraftIn(Model):
+    """A new draft price list, empty or copied from an existing list."""
+
+    copy_from: uuid.UUID | None = None
+    note: Text = ""
+
+
+class PriceEntriesIn(Model):
+    entries: Annotated[list[PriceEntryIn], Field(max_length=2000)]
+
+
+class PublishIn(Model):
+    valid_from: date
+
+
+class CsvIn(Model):
+    """The file's bytes in base64: the server works out the encoding (UTF-8 or Windows-1250)."""
+
+    content_base64: Annotated[str, Field(min_length=1, max_length=1_400_000)]
+
+
+class SheetDraftIn(Model):
+    """A system sheet being written: any of the sheet's keys, complete or not."""
+
+    constants: dict[str, Any]
+    source_pages: dict[str, str] = {}
+
+
+class CutPreviewIn(Model):
+    """Cut one window with a sheet that has not been saved, to check its deductions."""
+
+    constants: dict[str, Any]
+    construction_type: Short
+    width_mm: Size
+    height_mm: Size
+
+    @model_validator(mode="after")
+    def known_type(self) -> "CutPreviewIn":
+        if self.construction_type not in TYPES:
+            raise ValueError(f"unknown construction type {self.construction_type!r}")
+        return self
+
+
+class StarterIn(Model):
+    with_systems: bool = False
+
+
+class SystemCheckOut(Model):
+    model_config = ConfigDict(extra="ignore", from_attributes=True)
+    id: uuid.UUID
+    key: str
+    name: str
+    material: str
+    sheet: str
+    sheet_version: int | None
+    missing: list[str]
+    problem: str | None
+    done: bool
+
+
+class PriceCheckOut(Model):
+    model_config = ConfigDict(extra="ignore", from_attributes=True)
+    kind: str
+    ref: str
+    colour: str | None
+    unit: str
+    state: str
+    systems: list[str]
+
+
+class SetupStatusOut(Model):
+    model_config = ConfigDict(extra="ignore", from_attributes=True)
+    ready: bool
+    percent: int
+    construction_types: list[str]
+    systems: list[SystemCheckOut]
+    price_list_id: uuid.UUID | None
+    price_list_status: str | None
+    prices_needed: int
+    prices_missing: list[PriceCheckOut]
+    foil_prices_missing: list[PriceCheckOut]
+    glass_priced: bool
+    suppliers: int
+    estimates: int
+    openings_without_hardware_set: list[str]

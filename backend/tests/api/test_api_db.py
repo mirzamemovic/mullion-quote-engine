@@ -4,6 +4,7 @@ All data is the demo's invented sample data (SAMPLE - NOT REAL). Skipped without
 see ``conftest.py``.
 """
 
+import base64
 import uuid
 from datetime import UTC, date, datetime, timedelta
 from typing import Any
@@ -38,7 +39,15 @@ from quote_engine.db.models import (
 )
 from quote_engine.db.models import Session as SessionRow
 from quote_engine.db.repository import NotFoundError, Scoped
-from quote_engine.services import auth, calculation, demo, demo_catalogue, sandbox, workshops
+from quote_engine.services import (
+    auth,
+    calculation,
+    demo,
+    demo_catalogue,
+    price_csv,
+    sandbox,
+    workshops,
+)
 from quote_engine.services import quotes as svc
 from tests.api.conftest import PASSWORD, SampleWorkshop, log_in
 
@@ -283,6 +292,8 @@ def test_staff_make_quotes_but_cannot_change_the_workshop(
         api.put(f"{API}/settings", json=settings),
         api.put(f"{API}/workshop", json=api.get(f"{API}/workshop").json()),
         api.get(f"{API}/clients/{client_id}/export"),
+        api.post(f"{API}/price-lists/drafts", json={}),
+        api.post(f"{API}/setup/starter-prices", json={}),
     ]
     assert [r.status_code for r in refused] == [403] * len(refused)
 
@@ -880,3 +891,174 @@ def test_new_quotes_are_numbered_per_workshop(
 
     assert new_quote(api)["number"] == f"{today().year}-0001"
     assert svc.next_number(Scoped(db, shop_a.workshop.id), today().year).endswith("0002")
+
+
+# --- setup: checklist, starter prices, drafts, CSV, sheet editor --------------------------------
+
+
+def test_the_sample_workshop_is_ready_and_counts_its_estimates(
+    api: TestClient, shop_a: SampleWorkshop
+) -> None:
+    log_in(api, shop_a.email)
+    report = api.get(f"{API}/setup/status").json()
+
+    assert report["ready"] is True
+    assert report["percent"] == 100
+    assert report["prices_missing"] == []
+    assert report["estimates"] > 0
+    assert all(s["done"] for s in report["systems"])
+
+
+def test_a_quote_warns_when_it_uses_estimated_prices(
+    api: TestClient, shop_a: SampleWorkshop
+) -> None:
+    log_in(api, shop_a.email)
+    quote = new_quote(api)
+    api.put(f"{API}/quotes/{quote['id']}/revisions/1", json=revision_body())
+
+    calc = api.post(f"{API}/quotes/{quote['id']}/revisions/1/calculate").json()
+    assert any(w["code"] == "prices_estimated" for w in calc["warnings"])
+
+
+def new_owner(db: Session, currency: str = "EUR") -> str:
+    workshop = workshops.create_workshop(
+        db, "Sample new workshop", 1_000_000, 2_500_000, currency=currency
+    )
+    user = workshops.create_user(
+        db, workshop.id, f"owner-{currency.lower()}@example.invalid", PASSWORD, auth.ROLE_OWNER
+    )
+    db.commit()
+    return user.email
+
+
+def test_a_new_workshop_sees_what_it_lacks_and_starter_prices_fill_the_prices(
+    api: TestClient, db: Session
+) -> None:
+    log_in(api, new_owner(db))
+    empty = api.get(f"{API}/setup/status").json()
+    assert empty["ready"] is False
+    assert empty["systems"] == []
+    assert empty["price_list_id"] is None
+
+    started = api.post(f"{API}/setup/starter-prices", json={"with_systems": True})
+    assert started.status_code == 201, started.text
+    draft = started.json()
+    assert draft["status"] == "draft"
+    assert draft["entries"]
+    assert all(e["is_estimate"] for e in draft["entries"])
+
+    report = api.get(f"{API}/setup/status", params={"price_list_id": draft["id"]}).json()
+    assert len(report["systems"]) == len(demo_catalogue.SYSTEMS)
+    for system in report["systems"]:
+        assert system["sheet"] == "missing"
+        assert "deductions.sash_width" in system["missing"]
+    assert report["prices_missing"] == []  # the starter list holds every white price needed
+    assert report["ready"] is False  # the sheets must still come from the catalogues
+
+
+def test_starter_prices_only_fit_a_euro_workshop(api: TestClient, db: Session) -> None:
+    log_in(api, new_owner(db, "BAM"))
+
+    assert api.post(f"{API}/setup/starter-prices", json={}).status_code == 409
+
+
+def strip_ids(entries: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    return [{k: v for k, v in e.items() if k != "id"} for e in entries]
+
+
+def test_a_draft_price_list_is_never_used_until_it_is_published(
+    api: TestClient, shop_a: SampleWorkshop
+) -> None:
+    log_in(api, shop_a.email)
+    published = api.get(f"{API}/price-lists").json()[0]
+    copied = api.post(
+        f"{API}/price-lists/drafts", json={"copy_from": published["id"], "note": "next month"}
+    )
+    assert copied.status_code == 201, copied.text
+    draft = copied.json()
+    assert draft["status"] == "draft"
+    assert len(draft["entries"]) == len(published["entries"])
+
+    cheaper = [{**e, "amount_cents": 1} for e in strip_ids(draft["entries"])]
+    put = api.put(f"{API}/price-lists/{draft['id']}/entries", json={"entries": cheaper})
+    assert put.status_code == 200, put.text
+    quote = new_quote(api)
+    api.put(f"{API}/quotes/{quote['id']}/revisions/1", json=revision_body())
+    calc = api.post(f"{API}/quotes/{quote['id']}/revisions/1/calculate").json()
+    assert calc["versions"]["price_list"] == published["id"]
+
+    publish = {"valid_from": str(today())}
+    assert api.post(f"{API}/price-lists/{draft['id']}/publish", json=publish).status_code == 200
+    again = api.put(f"{API}/price-lists/{draft['id']}/entries", json={"entries": []})
+    assert again.status_code == 409
+    assert api.delete(f"{API}/price-lists/{draft['id']}").status_code == 409
+    empty = api.post(f"{API}/price-lists/drafts", json={}).json()
+    assert api.post(f"{API}/price-lists/{empty['id']}/publish", json=publish).status_code == 409
+    assert api.delete(f"{API}/price-lists/{empty['id']}").status_code == 204
+
+
+def test_a_price_list_goes_out_and_back_in_as_csv(api: TestClient, shop_a: SampleWorkshop) -> None:
+    log_in(api, shop_a.email)
+    published = api.get(f"{API}/price-lists").json()[0]
+    exported = api.get(f"{API}/price-lists/{published['id']}/csv")
+    assert exported.status_code == 200
+    assert exported.headers["content-type"].startswith("text/csv")
+    draft = api.post(f"{API}/price-lists/drafts", json={}).json()
+
+    data = base64.b64encode(exported.content).decode()
+    imported = api.post(f"{API}/price-lists/{draft['id']}/csv", json={"content_base64": data})
+    assert imported.status_code == 200, imported.text
+
+    def keys(entries: list[dict[str, Any]]) -> list[tuple[Any, ...]]:
+        fields = ("item_kind", "item_ref", "colour", "unit", "amount_cents", "is_estimate")
+        return sorted(tuple(e[f] for f in fields) for e in entries)
+
+    assert keys(imported.json()["entries"]) == keys(published["entries"])
+
+    bad = base64.b64encode(b"kind,ref,unit,amount,supplier\nglass,4-16-4,m2,abc,Nobody\n")
+    body = {"content_base64": bad.decode()}
+    refused = api.post(f"{API}/price-lists/{draft['id']}/csv", json=body)
+    assert refused.status_code == 422
+    assert {p["column"] for p in refused.json()["problems"]} == {"amount", "supplier"}
+    unchanged = api.get(f"{API}/price-lists/{draft['id']}").json()["entries"]
+    assert len(unchanged) == len(published["entries"])
+
+
+def test_the_template_lists_every_missing_price(api: TestClient, shop_a: SampleWorkshop) -> None:
+    log_in(api, shop_a.email)
+    draft = api.post(f"{API}/price-lists/drafts", json={}).json()
+
+    template = api.get(f"{API}/setup/price-template.csv", params={"price_list_id": draft["id"]})
+    lines = template.text.lstrip("﻿").splitlines()
+    assert lines[0] == ",".join(price_csv.COLUMNS)
+    assert any(line.startswith("labour,") for line in lines)
+    assert any(line.startswith("glass,4-16-4") for line in lines)
+
+
+def test_a_sheet_is_drafted_checked_and_published(api: TestClient, shop_a: SampleWorkshop) -> None:
+    log_in(api, shop_a.email)
+    system = api.get(f"{API}/systems").json()[0]
+    full = next(s for s in demo_catalogue.SYSTEMS if s.key == system["key"]).sheet()
+    partial = {**full, "deductions": {"sash_width": 44}}
+    drafts = f"{API}/systems/{system['id']}/sheets/draft"
+
+    saved = api.post(drafts, json={"constants": partial, "source_pages": {"sash_width": "p. 12"}})
+    assert saved.status_code == 201, saved.text
+    assert saved.json()["status"] == "draft"
+    assert (
+        api.post(drafts, json={"constants": partial}).json()["version"] == saved.json()["version"]
+    )
+    preview = {"construction_type": "single_sash_tilt_turn", "width_mm": 800, "height_mm": 1400}
+    missing = api.post(f"{API}/engine/cut-preview", json={**preview, "constants": partial})
+    assert missing.status_code == 422
+    assert missing.json()["constant"] == "deductions.sash_height"
+    publish = f"{API}/systems/{system['id']}/sheets/{saved.json()['version']}/publish"
+    assert api.post(publish).status_code == 422
+
+    api.post(drafts, json={"constants": full})
+    cut = api.post(f"{API}/engine/cut-preview", json={**preview, "constants": full})
+    assert cut.status_code == 200
+    assert cut.json()["cut_list"]["pieces"]
+    assert api.post(publish).json()["status"] == "published"
+    assert api.post(publish).status_code == 409
+    assert api.post(drafts, json={"constants": {"colour_of_the_sky": 1}}).status_code == 422

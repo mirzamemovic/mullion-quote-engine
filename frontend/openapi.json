@@ -239,6 +239,60 @@
         "title": "ConstructionTypeIO",
         "type": "object"
       },
+      "CsvIn": {
+        "additionalProperties": false,
+        "description": "The file's bytes in base64: the server works out the encoding (UTF-8 or Windows-1250).",
+        "properties": {
+          "content_base64": {
+            "maxLength": 1400000,
+            "minLength": 1,
+            "title": "Content Base64",
+            "type": "string"
+          }
+        },
+        "required": [
+          "content_base64"
+        ],
+        "title": "CsvIn",
+        "type": "object"
+      },
+      "CutPreviewIn": {
+        "additionalProperties": false,
+        "description": "Cut one window with a sheet that has not been saved, to check its deductions.",
+        "properties": {
+          "constants": {
+            "additionalProperties": true,
+            "title": "Constants",
+            "type": "object"
+          },
+          "construction_type": {
+            "maxLength": 50,
+            "minLength": 1,
+            "title": "Construction Type",
+            "type": "string"
+          },
+          "height_mm": {
+            "maximum": 3500.0,
+            "minimum": 300.0,
+            "title": "Height Mm",
+            "type": "integer"
+          },
+          "width_mm": {
+            "maximum": 3500.0,
+            "minimum": 300.0,
+            "title": "Width Mm",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "constants",
+          "construction_type",
+          "width_mm",
+          "height_mm"
+        ],
+        "title": "CutPreviewIn",
+        "type": "object"
+      },
       "ExtraIn": {
         "additionalProperties": false,
         "properties": {
@@ -1219,6 +1273,98 @@
         "title": "PreviewIn",
         "type": "object"
       },
+      "PriceCheckOut": {
+        "properties": {
+          "colour": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Colour"
+          },
+          "kind": {
+            "title": "Kind",
+            "type": "string"
+          },
+          "ref": {
+            "title": "Ref",
+            "type": "string"
+          },
+          "state": {
+            "title": "State",
+            "type": "string"
+          },
+          "systems": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Systems",
+            "type": "array"
+          },
+          "unit": {
+            "title": "Unit",
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "ref",
+          "colour",
+          "unit",
+          "state",
+          "systems"
+        ],
+        "title": "PriceCheckOut",
+        "type": "object"
+      },
+      "PriceDraftIn": {
+        "additionalProperties": false,
+        "description": "A new draft price list, empty or copied from an existing list.",
+        "properties": {
+          "copy_from": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Copy From"
+          },
+          "note": {
+            "default": "",
+            "maxLength": 200,
+            "title": "Note",
+            "type": "string"
+          }
+        },
+        "title": "PriceDraftIn",
+        "type": "object"
+      },
+      "PriceEntriesIn": {
+        "additionalProperties": false,
+        "properties": {
+          "entries": {
+            "items": {
+              "$ref": "#/components/schemas/PriceEntryIn"
+            },
+            "maxItems": 2000,
+            "title": "Entries",
+            "type": "array"
+          }
+        },
+        "required": [
+          "entries"
+        ],
+        "title": "PriceEntriesIn",
+        "type": "object"
+      },
       "PriceEntryIn": {
         "additionalProperties": false,
         "properties": {
@@ -1237,6 +1383,11 @@
                 "type": "null"
               }
             ]
+          },
+          "is_estimate": {
+            "default": false,
+            "title": "Is Estimate",
+            "type": "boolean"
           },
           "item_kind": {
             "maxLength": 50,
@@ -1297,6 +1448,11 @@
             "format": "uuid",
             "title": "Id",
             "type": "string"
+          },
+          "is_estimate": {
+            "default": false,
+            "title": "Is Estimate",
+            "type": "boolean"
           },
           "item_kind": {
             "maxLength": 50,
@@ -1388,6 +1544,10 @@
             "title": "Note",
             "type": "string"
           },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
           "valid_from": {
             "format": "date",
             "title": "Valid From",
@@ -1398,6 +1558,7 @@
           "id",
           "valid_from",
           "locked",
+          "status",
           "note",
           "entries"
         ],
@@ -1594,6 +1755,21 @@
           "id"
         ],
         "title": "ProfileSystemOut",
+        "type": "object"
+      },
+      "PublishIn": {
+        "additionalProperties": false,
+        "properties": {
+          "valid_from": {
+            "format": "date",
+            "title": "Valid From",
+            "type": "string"
+          }
+        },
+        "required": [
+          "valid_from"
+        ],
+        "title": "PublishIn",
         "type": "object"
       },
       "QuoteCreate": {
@@ -2148,6 +2324,133 @@
         "title": "SettingsIO",
         "type": "object"
       },
+      "SetupStatusOut": {
+        "properties": {
+          "construction_types": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Construction Types",
+            "type": "array"
+          },
+          "estimates": {
+            "title": "Estimates",
+            "type": "integer"
+          },
+          "foil_prices_missing": {
+            "items": {
+              "$ref": "#/components/schemas/PriceCheckOut"
+            },
+            "title": "Foil Prices Missing",
+            "type": "array"
+          },
+          "glass_priced": {
+            "title": "Glass Priced",
+            "type": "boolean"
+          },
+          "openings_without_hardware_set": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Openings Without Hardware Set",
+            "type": "array"
+          },
+          "percent": {
+            "title": "Percent",
+            "type": "integer"
+          },
+          "price_list_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Price List Id"
+          },
+          "price_list_status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Price List Status"
+          },
+          "prices_missing": {
+            "items": {
+              "$ref": "#/components/schemas/PriceCheckOut"
+            },
+            "title": "Prices Missing",
+            "type": "array"
+          },
+          "prices_needed": {
+            "title": "Prices Needed",
+            "type": "integer"
+          },
+          "ready": {
+            "title": "Ready",
+            "type": "boolean"
+          },
+          "suppliers": {
+            "title": "Suppliers",
+            "type": "integer"
+          },
+          "systems": {
+            "items": {
+              "$ref": "#/components/schemas/SystemCheckOut"
+            },
+            "title": "Systems",
+            "type": "array"
+          }
+        },
+        "required": [
+          "ready",
+          "percent",
+          "construction_types",
+          "systems",
+          "price_list_id",
+          "price_list_status",
+          "prices_needed",
+          "prices_missing",
+          "foil_prices_missing",
+          "glass_priced",
+          "suppliers",
+          "estimates",
+          "openings_without_hardware_set"
+        ],
+        "title": "SetupStatusOut",
+        "type": "object"
+      },
+      "SheetDraftIn": {
+        "additionalProperties": false,
+        "description": "A system sheet being written: any of the sheet's keys, complete or not.",
+        "properties": {
+          "constants": {
+            "additionalProperties": true,
+            "title": "Constants",
+            "type": "object"
+          },
+          "source_pages": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "default": {},
+            "title": "Source Pages",
+            "type": "object"
+          }
+        },
+        "required": [
+          "constants"
+        ],
+        "title": "SheetDraftIn",
+        "type": "object"
+      },
       "SheetIn": {
         "additionalProperties": false,
         "properties": {
@@ -2202,6 +2505,10 @@
             "title": "Source Pages",
             "type": "object"
           },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
           "version": {
             "title": "Version",
             "type": "integer"
@@ -2214,9 +2521,22 @@
           "constants",
           "source_pages",
           "locked",
+          "status",
           "created_at"
         ],
         "title": "SheetOut",
+        "type": "object"
+      },
+      "StarterIn": {
+        "additionalProperties": false,
+        "properties": {
+          "with_systems": {
+            "default": false,
+            "title": "With Systems",
+            "type": "boolean"
+          }
+        },
+        "title": "StarterIn",
         "type": "object"
       },
       "StatusIn": {
@@ -2308,6 +2628,77 @@
           "id"
         ],
         "title": "SupplierOut",
+        "type": "object"
+      },
+      "SystemCheckOut": {
+        "properties": {
+          "done": {
+            "title": "Done",
+            "type": "boolean"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "key": {
+            "title": "Key",
+            "type": "string"
+          },
+          "material": {
+            "title": "Material",
+            "type": "string"
+          },
+          "missing": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Missing",
+            "type": "array"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "problem": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Problem"
+          },
+          "sheet": {
+            "title": "Sheet",
+            "type": "string"
+          },
+          "sheet_version": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sheet Version"
+          }
+        },
+        "required": [
+          "id",
+          "key",
+          "name",
+          "material",
+          "sheet",
+          "sheet_version",
+          "missing",
+          "problem",
+          "done"
+        ],
+        "title": "SystemCheckOut",
         "type": "object"
       },
       "TotpEnableIn": {
@@ -3066,6 +3457,50 @@
         ]
       }
     },
+    "/api/v1/engine/cut-preview": {
+      "post": {
+        "description": "One window cut with a sheet still being written: a missing value comes back as a 422\nthat names it, so the sheet editor can point at the field.",
+        "operationId": "cut_preview_api_v1_engine_cut_preview_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CutPreviewIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Cut Preview Api V1 Engine Cut Preview Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Cut Preview",
+        "tags": [
+          "setup"
+        ]
+      }
+    },
     "/api/v1/engine/measure": {
       "post": {
         "description": "Window size from three widths and three heights, live while the owner measures.",
@@ -3706,7 +4141,83 @@
         ]
       }
     },
+    "/api/v1/price-lists/drafts": {
+      "post": {
+        "description": "A draft price list: empty, or a copy of another list to change.",
+        "operationId": "create_draft_api_v1_price_lists_drafts_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PriceDraftIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PriceListOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Create Draft",
+        "tags": [
+          "setup"
+        ]
+      }
+    },
     "/api/v1/price-lists/{list_id}": {
+      "delete": {
+        "operationId": "delete_draft_api_v1_price_lists__list_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "list_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "List Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Delete Draft",
+        "tags": [
+          "setup"
+        ]
+      },
       "get": {
         "operationId": "get_price_list_api_v1_price_lists__list_id__get",
         "parameters": [
@@ -3800,6 +4311,208 @@
         "summary": "Bump Price List",
         "tags": [
           "admin"
+        ]
+      }
+    },
+    "/api/v1/price-lists/{list_id}/csv": {
+      "get": {
+        "description": "A price list as a CSV file for a spreadsheet (formula-looking cells are escaped).",
+        "operationId": "export_csv_api_v1_price_lists__list_id__csv_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "list_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "List Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Export Csv",
+        "tags": [
+          "setup"
+        ]
+      },
+      "post": {
+        "description": "Replace a draft's prices with a CSV file: all or nothing, every problem listed.",
+        "operationId": "import_csv_api_v1_price_lists__list_id__csv_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "list_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "List Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CsvIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PriceListOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Import Csv",
+        "tags": [
+          "setup"
+        ]
+      }
+    },
+    "/api/v1/price-lists/{list_id}/entries": {
+      "put": {
+        "description": "Replace every price of a draft.",
+        "operationId": "put_entries_api_v1_price_lists__list_id__entries_put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "list_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "List Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PriceEntriesIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PriceListOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Put Entries",
+        "tags": [
+          "setup"
+        ]
+      }
+    },
+    "/api/v1/price-lists/{list_id}/publish": {
+      "post": {
+        "description": "Make a draft the price list for quotes from ``valid_from``. It never changes after.",
+        "operationId": "publish_price_list_api_v1_price_lists__list_id__publish_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "list_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "List Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PublishIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PriceListOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Publish Price List",
+        "tags": [
+          "setup"
         ]
       }
     },
@@ -4577,6 +5290,148 @@
         ]
       }
     },
+    "/api/v1/setup/price-template.csv": {
+      "get": {
+        "description": "A CSV of every price still missing, amounts empty, ready to fill in a spreadsheet.",
+        "operationId": "price_template_api_v1_setup_price_template_csv_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "price_list_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Price List Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Price Template",
+        "tags": [
+          "setup"
+        ]
+      }
+    },
+    "/api/v1/setup/starter-prices": {
+      "post": {
+        "description": "A draft of market-estimate prices, each flagged as an estimate, to edit and publish.",
+        "operationId": "starter_prices_api_v1_setup_starter_prices_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StarterIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PriceListOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Starter Prices",
+        "tags": [
+          "setup"
+        ]
+      }
+    },
+    "/api/v1/setup/status": {
+      "get": {
+        "description": "What the workshop still has to enter before it can quote (asked of the engine itself).",
+        "operationId": "setup_status_api_v1_setup_status_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "price_list_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Price List Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SetupStatusOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Setup Status",
+        "tags": [
+          "setup"
+        ]
+      }
+    },
     "/api/v1/suppliers": {
       "get": {
         "operationId": "list_suppliers_api_v1_suppliers_get",
@@ -4907,6 +5762,113 @@
         "summary": "Create Sheet",
         "tags": [
           "admin"
+        ]
+      }
+    },
+    "/api/v1/systems/{system_id}/sheets/draft": {
+      "post": {
+        "description": "Save the system's draft sheet (one per system). It may be incomplete until published.",
+        "operationId": "save_sheet_draft_api_v1_systems__system_id__sheets_draft_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "system_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "System Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SheetDraftIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SheetOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Save Sheet Draft",
+        "tags": [
+          "setup"
+        ]
+      }
+    },
+    "/api/v1/systems/{system_id}/sheets/{version}/publish": {
+      "post": {
+        "description": "Check a draft sheet with the engine and make it the one new quotes use.",
+        "operationId": "publish_sheet_api_v1_systems__system_id__sheets__version__publish_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "system_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "System Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "version",
+            "required": true,
+            "schema": {
+              "title": "Version",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SheetOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Publish Sheet",
+        "tags": [
+          "setup"
         ]
       }
     },

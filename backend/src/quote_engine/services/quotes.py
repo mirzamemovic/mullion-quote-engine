@@ -14,6 +14,7 @@ from typing import Any
 from sqlalchemy import func, select
 
 from quote_engine.db.models import (
+    PUBLISHED,
     AuditLog,
     Client,
     ExtraLine,
@@ -78,6 +79,7 @@ def settings_of(db: Scoped) -> WorkshopSettings:
 def current_price_list(db: Scoped, today: date) -> PriceListVersion:
     version = db.first(
         PriceListVersion,
+        PriceListVersion.status == PUBLISHED,
         PriceListVersion.valid_from <= today,
         order_by=PriceListVersion.valid_from.desc(),
     )
@@ -91,10 +93,11 @@ def current_sheet(db: Scoped, system_id: uuid.UUID) -> SystemSheetVersion:
     sheet = db.first(
         SystemSheetVersion,
         SystemSheetVersion.profile_system_id == system_id,
+        SystemSheetVersion.status == PUBLISHED,
         order_by=SystemSheetVersion.version.desc(),
     )
     if sheet is None:
-        raise QuoteError("this profile system has no system sheet yet")
+        raise QuoteError("this profile system has no published system sheet yet")
     return sheet
 
 

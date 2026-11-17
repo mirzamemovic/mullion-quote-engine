@@ -20,6 +20,7 @@ from sqlalchemy import (
     Text,
     UniqueConstraint,
     Uuid,
+    false,
 )
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -28,6 +29,8 @@ from quote_engine.db.base import Base, WorkshopScoped
 
 NAME = 200
 SHORT = 50
+DRAFT = "draft"
+PUBLISHED = "published"
 
 
 class Workshop(Base):
@@ -152,6 +155,8 @@ class SystemSheetVersion(WorkshopScoped, Base):
     constants: Mapped[dict[str, Any]] = mapped_column(JSONB)
     source_pages: Mapped[dict[str, Any]] = mapped_column(JSONB, default=dict)
     locked: Mapped[bool] = mapped_column(Boolean, default=False)
+    # draft (being written, never used by a quote) | published (immutable once used)
+    status: Mapped[str] = mapped_column(String(SHORT), default=PUBLISHED, server_default=PUBLISHED)
 
 
 class Profile(WorkshopScoped, Base):
@@ -190,6 +195,8 @@ class PriceListVersion(WorkshopScoped, Base):
     valid_from: Mapped[date] = mapped_column(Date)
     locked: Mapped[bool] = mapped_column(Boolean, default=False)
     note: Mapped[str] = mapped_column(String(NAME), default="")
+    # draft (being edited, never used by a quote) | published (immutable once used)
+    status: Mapped[str] = mapped_column(String(SHORT), default=PUBLISHED, server_default=PUBLISHED)
     entries: Mapped[list["PriceEntry"]] = relationship(
         back_populates="version", cascade="all, delete-orphan", order_by="PriceEntry.item_kind"
     )
@@ -208,6 +215,8 @@ class PriceEntry(WorkshopScoped, Base):
     unit: Mapped[str] = mapped_column(String(SHORT))
     amount_cents: Mapped[int] = mapped_column(BigInteger)
     quoted_on: Mapped[date] = mapped_column(Date)
+    # A starter price (market estimate) until the workshop puts in its supplier's price.
+    is_estimate: Mapped[bool] = mapped_column(Boolean, default=False, server_default=false())
     version: Mapped[PriceListVersion] = relationship(back_populates="entries")
 
 
