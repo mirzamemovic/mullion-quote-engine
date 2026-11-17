@@ -15,7 +15,7 @@ Git is local only. Each milestone has its own branch; a branch is merged into `m
 | M3 Cut rules | done | `main`, plus `feat/engine-parts` | Five formulas written 2026-11-13 at Mirza's request; real deductions come from each system's sheet. |
 | M4 Optimizer | done | `main`, plus `feat/engine-parts` | FFD and the solver model written 2026-11-13; benchmark run (see `docs/optimizer.md`). |
 | M5 Pricing, warnings, lists, golden tests | waiting for Mirza | `main`, plus `feat/engine-parts` | Everything built. Only the golden jobs, real system sheets and private price lists remain: they are Mirza's real data. Gate 2 waits for them. |
-| M6 Database and API | in progress | `feat/m6-database-api` | Built past Gate 2 at Mirza's request (2026-11-13). Everything is written; the 34 database tests (51 cases) have not run yet because Docker cannot start on this machine (see "Waiting for Mirza"). |
+| M6 Database and API | in progress | `feat/m6-database-api`, then `feat/m6-verify`, `feat/m6-workshops` | Built past Gate 2 at Mirza's request (2026-11-13). Since 2026-11-17 any workshop can run its own quote engine (see "Mullion"). The database tests have not run yet: no PostgreSQL on this machine (see "Waiting for Mirza"). |
 | M7 PDFs and messages | todo | | Built past Gate 2 at Mirza's request. |
 | M8 Frontend | in progress | `feat/m8-frontend` | Owner screens designed with Impeccable and built (see the M8 section). Not done: the admin catalogue screens (systems, sheets, profiles, hardware, users, sessions), extras editing, PDF download (M7). The e2e test is written but needs the running stack. |
 | M9 Deploy and operations | waiting for Mirza | merged into `main` | Files written and reviewed; nothing has run on a server or on GitHub. Needs a server, a domain and the GitHub repository. Retention jobs, demo wipe and Sentry wait for M6. |
@@ -41,14 +41,16 @@ Only Mirza writes "Gate N passed" here.
 | Review `docs/adr/0007-m0-tooling.md` (status: proposed) | docs | ADR decisions are Mirza's (PLAN.md section 13) |
 | Request the Oracle Always Free server, register the domain, and follow `docs/runbook.md` (first setup); add the `DEPLOY_*` secrets once the repository exists | Oracle, Cloudflare, GitHub | M9 going live; PLAN.md asked for the server request in M0 because capacity can take days |
 | Decide how long login attempts and the audit log are kept | `docs/privacy.md` | PLAN.md does not say |
-| Restart Windows so Docker Desktop can start (WSL 2 reports that virtualization is not available until then), then run `docker compose up db` and `cd backend && uv run pytest` | this PC | The M6 database tests (auth, CSRF, tenancy, snapshot) are skipped until a PostgreSQL answers |
+| Docker Desktop: Windows was restarted on 2026-11-17 and virtualization is on, but Docker Desktop opened an error window at start (its log only says the backend reported an error). Read that window, or approve installing PostgreSQL 18 with `winget` instead. Then run `docker compose up db` and `cd backend && uv run pytest` | this PC | Every database test (auth, CSRF, tenancy, snapshot, invites, sandboxes, roles) is skipped until a PostgreSQL answers |
 | Replace the demo's market-estimate prices with real supplier quotes (EB Group / Salamander, REHAU, Alumil Kosovo, your glass and hardware suppliers) | `docs/market-prices.md`, `backend/src/quote_engine/services/demo_catalogue.py` | Kosovo distributors publish no prices; several values are regional proxies or assumptions |
 | Confirm aluminium rules: corners crimped (no weld allowance), no steel, the same installation gaps as PVC | system sheets (`material`, `reinforced`) | The gap table in the skill is for PVC |
 | Confirm the opening-side convention: `*_left` means hinges on the left, seen from inside (DIN); the drawings put the handle on the other side | `frontend/src/components/WindowDrawing.tsx` | The engine names openings left/right without saying hinge or handle |
-| Confirm or replace the app's working name "Mjera" (from *po mjeri*) | `PRODUCT.md`, `frontend/src/i18n/*.json` | You left the name to me |
 | Check the Bosnian trade words with the owner (štok, krilo, štulp, lajsna, armatura, dihtung, okov, klupčica, roletna, komarnik) | `frontend/src/i18n/bs.json`, `frontend/src/lib/labels.ts` | Cut lists and price lines use them |
-| Confirm who may change what: prices, suppliers and settings by the owner (with a password re-check); systems, sheets, profiles, hardware, construction types, users and sessions by the admin only | `api/routes_admin.py` | PLAN.md lists the admin screens but not the owner's rights |
 | Give the size-class limits (small / standard / large, in mm²) when creating the real workshop | `python -m quote_engine.manage create-workshop` | PLAN.md says they are settings but has no default |
+| Create the Oracle Always Free account and register a domain; then I follow `docs/runbook.md` | Oracle, a registrar | Phase 7 (live demo) |
+| Make the old public `quote-engine` GitHub repository private or delete it before anything new is published | GitHub | Its history predates the rewrite |
+| Edit the attribution rule in `CLAUDE.md` so the README can carry a short "How I built this" section (your choice of 2026-11-17) | `CLAUDE.md` | Phase 8 |
+| Review `docs/adr/0008-any-workshop.md` (status: proposed) | docs | ADR decisions are yours |
 
 ## Decisions
 
@@ -76,6 +78,7 @@ Only Mirza writes "Gate N passed" here.
 | 2026-11-13 | M6: the demo workshop is seeded from invented data (`services/demo.py`, the same fake system sheet as the tests, invented prices for every price key, `demo@example.invalid`). `seed-demo` wipes the old demo first. | PLAN.md sections 7 and 12; no real prices or names anywhere. |
 | 2026-11-13 | M6: the database tests run on a real PostgreSQL in a separate `quote_engine_test` database, rebuilt from the migrations once per run, each test in a rolled-back transaction. Without a server they skip with a reason; in CI (`QUOTE_ENGINE_REQUIRE_DATABASE=1`) they fail instead. | PLAN.md section 10 asks for real PostgreSQL. |
 | 2026-11-13 | A position is checked against its type before its rule runs: the number of fields must match; a fixed window has only fixed fields; every other type has only opening fields. A rule's output must carry its own position ref. | Catches wrong input and rule bugs before they reach the optimizer. |
+| 2026-11-17 | The product becomes **Mullion**: any window workshop runs its own quote engine (its systems, sheets, prices and team), told as "built for a family-run PVC workshop in Kosovo". Roles per workshop are owner and staff (the admin role is folded into owner); people join by one-time invite links; two-step login is optional for all; "Try it" makes a private sandbox workshop per visitor for 24 h; each workshop picks its currency (EUR, BAM, RSD, ALL, MKD) and language (English first, Bosnian kept); prices come in through an editor and CSV, optionally starting from flagged estimates; the platform is run from the command line only. Details and reasons: `docs/adr/0008-any-workshop.md`. | Mirza's answers of 2026-11-17 |
 
 ## Deviations from PLAN.md
 
@@ -180,3 +183,22 @@ Not done: admin catalogue screens (systems and sheets, profiles, hardware sets, 
 - Engine: a system sheet states its `material` (pvc or aluminium) and whether it is `reinforced`. Aluminium sheets have no weld allowance (crimped 45° corners, no `2a` in formulas) and no steel. Profile, steel and gasket prices are per profile system (`profile/<system>/<role>`); hardware, consumables and labour per material. Profile systems store their material (migration 0002); a sheet must match its system's material.
 - Demo catalogue: three PVC and three aluminium systems documented in Kosovo (REHAU, Salamander, Alumil), priced from market research (docs/market-prices.md, reports/Kosovo PVC window prices.md), excluding VAT, calibrated so installed windows land on Kosovo targets.
 - The dev demo (`/?mock`) no longer returns a fixed calculation: development-only endpoints (`/api/v1/dev/*`, on only with `QUOTE_ENGINE_DEV_DEMO=1` and never in production) run the real engine on the demo catalogue, so totals follow what is entered. New quote has a system picker grouped by PVC and aluminium.
+
+## Mullion: any workshop runs its own quote engine (from 2026-11-17)
+
+Plan approved 2026-11-17, in phases, each on its own branch stacked on `feat/m8-frontend`. The reasons are in `docs/adr/0008-any-workshop.md`.
+
+| Phase | Branch | Status |
+|---|---|---|
+| 1 Verify the base | `feat/m6-verify` | Clean-ups committed; the database tests still wait for PostgreSQL |
+| 2 Workshops, roles, invites, sandbox | `feat/m6-workshops` | Built; offline tests pass; database tests written, not run |
+| 3 Setup checklist, drafts, CSV prices | `feat/m6-catalogue-setup` | todo |
+| 4 Admin panel and remaining screens | `feat/m8-admin-panel` | todo |
+| 5 PDFs | `feat/m7-pdfs` | todo |
+| 6 Pricing policy and quality | `feat/m5-pricing-policy`, `feat/m9-quality` | todo |
+| 7 Deploy | `feat/m9-deploy-live` | waiting for the Oracle account and a domain |
+| 8 Presentation | `feat/m11-presentation` | todo |
+
+Phase 2 files (under `backend/src/quote_engine/`): migration `0003` (workshop email, currency, language, sandbox expiry; `invites`; `sandbox_requests`; former admins become owners), `services/workshops.py` (currencies, roles, one active owner, invites), `services/sandbox.py` (create, limits, purge), `services/auth.py` (`open_session`, optional TOTP, password change), `api/routes_me.py`, `api/routes_workshop.py`, `api/routes_join.py`, owner-only rights in `api/routes_admin.py` and client export/erase, `manage.py` (`create-workshop` prints the owner's invite link, `invite`, `purge-sandboxes`), `infra/purge-sandboxes.sh` with an hourly systemd timer.
+
+Checks (2026-11-17): ruff, format, mypy strict, import-linter pass; `pytest` 542 passed, 66 skipped (63 database cases, 3 golden); frontend lint, typecheck, 24 tests and build pass. The new database tests (invites, team, roles, sandboxes, currency, password, two-step) have not run.

@@ -4,7 +4,7 @@ What personal data the PVC Quote Engine keeps, why, and for how long (PLAN.md se
 
 ## Who is responsible
 
-The workshop that uses the app is the controller of its clients' data. The app keeps that data on a server the workshop rents from Oracle Cloud, in the account's home region (to be stated here once the server exists).
+Each workshop that uses the app is the controller of its own clients' data; the operator of the server processes it for them. Every workshop's data is kept apart: each row carries its workshop and every query is filtered by it. The data is on a server rented from Oracle Cloud, in the account's home region (to be stated here once the server exists).
 
 ## What is kept
 
@@ -12,8 +12,10 @@ The workshop that uses the app is the controller of its clients' data. The app k
 |---|---|---|
 | Client name, phone number, place | To prepare, send and follow up a quote | Accepted jobs: 10 years. Rejected or expired quotes: erased after 12 months. |
 | Window sizes, prices, quote totals, payments | The quote itself | 10 years; these stay when a client's name and phone are erased |
-| User accounts (the owner and the administrator): email, password hash, TOTP secret | Logging in | While the account exists |
+| User accounts (owners and staff): email, password hash, and a TOTP secret for people who turned two-step login on | Logging in | While the account exists |
+| Invite links: a hash of the token, the role, who created it, times | Letting a new person join a workshop | Until used or 7 days, then kept as a used or expired record |
 | Sessions: a hash of the session token, browser name, times | Keeping users logged in, letting them log out other devices | Up to 30 days |
+| "Try it" sandbox requests: IP address and time | Limiting sandboxes to 3 per address per day | 1 day |
 | Login attempts: username, IP address, time, success | Stopping password guessing | Not decided yet (PLAN.md does not say) |
 | Audit log: who changed what, without personal data | Tracing changes to prices and quotes | Not decided yet (PLAN.md does not say) |
 
@@ -31,9 +33,9 @@ No data is sold or shared. Suppliers receive price requests that list materials 
 
 A client can ask the workshop for a copy of their data (export) or for it to be erased. Erasing blanks the name and phone number and records when; the quote totals stay so the workshop's books remain complete. Backups roll over within 8 weeks, so erased data disappears from them by then.
 
-## Demo workshop
+## "Try it" sandboxes
 
-The public demo uses invented data only and is wiped every night.
+A visitor who clicks "Try it" gets a private workshop filled with invented sample data, with no account to create and no email asked. It is deleted with everything typed into it 24 hours later (an hourly job, and again whenever a new sandbox starts). Visitors are told not to type real client data into a sandbox.
 
 ## Status
 
