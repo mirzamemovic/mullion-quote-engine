@@ -1,7 +1,8 @@
 /**
- * End-to-end tests against the real stack (PLAN.md section 10): `docker compose up`, then
- * `docker compose exec app /app/.venv/bin/python -m quote_engine.manage seed-demo` and
- * `E2E_PASSWORD=<printed password> npm run e2e`. Pixel 7 profile, axe on the main screens.
+ * End-to-end tests against the real stack (PLAN.md section 10): `docker compose up` (or the
+ * backend and `npm run dev`, with `E2E_BASE_URL=http://localhost:5173`), then `npm run e2e`.
+ * The test opens its own "Try it" sandbox, so no password is needed. Pixel 7 profile, axe on the
+ * main screens.
  */
 import { defineConfig, devices } from "@playwright/test";
 

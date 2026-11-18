@@ -349,17 +349,20 @@ export function Segmented<T extends string>({
   value,
   onChange,
   hideLabel = false,
+  wrap = false,
 }: {
   label: string;
   options: { value: T; label: string }[];
   value: T;
   onChange: (value: T) => void;
   hideLabel?: boolean;
+  /** Two per row on a phone, for four or more options that do not fit one row. */
+  wrap?: boolean;
 }) {
   return (
     <fieldset>
       <legend className={hideLabel ? "sr-only" : "mb-1.5 text-base font-bold"}>{label}</legend>
-      <div className="flex gap-1 rounded-slot bg-plaster-deep p-1">
+      <div className={`${wrap ? "grid grid-cols-2 sm:flex" : "flex"} gap-1 rounded-slot bg-plaster-deep p-1`}>
         {options.map((option) => (
           <label
             key={option.value}

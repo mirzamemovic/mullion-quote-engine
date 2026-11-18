@@ -1,13 +1,11 @@
 /**
- * The owner's day on the demo workshop: log in, new quote, measure two windows, see the total,
- * with no serious accessibility issue on the main screens. Needs the running stack and a seeded
- * demo (see playwright.config.ts); the demo data is invented.
+ * A visitor's first minutes, end to end against the real stack: "Try it" opens a private sample
+ * workshop (no password needed), a new quote, two measured windows, a sill, the total changing,
+ * and the setup checklist, with no serious accessibility issue on the main screens. The sample
+ * data is invented.
  */
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test, type Page } from "@playwright/test";
-
-const EMAIL = process.env.E2E_EMAIL ?? "demo@example.invalid";
-const PASSWORD = process.env.E2E_PASSWORD ?? "";
 
 async function noSeriousA11yIssues(page: Page, screen: string) {
   const result = await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag21aa", "wcag22aa"]).analyze();
@@ -16,42 +14,48 @@ async function noSeriousA11yIssues(page: Page, screen: string) {
 }
 
 async function measureWindow(page: Page, widths: string[], heights: string[], type: RegExp) {
-  const labels = ["Širina gore", "Širina sredina", "Širina dolje", "Visina lijevo", "Visina sredina", "Visina desno"];
+  const labels = ["Width top", "Width middle", "Width bottom", "Height left", "Height middle", "Height right"];
   for (const [i, value] of [...widths, ...heights].entries()) {
-    await page.getByLabel(labels[i] ?? "").fill(value);
+    await page.getByLabel(labels[i] ?? "", { exact: true }).fill(value);
   }
-  await expect(page.getByRole("button", { name: "Kako je izračunato?" })).toBeVisible();
-  await page.getByRole("button", { name: /Dalje: tip prozora/ }).click();
+  await expect(page.getByRole("button", { name: "How was this worked out?" })).toBeVisible();
+  await page.getByRole("button", { name: /Next: window type/ }).click();
   await page.getByRole("button", { name: type }).click();
-  await page.getByRole("button", { name: "Spremi prozor" }).click();
-  await expect(page.getByText("Ukupno za klijenta")).toBeVisible();
+  await page.getByRole("button", { name: "Save window" }).click();
+  await expect(page.getByText("Total for the client")).toBeVisible();
 }
 
-test("log in, measure two windows, see the total", async ({ page }) => {
-  test.skip(!PASSWORD, "set E2E_PASSWORD to the demo password printed by seed-demo");
+const total = (page: Page) => page.locator("#total").locator("xpath=../following-sibling::p");
 
+test("try it, quote two windows and a sill, see the total follow", async ({ page }) => {
   await page.goto("/");
-  await noSeriousA11yIssues(page, "login");
-  await page.getByLabel("E-mail").fill(EMAIL);
-  await page.getByLabel("Lozinka").fill(PASSWORD);
-  await page.getByRole("button", { name: "Prijavi se" }).click();
-  await expect(page.getByRole("note")).toContainText("DEMO");
+  await noSeriousA11yIssues(page, "landing");
+  await page.getByRole("button", { name: "Try it with sample data" }).click();
+  await expect(page.getByRole("note")).toContainText("don't enter real client data");
   await noSeriousA11yIssues(page, "quotes");
 
-  await page.getByRole("link", { name: /Nova ponuda/ }).click();
-  await page.getByRole("button", { name: /Probni klijent/ }).click();
+  await page.getByRole("link", { name: /New quote/ }).click();
+  await page.getByRole("button", { name: /Sample client/ }).click();
+  await page.getByText(/Euro-Design 70/).click();
   await noSeriousA11yIssues(page, "new quote");
-  await page.getByRole("button", { name: "Napravi ponudu" }).click();
+  await page.getByRole("button", { name: "Create quote" }).click();
 
-  await expect(page.getByLabel("Širina gore")).toBeVisible();
+  await expect(page.getByLabel("Width top", { exact: true })).toBeVisible();
   await noSeriousA11yIssues(page, "measure");
-  await measureWindow(page, ["1032", "1030", "1031"], ["1240", "1238", "1241"], /Jedno krilo/);
-
-  await page.getByRole("link", { name: /Dodaj prozor/ }).click();
-  await measureWindow(page, ["1452", "1450", "1449"], ["1440", "1441", "1439"], /Dva polja sa stubom/);
-
-  const total = page.locator("#total ~ p");
-  await expect(total).toContainText("€");
-  await expect(total).not.toHaveText("–");
+  await measureWindow(page, ["1032", "1030", "1031"], ["1240", "1238", "1241"], /Single sash/);
+  await page.getByRole("link", { name: /Add window/ }).click();
+  await measureWindow(page, ["1452", "1450", "1449"], ["1440", "1441", "1439"], /Two fields/);
+  await expect(total(page)).toContainText("€");
+  const before = await total(page).innerText();
   await noSeriousA11yIssues(page, "summary");
+
+  await page.getByRole("button", { name: "Add an extra" }).click();
+  await page.getByLabel("Length (mm)").fill("1000");
+  await page.getByRole("button", { name: "Add an extra" }).click();
+  await expect(page.getByText(/Sill · PVC \d+ mm/)).toBeVisible();
+  await expect(total(page)).not.toHaveText(before);
+
+  await page.goto("/workshop/setup");
+  await expect(page.getByText("Ready to quote.")).toBeVisible();
+  await noSeriousA11yIssues(page, "setup checklist");
 });

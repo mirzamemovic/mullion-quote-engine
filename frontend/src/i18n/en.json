@@ -398,7 +398,8 @@
     "currencyLocked": "The currency is fixed once the workshop has quotes.",
     "language": "Language for new people",
     "en": "English",
-    "bs": "Bosanski"
+    "bs": "Bosanski",
+    "section": "Name, contact and VAT"
   },
   "account": {
     "title": "My login",

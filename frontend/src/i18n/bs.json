@@ -398,7 +398,8 @@
     "currencyLocked": "Valuta se ne mijenja kad radionica ima ponude.",
     "language": "Jezik za nove korisnike",
     "en": "English",
-    "bs": "Bosanski"
+    "bs": "Bosanski",
+    "section": "Naziv, kontakt i PDV"
   },
   "account": {
     "title": "Moja prijava",

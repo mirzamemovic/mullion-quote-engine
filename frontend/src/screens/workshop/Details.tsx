@@ -35,7 +35,7 @@ function Profile() {
   const submit = () => save.mutate(value, { onSuccess: () => setDraft(null) });
 
   return (
-    <Section title={t("profile.title")}>
+    <Section title={t("profile.section")}>
       <form
         className="space-y-3 rounded-slot bg-board p-4"
         onSubmit={(e) => {

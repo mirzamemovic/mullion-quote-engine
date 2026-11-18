@@ -560,6 +560,7 @@ function Extras({ quote, lines, editable }: { quote: QuoteDetail; lines: { label
         >
           <div className="col-span-2">
             <Segmented
+              wrap
               label={t("extras.kind")}
               value={kind}
               onChange={(k) => {
