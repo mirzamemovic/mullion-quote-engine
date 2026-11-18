@@ -1,0 +1,11 @@
+# Gitleaks (the secret scan in .github/workflows/security.yml): every default rule, plus one
+# narrow exception for the demo catalogue, whose profile-system keys ("rehau-synego-80") look
+# like API keys to the generic rule but are plain names.
+[extend]
+useDefault = true
+
+[[allowlists]]
+description = "Profile-system keys in the invented demo catalogue, not secrets"
+paths = ['''backend/src/quote_engine/services/demo_catalogue\.py''']
+regexTarget = "secret"
+regexes = ['''^[a-z0-9]+(-[a-z0-9]+)+$''']

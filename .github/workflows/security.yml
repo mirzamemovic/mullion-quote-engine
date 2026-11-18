@@ -1,0 +1,89 @@
+# Security checks (PLAN.md section 9): known vulnerabilities in the dependencies, secrets in the
+# history, risky settings in the Dockerfile. Untested on GitHub: needs the repository. Every
+# command below was run on the development machine on 2026-11-18 with these exact versions.
+#
+# Third-party code: only the three actions ci.yml already pins by commit SHA. The scanners are
+# pinned tool versions (PyPI, Docker Hub) rather than more actions; Dependabot does not update
+# them, so their versions are checked by hand with the others in docs/PROGRESS.md.
+name: Security
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  schedule:
+    # Mondays: new advisories also concern dependencies that did not change.
+    - cron: "17 4 * * 1"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: security-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  python:
+    name: Python dependencies (pip-audit)
+    runs-on: ubuntu-24.04
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+      - name: Every locked package, with hashes
+        run: uv export --frozen --format requirements-txt --no-emit-project > "$RUNNER_TEMP/requirements.txt"
+      - name: Known vulnerabilities
+        run: uvx pip-audit==2.9.0 --strict --disable-pip -r "$RUNNER_TEMP/requirements.txt"
+
+  npm:
+    name: npm dependencies (npm audit)
+    runs-on: ubuntu-24.04
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24
+      # The shipped app must be clean; build tools may carry moderate advisories (lint only).
+      - name: Shipped packages, any severity
+        run: npm audit --omit=dev
+      - name: All packages, high and critical
+        run: npm audit --audit-level=high
+
+  secrets:
+    name: Secrets in the history (Gitleaks)
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          fetch-depth: 0 # every commit, not only the last
+      - name: Scan every commit (findings redacted in the log)
+        run: >-
+          docker run --rm -v "$GITHUB_WORKSPACE:/repo:ro"
+          -e GIT_CONFIG_COUNT=1 -e GIT_CONFIG_KEY_0=safe.directory -e GIT_CONFIG_VALUE_0=/repo
+          zricethezav/gitleaks:v8.27.2 git /repo --config /repo/.gitleaks.toml --redact --no-banner
+
+  trivy:
+    name: Lock files and Dockerfile (Trivy)
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      # The databases come from Google's mirror; the checks are the ones built into this version.
+      - name: High and critical findings fail the job
+        run: >-
+          docker run --rm -v "$GITHUB_WORKSPACE:/repo:ro" aquasec/trivy:0.63.0 fs --quiet
+          --scanners vuln,misconfig --severity HIGH,CRITICAL --exit-code 1 --skip-check-update
+          --db-repository mirror.gcr.io/aquasec/trivy-db
+          --java-db-repository mirror.gcr.io/aquasec/trivy-java-db
+          --skip-dirs "**/node_modules" /repo

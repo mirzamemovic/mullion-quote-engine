@@ -1,5 +1,6 @@
 """Deployment files: what can be checked without Docker, a server or GitHub (PLAN.md 11 and 12)."""
 
+import re
 import shutil
 import subprocess
 from pathlib import Path
@@ -68,7 +69,33 @@ def test_image_runs_as_a_non_root_user_and_serves_the_frontend() -> None:
     assert "QUOTE_ENGINE_STATIC_DIR=/app/static" in dockerfile
 
 
-@pytest.mark.parametrize("name", ["ci.yml", "deploy.yml", "codeql.yml"])
+def test_the_proxy_refuses_large_bodies_before_the_app_reads_them() -> None:
+    caddyfile = (INFRA / "Caddyfile").read_text(encoding="utf-8")
+
+    assert "request_body {\n\t\tmax_size 2MB\n\t}" in caddyfile
+
+
+@pytest.mark.parametrize("name", ["ci.yml", "deploy.yml", "security.yml"])
+def test_actions_are_pinned_by_commit(name: str) -> None:
+    """A tag can be moved to other code; a full commit SHA cannot. (codeql.yml still uses tags:
+    pinning them needs a lookup on GitHub, done once the repository exists.)"""
+    text = (ROOT / ".github" / "workflows" / name).read_text(encoding="utf-8")
+    uses = re.findall(r"uses: (\S+)", text)
+
+    assert uses
+    assert all(re.fullmatch(r"[\w.-]+/[\w./-]+@[0-9a-f]{40}", ref) for ref in uses), uses
+
+
+def test_security_scanners_are_pinned_versions() -> None:
+    text = (ROOT / ".github" / "workflows" / "security.yml").read_text(encoding="utf-8")
+
+    assert "pip-audit==2.9.0" in text
+    assert "zricethezav/gitleaks:v8.27.2" in text
+    assert "aquasec/trivy:0.63.0" in text
+    assert "fetch-depth: 0" in text  # the whole history, not only the last commit
+
+
+@pytest.mark.parametrize("name", ["ci.yml", "deploy.yml", "codeql.yml", "security.yml"])
 def test_workflows_start_read_only(name: str) -> None:
     workflow = read_yaml(ROOT / ".github" / "workflows" / name)
 
