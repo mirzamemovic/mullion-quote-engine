@@ -15,6 +15,7 @@ from quote_engine.engine.units import (
     per_metre,
     rate_per_m2,
     share_bp,
+    used_length_cost,
     whole_metres_up,
 )
 
@@ -143,3 +144,23 @@ def test_results_are_whole_numbers(result: int) -> None:
 )
 def test_hundredths_of_m2(area_mm2: int, expected: int) -> None:
     assert hundredths_of_m2(Mm2(area_mm2)) == expected
+
+
+@pytest.mark.parametrize(
+    ("bar", "used", "length", "waste", "expected"),
+    [
+        pytest.param(6000, 1500, 6000, 1000, 1650, id="a-quarter-bar-plus-ten-percent"),
+        pytest.param(6000, 6000, 6000, 0, 6000, id="a-whole-bar-without-waste"),
+        pytest.param(10_000, 1, 6666, 0, 2, id="one-mm-rounds-half-up-once"),
+        pytest.param(10_000, 0, 6666, 1500, 0, id="nothing-used"),
+    ],
+)
+def test_used_length_cost(bar: int, used: int, length: int, waste: int, expected: int) -> None:
+    assert used_length_cost(Cents(bar), Mm(used), Mm(length), Bp(waste)) == expected
+
+
+def test_used_length_cost_refuses_nonsense() -> None:
+    with pytest.raises(InvalidInput, match="bar length"):
+        used_length_cost(Cents(100), Mm(10), Mm(0), Bp(0))
+    with pytest.raises(InvalidInput, match="zero or more"):
+        used_length_cost(Cents(100), Mm(10), Mm(6000), Bp(-1))

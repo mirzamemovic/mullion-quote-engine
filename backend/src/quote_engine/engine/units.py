@@ -78,6 +78,20 @@ def per_metre(length_mm: Mm, cents_per_m: Cents) -> Cents:
     return Cents((length_mm * cents_per_m + MM_PER_M // 2) // MM_PER_M)
 
 
+def used_length_cost(bar_cents: Cents, used_mm: Mm, bar_length_mm: Mm, waste_bp: Bp) -> Cents:
+    """The share of a bar's price for ``used_mm`` of it, plus ``waste_bp``, rounded half up once.
+
+    ``bar_cents x used_mm x (100 % + waste) / bar_length_mm``: 6000 mm bar at 6000 cents, 1500 mm
+    used, 10 % waste -> 1650 cents.
+    """
+    if bar_length_mm <= 0:
+        raise InvalidInput(f"bar length must be above zero, got {bar_length_mm}")
+    if used_mm < 0 or waste_bp < 0:
+        raise InvalidInput("used length and waste must be zero or more")
+    whole = bar_length_mm * BP_PER_WHOLE
+    return Cents((bar_cents * used_mm * (BP_PER_WHOLE + waste_bp) + whole // 2) // whole)
+
+
 def hundredths_of_m2(area_mm2: Mm2) -> int:
     """``area_mm2`` in hundredths of a square metre, rounded half up (1 254 000 mm² -> 125)."""
     return (area_mm2 * 100 + MM2_PER_M2 // 2) // MM2_PER_M2

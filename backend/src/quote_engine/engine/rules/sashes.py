@@ -23,9 +23,11 @@ from dataclasses import dataclass
 from quote_engine.engine.model import (
     CutList,
     GlassPane,
+    Opening,
     Piece,
     PositionSpec,
     Role,
+    SashSize,
     SystemConstants,
 )
 from quote_engine.engine.rules.common import (
@@ -41,7 +43,7 @@ from quote_engine.engine.rules.common import (
     steel_pair,
     welded_ring,
 )
-from quote_engine.engine.units import Mm
+from quote_engine.engine.units import Mm, Mm2
 
 
 @dataclass(frozen=True)
@@ -124,10 +126,23 @@ def cut_list(
         + sum(perimeter(sash.outer_width_mm, sash.outer_height_mm) for sash in sashes)
         + extra_gasket_mm
     )
+    # The sashes fill the opening fields in order; fixed fields have none.
+    opening = [o for o in pos.openings if o is not Opening.FIXED]
+    sizes = tuple(
+        SashSize(
+            pos.ref,
+            field,
+            sash.outer_width_mm,
+            sash.outer_height_mm,
+            Mm2(sash.glass.width_mm * sash.glass.height_mm),
+        )
+        for sash, field in zip(sashes, opening, strict=True)
+    )
     return CutList(
         pieces=(*frame_pieces(pos, c), *pieces, *(p for sash in sashes for p in sash.pieces)),
         steel=(*frame_steel(pos, c), *steel, *(p for sash in sashes for p in sash.steel)),
         glass=tuple(sash.glass for sash in sashes),
         hardware_sets=hardware_for(pos),
         gasket_mm=Mm(gasket * pos.qty),
+        sashes=sizes,
     )

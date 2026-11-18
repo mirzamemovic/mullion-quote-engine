@@ -1,17 +1,17 @@
 """Quote warnings: things the owner should look at before sending a quote (PLAN.md section 4.6).
 
 Warnings never block a quote and never change a number. Limits come from catalogues (hardware
-sets, system sheets) and settings; a missing hardware limit raises ``MissingConstant``.
+sets, system sheets) and settings, never from a guess: a sash whose opening has no hardware set
+gets a warning that it was not checked.
 """
 
-from collections.abc import Iterable, Mapping
+from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass
 from datetime import date
 from enum import StrEnum
 
-from quote_engine.engine.errors import MissingConstant
 from quote_engine.engine.measuring import Measurement
-from quote_engine.engine.model import Opening, PositionSpec
+from quote_engine.engine.model import Opening, PositionSpec, SashSize
 from quote_engine.engine.prices import Price
 from quote_engine.engine.units import Bp, Mm, Mm2, grams_for_area, grams_for_length
 
@@ -24,6 +24,7 @@ class WarningCode(StrEnum):
     SASH_TOO_HIGH = "sash_too_high"
     SASH_TOO_LARGE = "sash_too_large"
     SASH_TOO_HEAVY = "sash_too_heavy"
+    HARDWARE_UNCHECKED = "hardware_unchecked"
     SIZE_OUTSIDE_SYSTEM = "size_outside_system"
     PRICE_LIST_OLD = "price_list_old"
     MARGIN_LOW = "margin_low"
@@ -50,17 +51,6 @@ class HardwareLimits:
 
 
 @dataclass(frozen=True)
-class Sash:
-    """One opening sash: its outer size and its glass area."""
-
-    position_ref: str
-    opening: Opening
-    width_mm: Mm
-    height_mm: Mm
-    glass_area_mm2: Mm2
-
-
-@dataclass(frozen=True)
 class WeightRates:
     """Weights from the system sheet: glass per m², sash profile per metre, in grams."""
 
@@ -78,7 +68,7 @@ class SystemLimits:
     max_height_mm: Mm
 
 
-def sash_weight_g(sash: Sash, rates: WeightRates) -> int:
+def sash_weight_g(sash: SashSize, rates: WeightRates) -> int:
     """Glass area x glass weight + sash perimeter x profile weight, in whole grams."""
     perimeter = Mm(2 * (sash.width_mm + sash.height_mm))
     return grams_for_area(sash.glass_area_mm2, rates.glass_g_per_m2) + grams_for_length(
@@ -86,28 +76,51 @@ def sash_weight_g(sash: Sash, rates: WeightRates) -> int:
     )
 
 
-def hardware_warnings(
-    sashes: Iterable[Sash], limits: Mapping[Opening, HardwareLimits], rates: WeightRates
-) -> list[QuoteWarning]:
-    """A warning for every sash outside its hardware set's width, height, area or weight."""
-    found: list[QuoteWarning] = []
-    for sash in sashes:
-        try:
-            limit = limits[sash.opening]
-        except KeyError:
-            raise MissingConstant("hardware sets", f"limits for {sash.opening}") from None
-        area = sash.width_mm * sash.height_mm
-        weight = sash_weight_g(sash, rates)
-        checks = (
-            (WarningCode.SASH_TOO_WIDE, sash.width_mm, limit.max_width_mm, "mm wide"),
-            (WarningCode.SASH_TOO_HIGH, sash.height_mm, limit.max_height_mm, "mm high"),
-            (WarningCode.SASH_TOO_LARGE, area, limit.max_area_mm2, "mm²"),
-            (WarningCode.SASH_TOO_HEAVY, weight, limit.max_weight_g, "g"),
+def _over_limits(
+    sash: SashSize, limit: HardwareLimits, rates: WeightRates | None
+) -> list[tuple[WarningCode, int, int, str]]:
+    """Each limit of one hardware set that the sash goes over: code, value, maximum, unit."""
+    checks = [
+        (WarningCode.SASH_TOO_WIDE, sash.width_mm, limit.max_width_mm, "mm wide"),
+        (WarningCode.SASH_TOO_HIGH, sash.height_mm, limit.max_height_mm, "mm high"),
+        (WarningCode.SASH_TOO_LARGE, sash.width_mm * sash.height_mm, limit.max_area_mm2, "mm²"),
+    ]
+    if rates is not None:
+        checks.append(
+            (WarningCode.SASH_TOO_HEAVY, sash_weight_g(sash, rates), limit.max_weight_g, "g")
         )
-        for code, value, maximum, unit in checks:
-            if value > maximum:
-                message = f"{sash.opening} sash: {value} {unit}, the hardware set allows {maximum}"
-                found.append(QuoteWarning(code, message, sash.position_ref))
+    return [check for check in checks if check[1] > check[2]]
+
+
+def hardware_warnings(
+    sashes: Iterable[SashSize],
+    limits: Mapping[Opening, Sequence[HardwareLimits]],
+    rates: WeightRates | None,
+) -> list[QuoteWarning]:
+    """A warning for every sash that no hardware set of its opening carries.
+
+    A workshop may keep several sets per opening (standard and heavy-duty): a sash is fine when
+    at least one of them carries it, otherwise the warnings name the limits of the set it misses
+    by the fewest. Weight is checked only with ``rates`` (glass and profile weights from the
+    system sheet). A sash whose opening has no set is reported as not checked, once per position.
+    """
+    found: list[QuoteWarning] = []
+    unchecked: set[tuple[str, Opening]] = set()
+    for sash in sashes:
+        sets = limits.get(sash.opening, ())
+        if not sets:
+            if (sash.position_ref, sash.opening) not in unchecked:
+                unchecked.add((sash.position_ref, sash.opening))
+                message = f"{sash.opening} sash: no hardware set entered, its size is not checked"
+                found.append(
+                    QuoteWarning(WarningCode.HARDWARE_UNCHECKED, message, sash.position_ref)
+                )
+            continue
+        misses = [_over_limits(sash, limit, rates) for limit in sets]
+        nearest = min(misses, key=len)
+        for code, value, maximum, unit in nearest:
+            message = f"{sash.opening} sash: {value} {unit}, the hardware set allows {maximum}"
+            found.append(QuoteWarning(code, message, sash.position_ref))
     return found
 
 

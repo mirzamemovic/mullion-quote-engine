@@ -96,6 +96,7 @@ def cut_position(pos: PositionSpec, c: SystemConstants) -> CutList:
         *(piece.position_ref for piece in (*result.pieces, *result.steel)),
         *(pane.position_ref for pane in result.glass),
         *(need.position_ref for need in result.hardware_sets),
+        *(sash.position_ref for sash in result.sashes),
     }
     if refs - {pos.ref}:
         raise InvalidInput(
@@ -113,6 +114,7 @@ def merge(cut_lists: Iterable[CutList]) -> CutList:
         glass=tuple(pane for cl in lists for pane in cl.glass),
         hardware_sets=tuple(need for cl in lists for need in cl.hardware_sets),
         gasket_mm=Mm(sum(cl.gasket_mm for cl in lists)),
+        sashes=tuple(sash for cl in lists for sash in cl.sashes),
     )
 
 

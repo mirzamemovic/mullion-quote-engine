@@ -7,13 +7,15 @@ The same function produces the snapshot stored when a quote is accepted, so reca
 the stored versions must reproduce it exactly.
 """
 
-from dataclasses import asdict, dataclass
+from collections.abc import Iterable, Mapping
+from dataclasses import asdict, dataclass, field
 from datetime import date
 from enum import Enum
 from typing import Any
 
 from quote_engine.db.models import (
     ExtraLine,
+    HardwareSet,
     Position,
     PriceEntry,
     PriceListVersion,
@@ -30,6 +32,7 @@ from quote_engine.engine.optimizer.groups import PieceGroup, group_pieces
 from quote_engine.engine.optimizer.plan import CuttingPlan, plan_stats
 from quote_engine.engine.prices import Price, PriceBook, PriceKey, PriceUnit
 from quote_engine.engine.pricing import (
+    BarPricing,
     Discount,
     Extra,
     ExtraKind,
@@ -44,8 +47,10 @@ from quote_engine.engine.rules.registry import cut_position, merge
 from quote_engine.engine.sheet import system_constants_from_mapping
 from quote_engine.engine.units import Bp, Cents, Mm, Mm2
 from quote_engine.engine.warnings import (
+    HardwareLimits,
     QuoteWarning,
     estimate_warning,
+    hardware_warnings,
     margin_warning,
     price_list_age_warning,
     readings_warnings,
@@ -65,6 +70,9 @@ class Inputs:
     entries: tuple[PriceEntry, ...]
     suppliers: dict[str, str]
     settings: WorkshopSettings
+    # The workshop's hardware sets by opening; an opening without one is reported as not
+    # checked, never given a guessed limit.
+    hardware: Mapping[Opening, tuple[HardwareLimits, ...]] = field(default_factory=dict)
 
 
 def plain(value: Any) -> Any:
@@ -114,6 +122,23 @@ def extra(row: ExtraLine) -> Extra:
     )
 
 
+def hardware_limits(rows: Iterable[HardwareSet]) -> dict[Opening, tuple[HardwareLimits, ...]]:
+    """Every hardware set's catalogue limits, grouped by the opening it is made for."""
+    found: dict[Opening, list[HardwareLimits]] = {}
+    known = {opening.value for opening in Opening}
+    for row in rows:
+        if row.opening_type in known:
+            found.setdefault(Opening(row.opening_type), []).append(
+                HardwareLimits(
+                    Mm(row.max_width_mm),
+                    Mm(row.max_height_mm),
+                    Mm2(row.max_area_mm2),
+                    row.max_weight_g,
+                )
+            )
+    return {opening: tuple(sets) for opening, sets in found.items()}
+
+
 def load_inputs(db: Scoped, revision: QuoteRevision) -> Inputs:
     entries = tuple(
         db.all(PriceEntry, PriceEntry.price_list_version_id == revision.price_list_version_id)
@@ -131,6 +156,7 @@ def load_inputs(db: Scoped, revision: QuoteRevision) -> Inputs:
         entries=entries,
         suppliers={str(s.id): s.name for s in db.all(Supplier)},
         settings=settings,
+        hardware=hardware_limits(db.all(HardwareSet)),
     )
 
 
@@ -160,6 +186,8 @@ def pricing_settings(revision: QuoteRevision, s: WorkshopSettings) -> PricingSet
         glass_min_area_mm2=Mm2(s.glass_min_area_mm2),
         gasket_extra_bp=Bp(s.gasket_extra_bp),
         size_thresholds=SizeThresholds(Mm2(s.small_max_mm2), Mm2(s.standard_max_mm2)),
+        bar_pricing=BarPricing(s.bar_pricing),
+        bar_waste_bp=Bp(s.bar_waste_bp) if s.bar_waste_bp is not None else None,
     )
 
 
@@ -216,6 +244,9 @@ def calculate(revision: QuoteRevision, inputs: Inputs, today: date) -> dict[str,
             [Mm(v) for v in readings["widths"]], [Mm(v) for v in readings["heights"]], pos.colour
         )
         warnings.extend(readings_warnings(ref, measured))
+    sashes = [sash for cut_list in cut_lists.values() for sash in cut_list.sashes]
+    # Weight waits for glass and profile weights in the system sheet; none are entered yet.
+    warnings.extend(hardware_warnings(sashes, inputs.hardware, None))
     age = price_list_age_warning(
         inputs.price_list.valid_from, today, inputs.settings.price_age_warn_days
     )

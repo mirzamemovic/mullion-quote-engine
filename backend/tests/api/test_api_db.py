@@ -1268,3 +1268,95 @@ def test_a_logo_needs_a_recent_password_check(
         row.reauth_at = datetime(2020, 1, 1, tzinfo=UTC)
     db.commit()
     assert api.put(f"{API}/workshop/logo", json=as_base64(png(10, 10))).status_code == 403
+
+
+# --- how bars are charged -----------------------------------------------------------------------
+
+
+def test_a_workshop_can_charge_bars_by_used_length(api: TestClient, shop_a: SampleWorkshop) -> None:
+    log_in(api, shop_a.email)
+    quote = new_quote(api)
+    api.put(f"{API}/quotes/{quote['id']}/revisions/1", json=revision_body())
+    url = f"{API}/quotes/{quote['id']}/revisions/1/calculate"
+    whole = api.post(url).json()["price"]
+
+    settings = api.get(f"{API}/settings").json()
+    assert (settings["bar_pricing"], settings["bar_waste_bp"]) == ("whole_bars", None)
+    no_waste = api.put(f"{API}/settings", json={**settings, "bar_pricing": "used_length"})
+    assert no_waste.status_code == 422
+    assert "waste percentage" in no_waste.text
+    used = {**settings, "bar_pricing": "used_length", "bar_waste_bp": 1500}
+    assert api.put(f"{API}/settings", json=used).status_code == 200
+
+    priced = api.post(url).json()["price"]
+    labels = [line["label"] for p in priced["positions"] for line in p["material"]]
+    assert any(label.endswith("used length") for label in labels)
+    assert not any(label.endswith(" bars") for label in labels)
+    assert priced["total_cents"] != whole["total_cents"]
+
+
+def test_a_sandbox_never_asks_for_a_password_it_does_not_have(
+    api: TestClient, db: Session, shop_a: SampleWorkshop
+) -> None:
+    """The visitor has no password; after the step-up window the setup must still work. A real
+    workshop's stale session is still refused."""
+    me = api.post(f"{API}/sandbox", json={"language": "en"}).json()
+    api.headers[CSRF_HEADER] = me["csrf_token"]
+    for row in db.scalars(select(SessionRow)):
+        row.reauth_at = datetime(2020, 1, 1, tzinfo=UTC)
+    db.commit()
+    settings = api.get(f"{API}/settings").json()
+    assert api.put(f"{API}/settings", json={**settings, "vat_bp": 1700}).status_code == 200
+
+    log_in(api, shop_a.email)
+    for row in db.scalars(select(SessionRow)):
+        row.reauth_at = datetime(2020, 1, 1, tzinfo=UTC)
+    db.commit()
+    settings = api.get(f"{API}/settings").json()
+    assert api.put(f"{API}/settings", json={**settings, "vat_bp": 1700}).status_code == 403
+
+
+# --- hardware limits ----------------------------------------------------------------------------
+
+
+def test_a_sash_too_big_for_its_hardware_is_warned(api: TestClient, shop_a: SampleWorkshop) -> None:
+    log_in(api, shop_a.email)
+    quote = new_quote(api)
+    big = {
+        "ref": "Big",
+        "construction_type": "single_sash_tilt_turn",
+        "width_mm": 1600,
+        "height_mm": 2000,
+        "qty": 1,
+        "colour": "white",
+        "glass_build": "4-16-4",
+        "openings": ["tilt_turn_right"],
+    }
+    api.put(
+        f"{API}/quotes/{quote['id']}/revisions/1", json=revision_body(positions=[big], extras=[])
+    )
+    url = f"{API}/quotes/{quote['id']}/revisions/1/calculate"
+
+    warnings = [(w["code"], w["position_ref"]) for w in api.post(url).json()["warnings"]]
+    assert ("sash_too_wide", "Big") in warnings
+    assert ("hardware_unchecked", "Big") not in warnings
+
+    for row in api.get(f"{API}/hardware-sets").json():
+        if row["opening_type"] == "tilt_turn_right":
+            assert api.delete(f"{API}/hardware-sets/{row['id']}").status_code == 204
+    warnings = [(w["code"], w["position_ref"]) for w in api.post(url).json()["warnings"]]
+    assert ("hardware_unchecked", "Big") in warnings
+    assert ("sash_too_wide", "Big") not in warnings
+
+
+def test_settings_without_the_bar_pricing_are_refused_not_reset(
+    api: TestClient, shop_a: SampleWorkshop
+) -> None:
+    log_in(api, shop_a.email)
+    settings = api.get(f"{API}/settings").json()
+    used = {**settings, "bar_pricing": "used_length", "bar_waste_bp": 1000}
+    assert api.put(f"{API}/settings", json=used).status_code == 200
+
+    old_client = {k: v for k, v in used.items() if k not in ("bar_pricing", "bar_waste_bp")}
+    assert api.put(f"{API}/settings", json=old_client).status_code == 422
+    assert api.get(f"{API}/settings").json()["bar_pricing"] == "used_length"

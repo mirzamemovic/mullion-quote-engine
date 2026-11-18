@@ -1,6 +1,32 @@
 {
   "components": {
     "schemas": {
+      "BarOut": {
+        "properties": {
+          "cuts": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Cuts",
+            "type": "array"
+          },
+          "offcut_mm": {
+            "title": "Offcut Mm",
+            "type": "integer"
+          },
+          "used_mm": {
+            "title": "Used Mm",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "cuts",
+          "used_mm",
+          "offcut_mm"
+        ],
+        "title": "BarOut",
+        "type": "object"
+      },
       "BumpIn": {
         "additionalProperties": false,
         "properties": {
@@ -27,6 +53,47 @@
           "valid_from"
         ],
         "title": "BumpIn",
+        "type": "object"
+      },
+      "CalculationOut": {
+        "description": "A revision cut, optimized and priced: the cut list per position, the plan per bar group,\nthe price layers and the warnings.",
+        "properties": {
+          "cut_lists": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/CutListOut"
+            },
+            "title": "Cut Lists",
+            "type": "object"
+          },
+          "plans": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/GroupPlanOut"
+            },
+            "title": "Plans",
+            "type": "object"
+          },
+          "price": {
+            "$ref": "#/components/schemas/JobPriceOut"
+          },
+          "versions": {
+            "$ref": "#/components/schemas/VersionsOut"
+          },
+          "warnings": {
+            "items": {
+              "$ref": "#/components/schemas/WarningOut"
+            },
+            "title": "Warnings",
+            "type": "array"
+          }
+        },
+        "required": [
+          "cut_lists",
+          "plans",
+          "price",
+          "warnings",
+          "versions"
+        ],
+        "title": "CalculationOut",
         "type": "object"
       },
       "ClientIn": {
@@ -256,6 +323,59 @@
         "title": "CsvIn",
         "type": "object"
       },
+      "CutListOut": {
+        "properties": {
+          "gasket_mm": {
+            "title": "Gasket Mm",
+            "type": "integer"
+          },
+          "glass": {
+            "items": {
+              "$ref": "#/components/schemas/GlassPaneOut"
+            },
+            "title": "Glass",
+            "type": "array"
+          },
+          "hardware_sets": {
+            "items": {
+              "$ref": "#/components/schemas/HardwareNeedOut"
+            },
+            "title": "Hardware Sets",
+            "type": "array"
+          },
+          "pieces": {
+            "items": {
+              "$ref": "#/components/schemas/PieceOut"
+            },
+            "title": "Pieces",
+            "type": "array"
+          },
+          "sashes": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/SashSizeOut"
+            },
+            "title": "Sashes",
+            "type": "array"
+          },
+          "steel": {
+            "items": {
+              "$ref": "#/components/schemas/PieceOut"
+            },
+            "title": "Steel",
+            "type": "array"
+          }
+        },
+        "required": [
+          "pieces",
+          "steel",
+          "glass",
+          "hardware_sets",
+          "gasket_mm"
+        ],
+        "title": "CutListOut",
+        "type": "object"
+      },
       "CutPreviewIn": {
         "additionalProperties": false,
         "description": "Cut one window with a sheet that has not been saved, to check its deductions.",
@@ -291,6 +411,39 @@
           "height_mm"
         ],
         "title": "CutPreviewIn",
+        "type": "object"
+      },
+      "CutPreviewOut": {
+        "properties": {
+          "cut_list": {
+            "$ref": "#/components/schemas/CutListOut"
+          }
+        },
+        "required": [
+          "cut_list"
+        ],
+        "title": "CutPreviewOut",
+        "type": "object"
+      },
+      "CuttingPlanOut": {
+        "properties": {
+          "bar_length_mm": {
+            "title": "Bar Length Mm",
+            "type": "integer"
+          },
+          "bars": {
+            "items": {
+              "$ref": "#/components/schemas/BarOut"
+            },
+            "title": "Bars",
+            "type": "array"
+          }
+        },
+        "required": [
+          "bar_length_mm",
+          "bars"
+        ],
+        "title": "CuttingPlanOut",
         "type": "object"
       },
       "ExtraIn": {
@@ -467,6 +620,65 @@
         "title": "ExtraOut",
         "type": "object"
       },
+      "GlassPaneOut": {
+        "properties": {
+          "build": {
+            "title": "Build",
+            "type": "string"
+          },
+          "formula_h": {
+            "title": "Formula H",
+            "type": "string"
+          },
+          "formula_w": {
+            "title": "Formula W",
+            "type": "string"
+          },
+          "height_mm": {
+            "title": "Height Mm",
+            "type": "integer"
+          },
+          "position_ref": {
+            "title": "Position Ref",
+            "type": "string"
+          },
+          "qty": {
+            "title": "Qty",
+            "type": "integer"
+          },
+          "width_mm": {
+            "title": "Width Mm",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "position_ref",
+          "width_mm",
+          "height_mm",
+          "qty",
+          "build",
+          "formula_w",
+          "formula_h"
+        ],
+        "title": "GlassPaneOut",
+        "type": "object"
+      },
+      "GroupPlanOut": {
+        "properties": {
+          "plan": {
+            "$ref": "#/components/schemas/CuttingPlanOut"
+          },
+          "stats": {
+            "$ref": "#/components/schemas/PlanStatsOut"
+          }
+        },
+        "required": [
+          "plan",
+          "stats"
+        ],
+        "title": "GroupPlanOut",
+        "type": "object"
+      },
       "HTTPValidationError": {
         "properties": {
           "detail": {
@@ -478,6 +690,28 @@
           }
         },
         "title": "HTTPValidationError",
+        "type": "object"
+      },
+      "HardwareNeedOut": {
+        "properties": {
+          "opening": {
+            "$ref": "#/components/schemas/Opening"
+          },
+          "position_ref": {
+            "title": "Position Ref",
+            "type": "string"
+          },
+          "qty": {
+            "title": "Qty",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "position_ref",
+          "opening",
+          "qty"
+        ],
+        "title": "HardwareNeedOut",
         "type": "object"
       },
       "HardwareSetIn": {
@@ -797,6 +1031,70 @@
         "title": "InviteTokenIn",
         "type": "object"
       },
+      "JobPriceOut": {
+        "properties": {
+          "advance_cents": {
+            "title": "Advance Cents",
+            "type": "integer"
+          },
+          "balance_cents": {
+            "title": "Balance Cents",
+            "type": "integer"
+          },
+          "discount_cents": {
+            "title": "Discount Cents",
+            "type": "integer"
+          },
+          "extras": {
+            "items": {
+              "$ref": "#/components/schemas/PriceLineOut"
+            },
+            "title": "Extras",
+            "type": "array"
+          },
+          "net_cents": {
+            "title": "Net Cents",
+            "type": "integer"
+          },
+          "positions": {
+            "items": {
+              "$ref": "#/components/schemas/PositionPriceOut"
+            },
+            "title": "Positions",
+            "type": "array"
+          },
+          "subtotal_cents": {
+            "title": "Subtotal Cents",
+            "type": "integer"
+          },
+          "total_cents": {
+            "title": "Total Cents",
+            "type": "integer"
+          },
+          "transport_cents": {
+            "title": "Transport Cents",
+            "type": "integer"
+          },
+          "vat_cents": {
+            "title": "Vat Cents",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "positions",
+          "extras",
+          "transport_cents",
+          "subtotal_cents",
+          "discount_cents",
+          "net_cents",
+          "vat_cents",
+          "total_cents",
+          "advance_cents",
+          "balance_cents"
+        ],
+        "title": "JobPriceOut",
+        "type": "object"
+      },
       "LoginIn": {
         "additionalProperties": false,
         "properties": {
@@ -1104,6 +1402,94 @@
         "title": "PaymentOut",
         "type": "object"
       },
+      "PieceOut": {
+        "properties": {
+          "angle_left": {
+            "title": "Angle Left",
+            "type": "integer"
+          },
+          "angle_right": {
+            "title": "Angle Right",
+            "type": "integer"
+          },
+          "formula": {
+            "title": "Formula",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "length_mm": {
+            "title": "Length Mm",
+            "type": "integer"
+          },
+          "position_ref": {
+            "title": "Position Ref",
+            "type": "string"
+          },
+          "qty": {
+            "title": "Qty",
+            "type": "integer"
+          },
+          "role": {
+            "$ref": "#/components/schemas/Role"
+          }
+        },
+        "required": [
+          "position_ref",
+          "role",
+          "label",
+          "length_mm",
+          "angle_left",
+          "angle_right",
+          "qty",
+          "formula"
+        ],
+        "title": "PieceOut",
+        "type": "object"
+      },
+      "PlanStatsOut": {
+        "properties": {
+          "bars": {
+            "title": "Bars",
+            "type": "integer"
+          },
+          "kept_offcuts_mm": {
+            "items": {
+              "type": "integer"
+            },
+            "title": "Kept Offcuts Mm",
+            "type": "array"
+          },
+          "scrap_bp": {
+            "title": "Scrap Bp",
+            "type": "integer"
+          },
+          "scrap_mm": {
+            "title": "Scrap Mm",
+            "type": "integer"
+          },
+          "waste_bp": {
+            "title": "Waste Bp",
+            "type": "integer"
+          },
+          "waste_mm": {
+            "title": "Waste Mm",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "bars",
+          "waste_mm",
+          "waste_bp",
+          "kept_offcuts_mm",
+          "scrap_mm",
+          "scrap_bp"
+        ],
+        "title": "PlanStatsOut",
+        "type": "object"
+      },
       "PositionIn": {
         "additionalProperties": false,
         "properties": {
@@ -1271,6 +1657,80 @@
         "title": "PositionOut",
         "type": "object"
       },
+      "PositionPriceOut": {
+        "properties": {
+          "area_mm2": {
+            "default": 0,
+            "title": "Area Mm2",
+            "type": "integer"
+          },
+          "cents_per_m2": {
+            "default": 0,
+            "title": "Cents Per M2",
+            "type": "integer"
+          },
+          "installation": {
+            "items": {
+              "$ref": "#/components/schemas/PriceLineOut"
+            },
+            "title": "Installation",
+            "type": "array"
+          },
+          "installation_cents": {
+            "title": "Installation Cents",
+            "type": "integer"
+          },
+          "labour_cents": {
+            "title": "Labour Cents",
+            "type": "integer"
+          },
+          "margin_cents": {
+            "title": "Margin Cents",
+            "type": "integer"
+          },
+          "material": {
+            "items": {
+              "$ref": "#/components/schemas/PriceLineOut"
+            },
+            "title": "Material",
+            "type": "array"
+          },
+          "material_cents": {
+            "title": "Material Cents",
+            "type": "integer"
+          },
+          "ref": {
+            "title": "Ref",
+            "type": "string"
+          },
+          "rounding_cents": {
+            "title": "Rounding Cents",
+            "type": "integer"
+          },
+          "total_cents": {
+            "title": "Total Cents",
+            "type": "integer"
+          },
+          "unit_price_cents": {
+            "title": "Unit Price Cents",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "ref",
+          "material",
+          "material_cents",
+          "margin_cents",
+          "labour_cents",
+          "installation",
+          "installation_cents",
+          "rounding_cents",
+          "total_cents",
+          "unit_price_cents"
+        ],
+        "title": "PositionPriceOut",
+        "type": "object"
+      },
       "PreviewIn": {
         "additionalProperties": false,
         "properties": {
@@ -1288,6 +1748,26 @@
           "position"
         ],
         "title": "PreviewIn",
+        "type": "object"
+      },
+      "PreviewOut": {
+        "properties": {
+          "cut_list": {
+            "$ref": "#/components/schemas/CutListOut"
+          },
+          "warnings": {
+            "items": {
+              "$ref": "#/components/schemas/WarningOut"
+            },
+            "title": "Warnings",
+            "type": "array"
+          }
+        },
+        "required": [
+          "cut_list",
+          "warnings"
+        ],
+        "title": "PreviewOut",
         "type": "object"
       },
       "PriceCheckOut": {
@@ -1507,6 +1987,24 @@
           "id"
         ],
         "title": "PriceEntryOut",
+        "type": "object"
+      },
+      "PriceLineOut": {
+        "properties": {
+          "cents": {
+            "title": "Cents",
+            "type": "integer"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          }
+        },
+        "required": [
+          "label",
+          "cents"
+        ],
+        "title": "PriceLineOut",
         "type": "object"
       },
       "PriceListIn": {
@@ -2226,6 +2724,38 @@
         "title": "SandboxIn",
         "type": "object"
       },
+      "SashSizeOut": {
+        "properties": {
+          "glass_area_mm2": {
+            "title": "Glass Area Mm2",
+            "type": "integer"
+          },
+          "height_mm": {
+            "title": "Height Mm",
+            "type": "integer"
+          },
+          "opening": {
+            "$ref": "#/components/schemas/Opening"
+          },
+          "position_ref": {
+            "title": "Position Ref",
+            "type": "string"
+          },
+          "width_mm": {
+            "title": "Width Mm",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "position_ref",
+          "opening",
+          "width_mm",
+          "height_mm",
+          "glass_area_mm2"
+        ],
+        "title": "SashSizeOut",
+        "type": "object"
+      },
       "SessionOut": {
         "properties": {
           "created_at": {
@@ -2270,6 +2800,27 @@
             "minimum": 0.0,
             "title": "Advance Bp",
             "type": "integer"
+          },
+          "bar_pricing": {
+            "enum": [
+              "whole_bars",
+              "used_length"
+            ],
+            "title": "Bar Pricing",
+            "type": "string"
+          },
+          "bar_waste_bp": {
+            "anyOf": [
+              {
+                "maximum": 10000.0,
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Bar Waste Bp"
           },
           "gasket_extra_bp": {
             "maximum": 10000.0,
@@ -2336,7 +2887,8 @@
           "glass_min_area_mm2",
           "gasket_extra_bp",
           "small_max_mm2",
-          "standard_max_mm2"
+          "standard_max_mm2",
+          "bar_pricing"
         ],
         "title": "SettingsIO",
         "type": "object"
@@ -2893,6 +3445,69 @@
           "type"
         ],
         "title": "ValidationError",
+        "type": "object"
+      },
+      "VersionsOut": {
+        "properties": {
+          "price_list": {
+            "title": "Price List",
+            "type": "string"
+          },
+          "system_sheet": {
+            "title": "System Sheet",
+            "type": "string"
+          }
+        },
+        "required": [
+          "system_sheet",
+          "price_list"
+        ],
+        "title": "VersionsOut",
+        "type": "object"
+      },
+      "WarningCode": {
+        "description": "What a warning is about.",
+        "enum": [
+          "readings_spread",
+          "sash_too_wide",
+          "sash_too_high",
+          "sash_too_large",
+          "sash_too_heavy",
+          "hardware_unchecked",
+          "size_outside_system",
+          "price_list_old",
+          "margin_low",
+          "prices_estimated"
+        ],
+        "title": "WarningCode",
+        "type": "string"
+      },
+      "WarningOut": {
+        "properties": {
+          "code": {
+            "$ref": "#/components/schemas/WarningCode"
+          },
+          "message": {
+            "title": "Message",
+            "type": "string"
+          },
+          "position_ref": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Position Ref"
+          }
+        },
+        "required": [
+          "code",
+          "message"
+        ],
+        "title": "WarningOut",
         "type": "object"
       },
       "WorkshopOut": {
@@ -3533,9 +4148,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "additionalProperties": true,
-                  "title": "Response Cut Preview Api V1 Engine Cut Preview Post",
-                  "type": "object"
+                  "$ref": "#/components/schemas/CutPreviewOut"
                 }
               }
             },
@@ -3619,9 +4232,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "additionalProperties": true,
-                  "title": "Response Preview Api V1 Engine Preview Post",
-                  "type": "object"
+                  "$ref": "#/components/schemas/PreviewOut"
                 }
               }
             },
@@ -5106,9 +5717,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "additionalProperties": true,
-                  "title": "Response Calculate Api V1 Quotes  Quote Id  Revisions  Number  Calculate Post",
-                  "type": "object"
+                  "$ref": "#/components/schemas/CalculationOut"
                 }
               }
             },

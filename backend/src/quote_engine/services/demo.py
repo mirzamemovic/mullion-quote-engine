@@ -18,7 +18,6 @@ from quote_engine.db.base import utc_now
 from quote_engine.db.models import (
     WORKSHOP_SCOPED,
     Client,
-    HardwareSet,
     PriceEntry,
     PriceListVersion,
     ProfileSystem,
@@ -26,7 +25,6 @@ from quote_engine.db.models import (
     SystemSheetVersion,
     Workshop,
 )
-from quote_engine.engine.model import Opening
 from quote_engine.services import auth
 from quote_engine.services.demo_catalogue import (
     DEMO_SMALL_MAX_MM2,
@@ -35,6 +33,7 @@ from quote_engine.services.demo_catalogue import (
     SUPPLIER_NAMES,
     SYSTEMS,
     price_rows,
+    sample_hardware_sets,
 )
 from quote_engine.services.workshops import create_user, create_workshop
 
@@ -98,17 +97,8 @@ def seed_demo(
                 source_pages={"all": "invented deductions; prices: docs/market-prices.md"},
             )
         )
-    for opening in (Opening.TILT_TURN_LEFT, Opening.TILT_TURN_RIGHT):
-        add(
-            HardwareSet(
-                name=f"Sample hardware {opening.value}",
-                opening_type=opening.value,
-                max_width_mm=1300,
-                max_height_mm=2400,
-                max_area_mm2=2_800_000,
-                max_weight_g=100_000,
-            )
-        )
+    for hardware in sample_hardware_sets():
+        add(hardware)
     prices = add(PriceListVersion(valid_from=today, note=PRICE_NOTE, published_at=utc_now()))
     for row in price_rows("profile", "glass", "other"):
         supplier = suppliers[str(row.pop("supplier_id"))]

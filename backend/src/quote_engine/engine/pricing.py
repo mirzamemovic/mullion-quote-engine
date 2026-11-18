@@ -5,9 +5,10 @@ per job: extras, transport, discount (its own line), VAT on the net total, advan
 are whole cents, rounded half up once per line with the helpers in ``units.py``; totals are sums
 of rounded lines.
 
-Profile and steel bars are bought whole per group (role and colour). A group's bar cost is shared
-between positions by the length they consume (pieces plus kerf), with the largest-remainder
-method so the shares add up exactly.
+Profile and steel bars are bought whole per group (role and colour). By default a group's bar
+cost is shared between positions by the length they consume (pieces plus kerf), with the
+largest-remainder method so the shares add up exactly. A workshop may instead charge each
+position its consumed length plus its own waste percentage (``BarPricing.USED_LENGTH``).
 """
 
 from collections.abc import Mapping, Sequence
@@ -20,6 +21,7 @@ from quote_engine.engine.optimizer.groups import PieceGroup, demand_key
 from quote_engine.engine.optimizer.plan import CuttingPlan
 from quote_engine.engine.prices import PriceBook, PriceKey, PriceUnit
 from quote_engine.engine.units import (
+    BP_PER_WHOLE,
     Bp,
     Cents,
     Mm,
@@ -29,6 +31,7 @@ from quote_engine.engine.units import (
     per_m2,
     per_metre,
     rate_per_m2,
+    used_length_cost,
 )
 
 INSTALLATION_SWITCHES = ("ral", "old_window_removal", "wall_repair")
@@ -113,6 +116,19 @@ class Discount:
             raise InvalidInput("a discount is either cents or basis points, zero or more")
 
 
+class BarPricing(StrEnum):
+    """How profile and steel bars are charged to the client.
+
+    - ``WHOLE_BARS``: every bar the cutting plan uses, shared by consumed length (the default:
+      the workshop buys whole bars, and a one-window job pays for its offcuts).
+    - ``USED_LENGTH``: each window pays for the length it consumes, plus the workshop's own waste
+      percentage. The offcuts are then the workshop's risk. There is no default waste.
+    """
+
+    WHOLE_BARS = "whole_bars"
+    USED_LENGTH = "used_length"
+
+
 @dataclass(frozen=True)
 class PricingSettings:
     """Per-quote and per-workshop settings that pricing needs (PLAN.md section 5)."""
@@ -125,6 +141,15 @@ class PricingSettings:
     gasket_extra_bp: Bp
     size_thresholds: SizeThresholds
     price_risk_bp: Bp = NO_BP
+    bar_pricing: BarPricing = BarPricing.WHOLE_BARS
+    # Required with USED_LENGTH, never guessed.
+    bar_waste_bp: Bp | None = None
+
+    def __post_init__(self) -> None:
+        if self.bar_pricing is BarPricing.USED_LENGTH and self.bar_waste_bp is None:
+            raise InvalidInput("pricing bars by used length needs the workshop's waste percentage")
+        if self.bar_waste_bp is not None and not 0 <= self.bar_waste_bp <= BP_PER_WHOLE:
+            raise InvalidInput(f"bar waste must be 0 to 100 %, got {self.bar_waste_bp} bp")
 
 
 @dataclass(frozen=True)
@@ -246,8 +271,9 @@ def _consumed_by_position(group: PieceGroup, kerf_mm: int, refs: Sequence[str]) 
     return [consumed[ref] for ref in refs]
 
 
-def _bar_costs(job: QuoteJob, book: PriceBook) -> dict[str, list[Line]]:
-    """Each group's bar cost, shared between positions by consumed length."""
+def _bar_costs(job: QuoteJob, book: PriceBook, s: PricingSettings) -> dict[str, list[Line]]:
+    """Each group's bar cost per position: whole bars shared by consumed length, or each
+    position's consumed length plus waste (``BarPricing``)."""
     refs = [pos.ref for pos in job.positions]
     shares: dict[str, list[Line]] = {ref: [] for ref in refs}
     for group in job.groups:
@@ -263,11 +289,21 @@ def _bar_costs(job: QuoteJob, book: PriceBook) -> dict[str, list[Line]]:
             if group.role is Role.STEEL
             else PriceKey("profile", f"{job.system_id}/{group.role.value}", group.colour)
         )
-        cost = Cents(book.amount(key, PriceUnit.BAR) * len(plan.bars))
+        bar_cents = book.amount(key, PriceUnit.BAR)
         consumed = _consumed_by_position(group, job.kerf_mm, refs)
-        for ref, part in zip(refs, allocate_largest_remainder(cost, consumed), strict=True):
+        if s.bar_pricing is BarPricing.WHOLE_BARS:
+            label = f"{group.name} bars"
+            parts = allocate_largest_remainder(Cents(bar_cents * len(plan.bars)), consumed)
+        else:
+            waste = Bp(s.bar_waste_bp or 0)  # never None here: PricingSettings checks it
+            label = f"{group.name} used length"
+            parts = [
+                used_length_cost(bar_cents, Mm(used), group.bar_length_mm, waste)
+                for used in consumed
+            ]
+        for ref, part in zip(refs, parts, strict=True):
             if part:
-                shares[ref].append(Line(f"{group.name} bars", part))
+                shares[ref].append(Line(label, part))
     return shares
 
 
@@ -387,7 +423,7 @@ def price_job(job: QuoteJob, book: PriceBook, s: PricingSettings) -> JobPrice:
     if job.transport_km < 0:
         raise InvalidInput("transport distance must not be negative")
 
-    bars = _bar_costs(job, book)
+    bars = _bar_costs(job, book, s)
     positions = tuple(
         price_position(pos, job.cut_lists[pos.ref], bars[pos.ref], job, book, s)
         for pos in job.positions

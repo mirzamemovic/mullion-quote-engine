@@ -11,7 +11,7 @@ import { apiUrl, fileBase64 } from "../../api/client";
 import { useRemoveLogo, useSaveLogo, useSaveWorkshop, useWorkshop } from "../../api/workshop";
 import { Icon } from "../../components/Icon";
 import { ActionError } from "../../components/Reauth";
-import { Button, Check, ErrorNote, Field, Loading, Note, Section, Select } from "../../components/ui";
+import { Button, Check, ErrorNote, Field, Loading, Note, Section, Segmented, Select } from "../../components/ui";
 import { CURRENCIES } from "../../lib/format";
 import { Page } from "./Page";
 
@@ -150,7 +150,10 @@ function Profile() {
   );
 }
 
-const PERCENT_FIELDS: { key: keyof Settings; label: string }[] = [
+type PercentKey = "margin_default_bp" | "margin_warn_bp" | "vat_bp" | "advance_bp";
+type BarPricing = Settings["bar_pricing"];
+
+const PERCENT_FIELDS: { key: PercentKey; label: string }[] = [
   { key: "margin_default_bp", label: "admin.marginDefault" },
   { key: "margin_warn_bp", label: "admin.marginWarn" },
   { key: "vat_bp", label: "admin.vat" },
@@ -176,6 +179,7 @@ function QuoteSettings() {
   const settings = useSettings();
   const save = useSaveSettings();
   const [texts, setTexts] = useState<Partial<Record<keyof Settings, string>>>({});
+  const [barPricing, setBarPricing] = useState<BarPricing | null>(null);
   if (settings.isPending) return <Loading />;
   if (settings.isError) return <ErrorNote message={settings.error.message} />;
   const base = settings.data;
@@ -197,8 +201,23 @@ function QuoteSettings() {
       else value[key] = days;
     }
   }
-  const dirty = Object.keys(texts).length > 0;
-  const submit = () => save.mutate(value, { onSuccess: () => setTexts({}) });
+  value.bar_pricing = barPricing ?? base.bar_pricing;
+  const byLength = value.bar_pricing === "used_length";
+  const wasteText = texts.bar_waste_bp;
+  if (byLength) {
+    // Used length needs his own waste figure: an empty field is not zero.
+    const bp = wasteText === undefined ? (base.bar_waste_bp ?? null) : percentBp(wasteText);
+    if (bp === null) valid = false;
+    else value.bar_waste_bp = bp;
+  }
+  const dirty = Object.keys(texts).length > 0 || barPricing !== null;
+  const submit = () =>
+    save.mutate(value, {
+      onSuccess: () => {
+        setTexts({});
+        setBarPricing(null);
+      },
+    });
   const shown = (key: keyof Settings, fallback: string) => texts[key] ?? fallback;
 
   return (
@@ -222,6 +241,29 @@ function QuoteSettings() {
         ))}
         <Field label={t("admin.validDays")} inputMode="numeric" value={shown("quote_valid_days", String(base.quote_valid_days))} onChange={(e) => setTexts({ ...texts, quote_valid_days: e.target.value.replace(/\D/g, "").slice(0, 3) })} />
         <Field label={t("admin.priceAge")} inputMode="numeric" value={shown("price_age_warn_days", String(base.price_age_warn_days))} onChange={(e) => setTexts({ ...texts, price_age_warn_days: e.target.value.replace(/\D/g, "").slice(0, 3) })} />
+        <div className="col-span-2 space-y-2">
+          <Segmented<BarPricing>
+            label={t("admin.barPricing")}
+            value={value.bar_pricing}
+            onChange={setBarPricing}
+            wrap
+            options={[
+              { value: "whole_bars", label: t("admin.wholeBars") },
+              { value: "used_length", label: t("admin.usedLength") },
+            ]}
+          />
+          <p className="text-sm text-graphite-soft">{t(byLength ? "admin.usedLengthHint" : "admin.wholeBarsHint")}</p>
+        </div>
+        {byLength && (
+          <Field
+            label={t("admin.barWaste")}
+            inputMode="decimal"
+            value={wasteText ?? (base.bar_waste_bp != null ? bpText(base.bar_waste_bp, lang) : "")}
+            onChange={(e) => setTexts({ ...texts, bar_waste_bp: e.target.value.replace(/[^\d,.]/g, "") })}
+            hint={t("admin.barWasteHint")}
+            error={wasteText !== undefined && percentBp(wasteText) === null ? t("errors.range", { min: 0, max: 100 }) : undefined}
+          />
+        )}
         <div className="col-span-2 space-y-2">
           <ActionError error={save.error} retry={submit} />
           <Button type="submit" busy={save.isPending} disabled={!dirty || !valid}>

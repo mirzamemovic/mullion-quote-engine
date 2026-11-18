@@ -11,7 +11,7 @@ from typing import Any
 from fastapi import APIRouter
 from pydantic import BaseModel, ConfigDict
 
-from quote_engine.api.schemas import MeasureIn, MeasureOut, RevisionIn
+from quote_engine.api.schemas import CalculationOut, MeasureIn, MeasureOut, RevisionIn
 from quote_engine.engine.measuring import measure_opening
 from quote_engine.engine.units import Mm
 from quote_engine.services import demo_catalogue
@@ -84,7 +84,7 @@ def catalogue() -> dict[str, Any]:
 
 
 @router.post("/calculate")
-def calculate(body: DevCalculateIn) -> dict[str, Any]:
+def calculate(body: DevCalculateIn) -> CalculationOut:
     """Cut, optimize and price the revision with the chosen demo system."""
     revision = body.revision
     content = {
@@ -112,7 +112,8 @@ def calculate(body: DevCalculateIn) -> dict[str, Any]:
             for e in revision.extras
         ],
     }
-    return demo_catalogue.calculate(body.system_key, content, datetime.now(UTC).date())
+    result = demo_catalogue.calculate(body.system_key, content, datetime.now(UTC).date())
+    return CalculationOut.model_validate(result)
 
 
 @router.post("/measure")

@@ -240,6 +240,12 @@ class WorkshopSettings(WorkshopScoped, Base):
     gasket_extra_bp: Mapped[int] = mapped_column(Integer)
     small_max_mm2: Mapped[int] = mapped_column(BigInteger)
     standard_max_mm2: Mapped[int] = mapped_column(BigInteger)
+    # How bars are charged (engine.pricing.BarPricing): whole_bars | used_length. Used length
+    # needs the workshop's own waste percentage; there is no default.
+    bar_pricing: Mapped[str] = mapped_column(
+        String(SHORT), default="whole_bars", server_default="whole_bars"
+    )
+    bar_waste_bp: Mapped[int | None] = mapped_column(Integer, default=None)
 
 
 class Quote(WorkshopScoped, Base):

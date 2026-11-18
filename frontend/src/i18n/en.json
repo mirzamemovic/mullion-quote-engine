@@ -194,7 +194,14 @@
     "reauthTitle": "Confirm your password",
     "reauthHint": "Changing prices and settings needs your password again.",
     "reauthSubmit": "Confirm",
-    "saved": "Saved."
+    "saved": "Saved.",
+    "barPricing": "Profile bars are charged",
+    "wholeBars": "Whole bars",
+    "usedLength": "Used length",
+    "wholeBarsHint": "The client pays for every bar the cutting plan uses, offcuts included.",
+    "usedLengthHint": "Each window pays for the length it uses plus your waste. Offcuts are your risk.",
+    "barWaste": "Waste (%)",
+    "barWasteHint": "Your own offcut and saw losses. There is no default."
   },
   "errors": {
     "generic": "Something went wrong: {{detail}}",

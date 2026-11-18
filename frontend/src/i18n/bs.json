@@ -194,7 +194,14 @@
     "reauthTitle": "Potvrdi lozinku",
     "reauthHint": "Za promjenu cijena i postavki treba ponovo upisati lozinku.",
     "reauthSubmit": "Potvrdi",
-    "saved": "Spremljeno."
+    "saved": "Spremljeno.",
+    "barPricing": "Profili se naplaćuju",
+    "wholeBars": "Cijele šipke",
+    "usedLength": "Utrošena dužina",
+    "wholeBarsHint": "Klijent plaća svaku šipku iz plana sječenja, i ostatke.",
+    "usedLengthHint": "Svaki prozor plaća dužinu koju troši i vaš otpad. Ostaci su vaš rizik.",
+    "barWaste": "Otpad (%)",
+    "barWasteHint": "Vaši ostaci i gubitak na rezu. Nema zadane vrijednosti."
   },
   "errors": {
     "generic": "Nešto nije u redu: {{detail}}",

@@ -9,7 +9,7 @@ from dataclasses import dataclass
 from enum import StrEnum
 
 from quote_engine.engine.errors import InvalidInput
-from quote_engine.engine.units import Mm
+from quote_engine.engine.units import Mm, Mm2
 
 ALLOWED_ANGLES = (45, 90)
 
@@ -219,14 +219,33 @@ class HardwareNeed:
 
 
 @dataclass(frozen=True)
+class SashSize:
+    """One opening sash: its outer size and glass area, checked against its hardware set."""
+
+    position_ref: str
+    opening: Opening
+    width_mm: Mm
+    height_mm: Mm
+    glass_area_mm2: Mm2
+
+    def __post_init__(self) -> None:
+        where = f"{self.position_ref} sash"
+        _require(self.opening is not Opening.FIXED, f"{where}: a fixed field has no sash")
+        _whole(self.width_mm, f"{where}: width", minimum=1)
+        _whole(self.height_mm, f"{where}: height", minimum=1)
+        _whole(self.glass_area_mm2, f"{where}: glass area", minimum=0)
+
+
+@dataclass(frozen=True)
 class CutList:
-    """Everything one job needs cut or ordered."""
+    """Everything one job needs cut or ordered, and the size of each opening sash."""
 
     pieces: tuple[Piece, ...]
     steel: tuple[Piece, ...]
     glass: tuple[GlassPane, ...]
     hardware_sets: tuple[HardwareNeed, ...]
     gasket_mm: Mm
+    sashes: tuple[SashSize, ...] = ()
 
     def __post_init__(self) -> None:
         _whole(self.gasket_mm, "gasket length", minimum=0)

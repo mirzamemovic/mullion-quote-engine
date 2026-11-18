@@ -4,13 +4,11 @@ from datetime import date
 
 import pytest
 
-from quote_engine.engine.errors import MissingConstant
 from quote_engine.engine.measuring import Dimension, Measurement, SpreadWarning
-from quote_engine.engine.model import Colour, Opening, PositionSpec
+from quote_engine.engine.model import Colour, Opening, PositionSpec, SashSize
 from quote_engine.engine.units import Bp, Mm, Mm2
 from quote_engine.engine.warnings import (
     HardwareLimits,
-    Sash,
     SystemLimits,
     WarningCode,
     WeightRates,
@@ -24,12 +22,14 @@ from quote_engine.engine.warnings import (
 )
 
 # Invented catalogue values (SAMPLE - NOT REAL).
-LIMITS = {Opening.TILT_TURN_RIGHT: HardwareLimits(Mm(1000), Mm(1600), Mm2(1_400_000), 60_000)}
+STANDARD = HardwareLimits(Mm(1000), Mm(1600), Mm2(1_400_000), 60_000)
+HEAVY = HardwareLimits(Mm(1300), Mm(2400), Mm2(2_800_000), 130_000)
+LIMITS = {Opening.TILT_TURN_RIGHT: (STANDARD,)}
 RATES = WeightRates(glass_g_per_m2=20_000, profile_g_per_m=1_500)
 
 
-def a_sash(width: int, height: int, glass_area: int) -> Sash:
-    return Sash("P1", Opening.TILT_TURN_RIGHT, Mm(width), Mm(height), Mm2(glass_area))
+def a_sash(width: int, height: int, glass_area: int) -> SashSize:
+    return SashSize("P1", Opening.TILT_TURN_RIGHT, Mm(width), Mm(height), Mm2(glass_area))
 
 
 def test_sash_weight_is_glass_plus_profile() -> None:
@@ -62,10 +62,35 @@ def test_heavy_sash_is_warned() -> None:
 
 
 def test_missing_hardware_limits_are_never_guessed() -> None:
-    sash = Sash("P1", Opening.TURN_LEFT, Mm(800), Mm(1400), Mm2(900_000))
+    sash = SashSize("P1", Opening.TURN_LEFT, Mm(800), Mm(1400), Mm2(900_000))
 
-    with pytest.raises(MissingConstant, match="turn_left"):
-        hardware_warnings([sash], LIMITS, RATES)
+    found = hardware_warnings([sash, sash], LIMITS, RATES)
+
+    assert [(w.code, w.position_ref) for w in found] == [(WarningCode.HARDWARE_UNCHECKED, "P1")]
+    assert found[0].message == "turn_left sash: no hardware set entered, its size is not checked"
+
+
+def test_one_set_that_carries_the_sash_is_enough() -> None:
+    big = a_sash(1100, 1700, 2_000_000)
+    both = {Opening.TILT_TURN_RIGHT: (STANDARD, HEAVY)}
+
+    assert hardware_warnings([big], both, RATES) == []
+
+
+def test_the_warning_names_the_set_missed_by_the_least() -> None:
+    huge = a_sash(1350, 1700, 2_000_000)
+    both = {Opening.TILT_TURN_RIGHT: (STANDARD, HEAVY)}
+
+    found = hardware_warnings([huge], both, None)
+
+    assert [w.code for w in found] == [WarningCode.SASH_TOO_WIDE]
+    assert found[0].message.endswith("allows 1300")
+
+
+def test_weight_is_checked_only_with_weights_from_the_sheet() -> None:
+    heavy = a_sash(1000, 1400, 1_300_000)
+
+    assert hardware_warnings([heavy], LIMITS, None) == []
 
 
 def test_size_outside_the_system() -> None:

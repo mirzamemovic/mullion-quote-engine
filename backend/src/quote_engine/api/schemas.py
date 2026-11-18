@@ -14,6 +14,7 @@ from quote_engine.engine.model import Colour, Opening, Role
 from quote_engine.engine.prices import PriceUnit
 from quote_engine.engine.pricing import ExtraKind
 from quote_engine.engine.rules.registry import TYPES
+from quote_engine.engine.warnings import WarningCode
 
 Size = Annotated[int, Field(ge=300, le=3500)]
 Qty = Annotated[int, Field(ge=1, le=99)]
@@ -415,6 +416,15 @@ class SettingsIO(Model):
     gasket_extra_bp: Bp
     small_max_mm2: Annotated[int, Field(ge=1, le=50_000_000)]
     standard_max_mm2: Annotated[int, Field(ge=1, le=50_000_000)]
+    # Required, so a client that does not know the setting cannot reset it by leaving it out.
+    bar_pricing: Literal["whole_bars", "used_length"]
+    bar_waste_bp: Bp | None = None
+
+    @model_validator(mode="after")
+    def waste_with_used_length(self) -> "SettingsIO":
+        if self.bar_pricing == "used_length" and self.bar_waste_bp is None:
+            raise ValueError("pricing bars by used length needs your waste percentage")
+        return self
 
 
 class UserOut(Model):
@@ -584,3 +594,145 @@ class SetupStatusOut(Model):
     suppliers: int
     estimates: int
     openings_without_hardware_set: list[str]
+
+
+# --- calculation results (read only) ------------------------------------------------------------
+# The engine's own data shapes (services/calculation.py: plain()). Accepted quotes store them as a
+# snapshot, so fields added later have defaults and unknown fields are ignored.
+
+
+class ResultModel(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+
+
+class PieceOut(ResultModel):
+    position_ref: str
+    role: Role
+    label: str
+    length_mm: int
+    angle_left: int
+    angle_right: int
+    qty: int
+    formula: str
+
+
+class GlassPaneOut(ResultModel):
+    position_ref: str
+    width_mm: int
+    height_mm: int
+    qty: int
+    build: str
+    formula_w: str
+    formula_h: str
+
+
+class HardwareNeedOut(ResultModel):
+    position_ref: str
+    opening: Opening
+    qty: int
+
+
+class SashSizeOut(ResultModel):
+    position_ref: str
+    opening: Opening
+    width_mm: int
+    height_mm: int
+    glass_area_mm2: int
+
+
+class CutListOut(ResultModel):
+    pieces: list[PieceOut]
+    steel: list[PieceOut]
+    glass: list[GlassPaneOut]
+    hardware_sets: list[HardwareNeedOut]
+    gasket_mm: int
+    sashes: list[SashSizeOut] = []
+
+
+class BarOut(ResultModel):
+    cuts: list[str]
+    used_mm: int
+    offcut_mm: int
+
+
+class CuttingPlanOut(ResultModel):
+    bar_length_mm: int
+    bars: list[BarOut]
+
+
+class PlanStatsOut(ResultModel):
+    bars: int
+    waste_mm: int
+    waste_bp: int
+    kept_offcuts_mm: list[int]
+    scrap_mm: int
+    scrap_bp: int
+
+
+class GroupPlanOut(ResultModel):
+    plan: CuttingPlanOut
+    stats: PlanStatsOut
+
+
+class PriceLineOut(ResultModel):
+    label: str
+    cents: int
+
+
+class PositionPriceOut(ResultModel):
+    ref: str
+    material: list[PriceLineOut]
+    material_cents: int
+    margin_cents: int
+    labour_cents: int
+    installation: list[PriceLineOut]
+    installation_cents: int
+    rounding_cents: int
+    total_cents: int
+    unit_price_cents: int
+    area_mm2: int = 0
+    cents_per_m2: int = 0
+
+
+class JobPriceOut(ResultModel):
+    positions: list[PositionPriceOut]
+    extras: list[PriceLineOut]
+    transport_cents: int
+    subtotal_cents: int
+    discount_cents: int
+    net_cents: int
+    vat_cents: int
+    total_cents: int
+    advance_cents: int
+    balance_cents: int
+
+
+class WarningOut(ResultModel):
+    code: WarningCode
+    message: str
+    position_ref: str | None = None
+
+
+class VersionsOut(ResultModel):
+    system_sheet: str
+    price_list: str
+
+
+class CalculationOut(ResultModel):
+    """A revision cut, optimized and priced: the cut list per position, the plan per bar group,
+    the price layers and the warnings."""
+
+    cut_lists: dict[str, CutListOut]
+    plans: dict[str, GroupPlanOut]
+    price: JobPriceOut
+    warnings: list[WarningOut]
+    versions: VersionsOut
+
+
+class PreviewOut(ResultModel):
+    cut_list: CutListOut
+    warnings: list[WarningOut]
+
+
+class CutPreviewOut(ResultModel):
+    cut_list: CutListOut

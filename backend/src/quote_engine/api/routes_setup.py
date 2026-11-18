@@ -18,6 +18,7 @@ from quote_engine.api.deps import LoggedIn, Owner, OwnerStepUp
 from quote_engine.api.schemas import (
     CsvIn,
     CutPreviewIn,
+    CutPreviewOut,
     PriceDraftIn,
     PriceEntriesIn,
     PriceEntryIn,
@@ -308,7 +309,7 @@ def sheet_fields(system_id: uuid.UUID, a: LoggedIn, reinforced: bool = True) -> 
 
 
 @router.post("/engine/cut-preview")
-def cut_preview(body: CutPreviewIn, a: LoggedIn) -> dict[str, Any]:
+def cut_preview(body: CutPreviewIn, a: LoggedIn) -> CutPreviewOut:
     """One window cut with a sheet still being written: a missing value comes back as a 422
     that names it, so the sheet editor can point at the field."""
     constants = system_constants_from_mapping({"system_id": "draft", **body.constants})
@@ -322,4 +323,4 @@ def cut_preview(body: CutPreviewIn, a: LoggedIn) -> dict[str, Any]:
         glass_build="preview",
         openings=PROBE_OPENINGS[body.construction_type],
     )
-    return plain_dict({"cut_list": cut_position(spec, constants)})
+    return CutPreviewOut.model_validate(plain_dict({"cut_list": cut_position(spec, constants)}))

@@ -27,6 +27,7 @@ from quote_engine.engine.optimizer.groups import group_pieces
 from quote_engine.engine.optimizer.plan import CuttingPlan, make_bar
 from quote_engine.engine.prices import Price, PriceBook, PriceKey, PriceUnit
 from quote_engine.engine.pricing import (
+    BarPricing,
     Discount,
     Extra,
     ExtraKind,
@@ -440,3 +441,51 @@ def test_price_must_be_in_the_expected_unit(sample_book: PriceBook) -> None:
 def test_bad_prices_are_refused(amount: int, supplier: str) -> None:
     with pytest.raises(InvalidInput):
         Price(PriceKey("steel", "steel"), Cents(amount), PriceUnit.BAR, supplier, date(2026, 1, 1))
+
+
+# --- bar pricing policy ---------------------------------------------------------------------------
+
+USED_LENGTH = replace(SETTINGS, bar_pricing=BarPricing.USED_LENGTH, bar_waste_bp=Bp(1000))
+
+
+@pytest.mark.usefixtures("stand_in_pricing_decisions")
+def test_used_length_charges_each_window_its_length_plus_waste(
+    sample_constants: SystemConstants, sample_book: PriceBook
+) -> None:
+    result = price_job(a_job(sample_constants), sample_book, USED_LENGTH)
+
+    # Frame: 4 x (1000 + 2 kerf) = 4008 mm of a 6666 mm bar at 10 000, plus 10 %:
+    # 10 000 x 4008 x 1.1 / 6666 = 6613.8 -> 6614. Steel: 3608 mm of 5555 at 5 000 -> 3572.
+    bars = [(line.label, line.cents) for line in result.positions[0].material][:2]
+    assert bars == [("frame/white used length", 6_614), ("steel used length", 3_572)]
+
+
+@pytest.mark.usefixtures("stand_in_pricing_decisions")
+def test_a_one_window_job_pays_less_by_used_length(
+    sample_constants: SystemConstants, sample_book: PriceBook
+) -> None:
+    job = a_job(sample_constants)
+    whole = price_job(job, sample_book, SETTINGS).total_cents
+    used = price_job(job, sample_book, USED_LENGTH).total_cents
+    assert used < whole
+
+
+@pytest.mark.usefixtures("stand_in_pricing_decisions")
+def test_used_length_shares_do_not_depend_on_the_other_windows(
+    sample_constants: SystemConstants, sample_book: PriceBook
+) -> None:
+    alone = price_job(a_job(sample_constants), sample_book, USED_LENGTH)
+    together = price_job(
+        a_job(sample_constants, at=(a_position("P1"), a_position("P2", qty=3))),
+        sample_book,
+        USED_LENGTH,
+    )
+    assert together.positions[0].material[:2] == alone.positions[0].material[:2]
+
+
+def test_used_length_needs_its_waste_percentage() -> None:
+    with pytest.raises(InvalidInput, match="waste percentage"):
+        replace(SETTINGS, bar_pricing=BarPricing.USED_LENGTH)
+    with pytest.raises(InvalidInput, match="0 to 100"):
+        replace(SETTINGS, bar_pricing=BarPricing.USED_LENGTH, bar_waste_bp=Bp(10_001))
+    assert replace(USED_LENGTH, bar_waste_bp=Bp(0)).bar_waste_bp == 0

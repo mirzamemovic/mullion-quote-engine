@@ -1220,6 +1220,15 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /** BarOut */
+        BarOut: {
+            /** Cuts */
+            cuts: string[];
+            /** Offcut Mm */
+            offcut_mm: number;
+            /** Used Mm */
+            used_mm: number;
+        };
         /** BumpIn */
         BumpIn: {
             /** Bp */
@@ -1234,6 +1243,25 @@ export interface components {
              * Format: date
              */
             valid_from: string;
+        };
+        /**
+         * CalculationOut
+         * @description A revision cut, optimized and priced: the cut list per position, the plan per bar group,
+         *     the price layers and the warnings.
+         */
+        CalculationOut: {
+            /** Cut Lists */
+            cut_lists: {
+                [key: string]: components["schemas"]["CutListOut"];
+            };
+            /** Plans */
+            plans: {
+                [key: string]: components["schemas"]["GroupPlanOut"];
+            };
+            price: components["schemas"]["JobPriceOut"];
+            versions: components["schemas"]["VersionsOut"];
+            /** Warnings */
+            warnings: components["schemas"]["WarningOut"][];
         };
         /** ClientIn */
         ClientIn: {
@@ -1326,6 +1354,24 @@ export interface components {
             /** Content Base64 */
             content_base64: string;
         };
+        /** CutListOut */
+        CutListOut: {
+            /** Gasket Mm */
+            gasket_mm: number;
+            /** Glass */
+            glass: components["schemas"]["GlassPaneOut"][];
+            /** Hardware Sets */
+            hardware_sets: components["schemas"]["HardwareNeedOut"][];
+            /** Pieces */
+            pieces: components["schemas"]["PieceOut"][];
+            /**
+             * Sashes
+             * @default []
+             */
+            sashes: components["schemas"]["SashSizeOut"][];
+            /** Steel */
+            steel: components["schemas"]["PieceOut"][];
+        };
         /**
          * CutPreviewIn
          * @description Cut one window with a sheet that has not been saved, to check its deductions.
@@ -1341,6 +1387,17 @@ export interface components {
             height_mm: number;
             /** Width Mm */
             width_mm: number;
+        };
+        /** CutPreviewOut */
+        CutPreviewOut: {
+            cut_list: components["schemas"]["CutListOut"];
+        };
+        /** CuttingPlanOut */
+        CuttingPlanOut: {
+            /** Bar Length Mm */
+            bar_length_mm: number;
+            /** Bars */
+            bars: components["schemas"]["BarOut"][];
         };
         /** ExtraIn */
         ExtraIn: {
@@ -1388,10 +1445,40 @@ export interface components {
             /** Ref */
             ref: string;
         };
+        /** GlassPaneOut */
+        GlassPaneOut: {
+            /** Build */
+            build: string;
+            /** Formula H */
+            formula_h: string;
+            /** Formula W */
+            formula_w: string;
+            /** Height Mm */
+            height_mm: number;
+            /** Position Ref */
+            position_ref: string;
+            /** Qty */
+            qty: number;
+            /** Width Mm */
+            width_mm: number;
+        };
+        /** GroupPlanOut */
+        GroupPlanOut: {
+            plan: components["schemas"]["CuttingPlanOut"];
+            stats: components["schemas"]["PlanStatsOut"];
+        };
         /** HTTPValidationError */
         HTTPValidationError: {
             /** Detail */
             detail?: components["schemas"]["ValidationError"][];
+        };
+        /** HardwareNeedOut */
+        HardwareNeedOut: {
+            opening: components["schemas"]["Opening"];
+            /** Position Ref */
+            position_ref: string;
+            /** Qty */
+            qty: number;
         };
         /** HardwareSetIn */
         HardwareSetIn: {
@@ -1549,6 +1636,29 @@ export interface components {
             /** Token */
             token: string;
         };
+        /** JobPriceOut */
+        JobPriceOut: {
+            /** Advance Cents */
+            advance_cents: number;
+            /** Balance Cents */
+            balance_cents: number;
+            /** Discount Cents */
+            discount_cents: number;
+            /** Extras */
+            extras: components["schemas"]["PriceLineOut"][];
+            /** Net Cents */
+            net_cents: number;
+            /** Positions */
+            positions: components["schemas"]["PositionPriceOut"][];
+            /** Subtotal Cents */
+            subtotal_cents: number;
+            /** Total Cents */
+            total_cents: number;
+            /** Transport Cents */
+            transport_cents: number;
+            /** Vat Cents */
+            vat_cents: number;
+        };
         /** LoginIn */
         LoginIn: {
             /** Email */
@@ -1676,6 +1786,39 @@ export interface components {
              */
             received_on: string;
         };
+        /** PieceOut */
+        PieceOut: {
+            /** Angle Left */
+            angle_left: number;
+            /** Angle Right */
+            angle_right: number;
+            /** Formula */
+            formula: string;
+            /** Label */
+            label: string;
+            /** Length Mm */
+            length_mm: number;
+            /** Position Ref */
+            position_ref: string;
+            /** Qty */
+            qty: number;
+            role: components["schemas"]["Role"];
+        };
+        /** PlanStatsOut */
+        PlanStatsOut: {
+            /** Bars */
+            bars: number;
+            /** Kept Offcuts Mm */
+            kept_offcuts_mm: number[];
+            /** Scrap Bp */
+            scrap_bp: number;
+            /** Scrap Mm */
+            scrap_mm: number;
+            /** Waste Bp */
+            waste_bp: number;
+            /** Waste Mm */
+            waste_mm: number;
+        };
         /** PositionIn */
         PositionIn: {
             colour: components["schemas"]["Colour"];
@@ -1732,6 +1875,39 @@ export interface components {
             /** Width Mm */
             width_mm: number;
         };
+        /** PositionPriceOut */
+        PositionPriceOut: {
+            /**
+             * Area Mm2
+             * @default 0
+             */
+            area_mm2: number;
+            /**
+             * Cents Per M2
+             * @default 0
+             */
+            cents_per_m2: number;
+            /** Installation */
+            installation: components["schemas"]["PriceLineOut"][];
+            /** Installation Cents */
+            installation_cents: number;
+            /** Labour Cents */
+            labour_cents: number;
+            /** Margin Cents */
+            margin_cents: number;
+            /** Material */
+            material: components["schemas"]["PriceLineOut"][];
+            /** Material Cents */
+            material_cents: number;
+            /** Ref */
+            ref: string;
+            /** Rounding Cents */
+            rounding_cents: number;
+            /** Total Cents */
+            total_cents: number;
+            /** Unit Price Cents */
+            unit_price_cents: number;
+        };
         /** PreviewIn */
         PreviewIn: {
             position: components["schemas"]["PositionIn"];
@@ -1740,6 +1916,12 @@ export interface components {
              * Format: uuid
              */
             profile_system_id: string;
+        };
+        /** PreviewOut */
+        PreviewOut: {
+            cut_list: components["schemas"]["CutListOut"];
+            /** Warnings */
+            warnings: components["schemas"]["WarningOut"][];
         };
         /** PriceCheckOut */
         PriceCheckOut: {
@@ -1830,6 +2012,13 @@ export interface components {
              */
             supplier_id: string;
             unit: components["schemas"]["PriceUnit"];
+        };
+        /** PriceLineOut */
+        PriceLineOut: {
+            /** Cents */
+            cents: number;
+            /** Label */
+            label: string;
         };
         /** PriceListIn */
         PriceListIn: {
@@ -2126,6 +2315,18 @@ export interface components {
              */
             language: "en" | "bs";
         };
+        /** SashSizeOut */
+        SashSizeOut: {
+            /** Glass Area Mm2 */
+            glass_area_mm2: number;
+            /** Height Mm */
+            height_mm: number;
+            opening: components["schemas"]["Opening"];
+            /** Position Ref */
+            position_ref: string;
+            /** Width Mm */
+            width_mm: number;
+        };
         /** SessionOut */
         SessionOut: {
             /**
@@ -2155,6 +2356,13 @@ export interface components {
         SettingsIO: {
             /** Advance Bp */
             advance_bp: number;
+            /**
+             * Bar Pricing
+             * @enum {string}
+             */
+            bar_pricing: "whole_bars" | "used_length";
+            /** Bar Waste Bp */
+            bar_waste_bp?: number | null;
             /** Gasket Extra Bp */
             gasket_extra_bp: number;
             /** Glass Min Area Mm2 */
@@ -2403,6 +2611,27 @@ export interface components {
             msg: string;
             /** Error Type */
             type: string;
+        };
+        /** VersionsOut */
+        VersionsOut: {
+            /** Price List */
+            price_list: string;
+            /** System Sheet */
+            system_sheet: string;
+        };
+        /**
+         * WarningCode
+         * @description What a warning is about.
+         * @enum {string}
+         */
+        WarningCode: "readings_spread" | "sash_too_wide" | "sash_too_high" | "sash_too_large" | "sash_too_heavy" | "hardware_unchecked" | "size_outside_system" | "price_list_old" | "margin_low" | "prices_estimated";
+        /** WarningOut */
+        WarningOut: {
+            code: components["schemas"]["WarningCode"];
+            /** Message */
+            message: string;
+            /** Position Ref */
+            position_ref?: string | null;
         };
         /**
          * WorkshopOut
@@ -2900,9 +3129,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        [key: string]: unknown;
-                    };
+                    "application/json": components["schemas"]["CutPreviewOut"];
                 };
             };
             /** @description Validation Error */
@@ -2968,9 +3195,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        [key: string]: unknown;
-                    };
+                    "application/json": components["schemas"]["PreviewOut"];
                 };
             };
             /** @description Validation Error */
@@ -4045,9 +4270,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        [key: string]: unknown;
-                    };
+                    "application/json": components["schemas"]["CalculationOut"];
                 };
             };
             /** @description Validation Error */

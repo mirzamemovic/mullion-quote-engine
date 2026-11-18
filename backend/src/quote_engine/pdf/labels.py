@@ -83,6 +83,7 @@ _PHRASES_BS = (
     (re.compile(r"\bfalse mullion\b"), "štulp"),
     (re.compile(r"\bdoor sash\b"), "krilo vrata"),
     (re.compile(r"\bprice risk\b"), "rizik cijene"),
+    (re.compile(r"\bused length\b"), "utrošena dužina"),
     (re.compile(r"\bold window removal\b"), "skidanje starog prozora"),
     (re.compile(r"\bwall repair\b"), "popravka zida"),
 )

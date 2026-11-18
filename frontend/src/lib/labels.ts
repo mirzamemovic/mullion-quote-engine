@@ -7,6 +7,7 @@ const PHRASES_BS: [RegExp, string][] = [
   [/\bfalse mullion\b/g, "štulp"],
   [/\bdoor sash\b/g, "krilo vrata"],
   [/\bprice risk\b/g, "rizik cijene"],
+  [/\bused length\b/g, "utrošena dužina"],
   [/\bold window removal\b/g, "skidanje starog prozora"],
   [/\bwall repair\b/g, "popravka zida"],
 ];

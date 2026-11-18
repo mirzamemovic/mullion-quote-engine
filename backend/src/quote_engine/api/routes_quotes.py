@@ -9,11 +9,13 @@ from sqlalchemy import or_
 
 from quote_engine.api.deps import LoggedIn
 from quote_engine.api.schemas import (
+    CalculationOut,
     MeasureIn,
     MeasureOut,
     PaymentIn,
     PaymentOut,
     PreviewIn,
+    PreviewOut,
     QuoteCreate,
     QuoteDetail,
     QuoteOut,
@@ -150,13 +152,14 @@ def diff_revisions(
 
 
 @router.post("/quotes/{quote_id}/revisions/{number}/calculate")
-def calculate(quote_id: uuid.UUID, number: int, a: LoggedIn) -> dict[str, Any]:
+def calculate(quote_id: uuid.UUID, number: int, a: LoggedIn) -> CalculationOut:
     """Cut list, cutting plans, price breakdown and warnings. A locked revision returns its
     stored snapshot, so an accepted quote never changes."""
     rev = svc.revision(a.db, a.db.get(Quote, quote_id), number)
     if rev.calc_snapshot is not None:
-        return rev.calc_snapshot
-    return calculation.calculate(rev, calculation.load_inputs(a.db, rev), today())
+        return CalculationOut.model_validate(rev.calc_snapshot)
+    result = calculation.calculate(rev, calculation.load_inputs(a.db, rev), today())
+    return CalculationOut.model_validate(result)
 
 
 PDF_RESPONSE: dict[int | str, dict[str, Any]] = {
@@ -247,7 +250,7 @@ def measure(body: MeasureIn, a: LoggedIn) -> MeasureOut:
 
 
 @router.post("/engine/preview")
-def preview(body: PreviewIn, a: LoggedIn) -> dict[str, Any]:
+def preview(body: PreviewIn, a: LoggedIn) -> PreviewOut:
     """One position's cut list and measuring warnings, for live feedback while typing."""
     sheet = svc.current_sheet(a.db, body.profile_system_id)
     constants = system_constants_from_mapping(sheet.constants)
@@ -270,7 +273,8 @@ def preview(body: PreviewIn, a: LoggedIn) -> dict[str, Any]:
             [Mm(v) for v in p.readings.widths], [Mm(v) for v in p.readings.heights], p.colour
         )
         warnings = readings_warnings(p.ref, measured)
-    return calculation.plain_dict({"cut_list": cut_position(spec, constants), "warnings": warnings})
+    result = {"cut_list": cut_position(spec, constants), "warnings": warnings}
+    return PreviewOut.model_validate(calculation.plain_dict(result))
 
 
 def _position_row(

@@ -15,6 +15,7 @@ from typing import Any
 
 from quote_engine.db.models import (
     ExtraLine,
+    HardwareSet,
     Position,
     PriceEntry,
     PriceListVersion,
@@ -291,6 +292,28 @@ def system(key: str) -> DemoSystem:
     raise KeyError(key)
 
 
+# SAMPLE - NOT REAL: invented hardware set limits for the demo, the same for every opening.
+SAMPLE_HARDWARE_LIMITS = {
+    "max_width_mm": 1300,
+    "max_height_mm": 2400,
+    "max_area_mm2": 2_800_000,
+    "max_weight_g": 100_000,
+}
+
+
+def sample_hardware_sets() -> list[HardwareSet]:
+    """One invented hardware set per opening type that has a sash."""
+    return [
+        HardwareSet(
+            name=f"Sample hardware {opening.value}",
+            opening_type=opening.value,
+            **SAMPLE_HARDWARE_LIMITS,
+        )
+        for opening in Opening
+        if opening is not Opening.FIXED
+    ]
+
+
 def price_rows(profile: str, glass: str, other: str) -> list[dict[str, object]]:
     """Every price the engine asks for, for every demo system. Supplier ids are passed in."""
 
@@ -408,5 +431,6 @@ def calculate(system_key: str, content: dict[str, Any], today: date) -> dict[str
         entries=tuple(entries),
         suppliers={str(SUPPLIER_IDS[k]): name for k, name in SUPPLIER_NAMES.items()},
         settings=demo_settings(),
+        hardware=calculation.hardware_limits(sample_hardware_sets()),
     )
     return calculation.calculate(revision, inputs, today)

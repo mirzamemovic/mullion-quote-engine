@@ -7,7 +7,7 @@ from typing import Annotated, TypeAlias
 from fastapi import Depends, HTTPException, Request, status
 from sqlalchemy.orm import Session as DbSession
 
-from quote_engine.db.models import Session, User
+from quote_engine.db.models import Session, User, Workshop
 from quote_engine.db.repository import Scoped
 from quote_engine.db.session import db_session
 from quote_engine.services import auth
@@ -74,7 +74,14 @@ def owner(auth_: Annotated[Auth, Depends(logged_in)]) -> Auth:
 
 
 def step_up(auth_: Annotated[Auth, Depends(logged_in)], settings: AppSettings) -> Auth:
-    """For sensitive changes: a password check in the last few minutes."""
+    """For sensitive changes: a password check in the last few minutes.
+
+    A "Try it" sandbox is the exception: its visitor never gets a password, and it holds only
+    invented data that is deleted within a day, so there is nothing for the check to protect.
+    """
+    workshop = auth_.db.session.get(Workshop, auth_.db.workshop_id)
+    if workshop is not None and workshop.expires_at is not None:
+        return auth_
     if not auth.recently_reauthenticated(auth_.session, settings):
         raise HTTPException(status.HTTP_403_FORBIDDEN, "confirm your password first")
     return auth_

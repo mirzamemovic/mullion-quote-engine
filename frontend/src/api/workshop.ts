@@ -5,7 +5,7 @@
  */
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
-import { del, get, patch, post, put } from "./client";
+import { del, get, patch, post, put, type Schemas } from "./client";
 import { keys } from "./queries";
 import type {
   ConstructionTypeState,
@@ -136,7 +136,7 @@ export function usePublishSheet(systemId: string) {
 export function useCutPreview() {
   return useMutation({
     mutationFn: (body: { constants: Record<string, unknown>; construction_type: string; width_mm: number; height_mm: number }) =>
-      post<{ cut_list: import("./types").CutList }>("/engine/cut-preview", body),
+      post<Schemas["CutPreviewOut"]>("/engine/cut-preview", body),
   });
 }
 

@@ -35,6 +35,7 @@ DEFAULT_SETTINGS = {
     "price_age_warn_days": 30,
     "glass_min_area_mm2": 300_000,  # 0.3 m² per pane (confirm with the glass company)
     "gasket_extra_bp": 500,  # 5% over the perimeter
+    "bar_pricing": "whole_bars",  # used length needs the workshop's own waste figure
 }
 
 
