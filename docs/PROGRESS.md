@@ -195,7 +195,7 @@ Plan approved 2026-11-17, in phases, each on its own branch stacked on `feat/m8-
 | 3 Setup checklist, drafts, CSV prices | `feat/m6-catalogue-setup` | Backend built; offline tests pass; database tests written, not run; screens come in phase 4 |
 | 4 Admin panel and remaining screens | `feat/m8-admin-panel` | Done 2026-11-18: built, checked in the browser on the real database, end-to-end test passes |
 | 5 PDFs | `feat/m7-pdfs` | Done 2026-11-18: PDFs rendered and tested in Docker against PostgreSQL |
-| 6 Pricing policy and quality | `feat/m5-pricing-policy`, `feat/m9-quality` | todo |
+| 6 Pricing policy and quality | `feat/m5-pricing-policy` (one branch: the two parts share files) | Done 2026-11-18 |
 | 7 Deploy | `feat/m9-deploy-live` | waiting for the Oracle account and a domain |
 | 8 Presentation | `feat/m11-presentation` | todo |
 
@@ -237,3 +237,19 @@ Files (under `backend/src/quote_engine/`): `pdf/labels.py` (English and Bosnian 
 Checks: on Windows (no Pango) ruff, format, mypy, import-linter pass and `pytest` 748 passed, 6 skipped (3 golden, 3 that need Pango); in Docker (python:3.13-slim with the production image's Pango libraries) against a throwaway PostgreSQL 18 container, the whole suite: 751 passed, 3 skipped (golden). The rendered pages were looked at; č, ć, š, ž and đ print and copy correctly. Frontend lint, typecheck, 37 tests and build pass; axe 0 violations on the changed screens; the design detector reports nothing. The built wheel contains the templates and fonts.
 
 For Mirza: the Bosnian PDF words (`pdf/labels.py`, for example "Radni nalog", "Krojna lista", "Avans pri narudžbi") need a read by a native speaker. The client PDF has no delivery time yet (PLAN.md section 8 lists it): there is no setting for it, and it is not invented.
+
+### Phase 6: pricing policy and quality (2026-11-18)
+
+Pricing (`window-rules` loaded):
+- How bars are charged is a workshop setting (`settings.bar_pricing`, migration `0007`): whole bars, as before and still the default, or the length each window uses plus the workshop's own waste percentage, which has no default and is required when chosen (`engine/pricing.py: BarPricing`, `engine/units.py: used_length_cost`, rounded half up once). A window then pays the same whatever else is in the job; the purchase list still buys whole bars. The workshop details screen has the choice and the waste field. Settings sent without the choice are refused (422), never reset.
+- Hardware limits are checked: the rules now pass each opening sash's outer size and glass area through the cut list (`engine/model.py: SashSize`). A sash is fine when one of its opening's hardware sets carries it; otherwise the warnings name the limits of the nearest set. Weight is checked only once the system sheet has glass and profile weights (none do yet). An opening without a hardware set gets "not checked", never a guessed limit. The demo has a sample set (invented, marked SAMPLE) for every opening.
+- Found while checking in the browser: a "Try it" visitor has no password, so 15 minutes after opening the sandbox every protected change (prices, settings, sheets, logo) asked for one. Sandboxes now skip the password re-check; a real workshop's stale session is still refused (test).
+
+Quality:
+- The calculation, preview and cut-preview answers are typed Pydantic models (`api/schemas.py: CalculationOut` and its parts); the frontend's hand-written types are now aliases of the generated ones. Fields added later have defaults, so earlier accepted snapshots still load.
+- `screens/QuoteScreen.tsx` (707 lines) is split into `screens/quote/` (position row, extras, adjustments, payments, documents, total sheet), moved unchanged; two new screen tests (the total's layers, an accepted quote locked).
+- `.github/workflows/security.yml` (untested: needs GitHub): pip-audit 2.9.0, npm audit, Gitleaks v8.27.2 over the whole history, Trivy 0.63.0 on the lock files and the Dockerfile. Only the three actions `ci.yml` already pins by SHA; the scanners are pinned versions. `.gitleaks.toml` keeps every default rule plus one narrow exception (profile-system keys in the demo catalogue). `codeql.yml` still uses `@v3` tags: pinning them needs a lookup on GitHub, to do once the repository exists. A test now checks that `ci.yml`, `deploy.yml` and `security.yml` use full commit SHAs.
+
+Run on this machine on 2026-11-18 with those versions: Gitleaks over all 124 commits found nothing once the two demo keys were excepted (the 10 hits in the working folder are all in git-ignored files: `.venv` libraries and a design-tool seed); pip-audit found no known vulnerabilities; npm audit found 0 in the shipped packages and 9 moderate in lint tooling (ESLint and minimatch); Trivy found no high or critical issue in `uv.lock`, `package-lock.json` or `infra/Dockerfile`.
+
+Checks: ruff, format, mypy, import-linter, OpenAPI current; `pytest --cov` 770 passed, 6 skipped (3 golden, 3 that need Pango), coverage 94%, engine 99%; frontend lint, typecheck, 39 tests, build; Playwright end-to-end passes against the running app.
