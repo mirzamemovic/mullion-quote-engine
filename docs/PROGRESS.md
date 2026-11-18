@@ -16,7 +16,7 @@ Git is local only. Each milestone has its own branch; a branch is merged into `m
 | M4 Optimizer | done | `main`, plus `feat/engine-parts` | FFD and the solver model written 2026-11-13; benchmark run (see `docs/optimizer.md`). |
 | M5 Pricing, warnings, lists, golden tests | waiting for Mirza | `main`, plus `feat/engine-parts` | Everything built. Only the golden jobs, real system sheets and private price lists remain: they are Mirza's real data. Gate 2 waits for them. |
 | M6 Database and API | in progress | `feat/m6-database-api`, then `feat/m6-verify`, `feat/m6-workshops` | Built past Gate 2 at Mirza's request (2026-11-13). Since 2026-11-17 any workshop can run its own quote engine (see "Mullion"). The database tests have not run yet: no PostgreSQL on this machine (see "Waiting for Mirza"). |
-| M7 PDFs and messages | todo | | Built past Gate 2 at Mirza's request. |
+| M7 PDFs and messages | in progress | `feat/m7-pdfs` | Client quote and workshop sheet PDFs built 2026-11-18 (see "Phase 5: PDFs"). Not done: the Albanian PDF (later, by decision), the price-request message per supplier. |
 | M8 Frontend | in progress | `feat/m8-frontend` | Owner screens designed with Impeccable and built (see the M8 section). Not done: the admin catalogue screens (systems, sheets, profiles, hardware, users, sessions), extras editing, PDF download (M7). The e2e test is written but needs the running stack. |
 | M9 Deploy and operations | waiting for Mirza | merged into `main` | Files written and reviewed; nothing has run on a server or on GitHub. Needs a server, a domain and the GitHub repository. Retention jobs, demo wipe and Sentry wait for M6. |
 | M10 Shadow mode and live use | waiting for Mirza | | Mirza's work with the workshop owner. |
@@ -194,7 +194,7 @@ Plan approved 2026-11-17, in phases, each on its own branch stacked on `feat/m8-
 | 2 Workshops, roles, invites, sandbox | `feat/m6-workshops` | Built; offline tests pass; database tests written, not run |
 | 3 Setup checklist, drafts, CSV prices | `feat/m6-catalogue-setup` | Backend built; offline tests pass; database tests written, not run; screens come in phase 4 |
 | 4 Admin panel and remaining screens | `feat/m8-admin-panel` | Done 2026-11-18: built, checked in the browser on the real database, end-to-end test passes |
-| 5 PDFs | `feat/m7-pdfs` | todo |
+| 5 PDFs | `feat/m7-pdfs` | Done 2026-11-18: PDFs rendered and tested in Docker against PostgreSQL |
 | 6 Pricing policy and quality | `feat/m5-pricing-policy`, `feat/m9-quality` | todo |
 | 7 Deploy | `feat/m9-deploy-live` | waiting for the Oracle account and a domain |
 | 8 Presentation | `feat/m11-presentation` | todo |
@@ -225,3 +225,15 @@ Screens (under `frontend/src/`): `screens/Landing.tsx` (what the app does, "Try 
 Found and fixed while checking in the browser: two price lists published on the same day had no defined order (migration 0005 adds `published_at`; the one published last is in use); the demo's names, note and suppliers were still in Bosnian in an English sandbox; three phone layouts (the landing's main action below the fold, the extras switch, the sheet editor's page fields).
 
 Checks: Vitest 30 tests; Playwright end-to-end (Try it, a quote with two measured windows and a sill, the total following, the setup checklist; axe on each main screen) passes against the running app; axe (WCAG 2.2 AA) 0 violations on 13 screens; the design detector reports nothing; backend `pytest` with the database 660 passed, 3 skipped (golden).
+
+### Phase 5: PDFs (2026-11-18)
+
+Files (under `backend/src/quote_engine/`): `pdf/labels.py` (English and Bosnian words and number formats, the same as the app shows; a test compares them with the frontend), `pdf/drawing.py` (window drawings as SVG, the app's conventions), `pdf/content.py` (what each page shows), `pdf/images.py` (logo checks from the first bytes), `pdf/render.py` (Jinja2 with autoescape, WeasyPrint that may load only the bundled Noto Sans files and a checked logo; every other URL is refused), `pdf/templates/` (A4 client quote and workshop sheet), `services/documents.py` (load, build, render; 20 PDFs a minute per workshop, two renders at a time), migration `0006` (`workshops.logo`), endpoints `GET /quotes/{id}/revisions/{n}/quote.pdf?lang=` and `workshop.pdf`, `GET|PUT|DELETE /workshop/logo`. Dependencies added from PLAN.md: WeasyPrint, Jinja2, and pypdf for tests.
+- The client quote prints the accepted snapshot once a quote is accepted, so the paper matches what the client agreed to. The workshop sheet is cut fresh from the revision's own sheet and price-list versions and shows no prices: bar strips with numbered pieces and the offcut (marked "keep" from the minimum offcut), the cut list with every formula, hardware per position, the glass order and what to buy per supplier.
+- Sandbox PDFs carry "sample workshop with invented data, not a real quote" at the top and in the footer.
+- Frontend: "Send to client" now shares the client PDF through the phone's share sheet (download where files cannot be shared; the text summary when no PDF can be made, with the reason). A draft becomes "sent" only once it actually went out, not when the share sheet is closed. A "Documents" section downloads both PDFs and picks the language of the client's copy. Workshop details gained the logo (PNG or JPEG, 300 KB, 2000 x 2000 pixels at most).
+- `infra/Caddyfile` now refuses request bodies over 2 MB before they reach the app.
+
+Checks: on Windows (no Pango) ruff, format, mypy, import-linter pass and `pytest` 748 passed, 6 skipped (3 golden, 3 that need Pango); in Docker (python:3.13-slim with the production image's Pango libraries) against a throwaway PostgreSQL 18 container, the whole suite: 751 passed, 3 skipped (golden). The rendered pages were looked at; č, ć, š, ž and đ print and copy correctly. Frontend lint, typecheck, 37 tests and build pass; axe 0 violations on the changed screens; the design detector reports nothing. The built wheel contains the templates and fonts.
+
+For Mirza: the Bosnian PDF words (`pdf/labels.py`, for example "Radni nalog", "Krojna lista", "Avans pri narudžbi") need a read by a native speaker. The client PDF has no delivery time yet (PLAN.md section 8 lists it): there is no setting for it, and it is not invented.
