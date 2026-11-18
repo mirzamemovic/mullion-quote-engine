@@ -1,6 +1,6 @@
 /** The app's controls: standard buttons, fields and bars in the site-wall palette. */
 import type { ButtonHTMLAttributes, InputHTMLAttributes, ReactNode } from "react";
-import { useId } from "react";
+import { useEffect, useId, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router";
 
@@ -147,8 +147,25 @@ export function LanguageToggle({ className = "" }: { className?: string }) {
   );
 }
 
-export function DemoBanner() {
+/** The time now, read once and then every minute (rendering itself never reads the clock). */
+function useMinuteClock(): number {
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    const timer = window.setInterval(() => setNow(Date.now()), 60_000);
+    return () => window.clearInterval(timer);
+  }, []);
+  return now;
+}
+
+/** On every screen of a sample workshop: invented data, and for a sandbox the hours it has left. */
+export function DemoBanner({ expiresAt }: { expiresAt?: string | null }) {
   const { t } = useTranslation();
+  const now = useMinuteClock();
+  let text = t("app.demo");
+  if (expiresAt) {
+    const hours = Math.floor((Date.parse(expiresAt) - now) / 3_600_000);
+    text = hours >= 1 ? t("app.sandbox", { hours }) : t("app.sandboxSoon");
+  }
   return (
     <p
       role="note"
@@ -156,10 +173,126 @@ export function DemoBanner() {
     >
       <span
         aria-hidden="true"
-        className="h-3.5 w-6 rounded-[2px] bg-[repeating-linear-gradient(135deg,var(--color-graphite)_0_2px,transparent_2px_5px)]"
+        className="h-3.5 w-6 shrink-0 rounded-[2px] bg-[repeating-linear-gradient(135deg,var(--color-graphite)_0_2px,transparent_2px_5px)]"
       />
-      {t("app.demo")}
+      {text}
     </p>
+  );
+}
+
+/** A native select in the field style: label above, 56 px tall. */
+export function Select({
+  label,
+  value,
+  onChange,
+  options,
+  className = "",
+  disabled,
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  options: { value: string; label: string }[];
+  className?: string;
+  disabled?: boolean;
+}) {
+  const id = useId();
+  return (
+    <div className={className}>
+      <label htmlFor={id} className="mb-1.5 block text-base font-bold">
+        {label}
+      </label>
+      <select
+        id={id}
+        value={value}
+        disabled={disabled}
+        onChange={(e) => onChange(e.target.value)}
+        className="h-14 w-full rounded-slot border-2 border-graphite-line bg-board px-3 text-lg outline-none transition-colors duration-150 focus:border-chalk disabled:text-graphite-soft"
+      >
+        {options.map((o) => (
+          <option key={o.value} value={o.value}>
+            {o.label}
+          </option>
+        ))}
+      </select>
+    </div>
+  );
+}
+
+/** A yes/no choice as a whole tappable row. */
+export function Check({
+  label,
+  checked,
+  onChange,
+  disabled,
+}: {
+  label: string;
+  checked: boolean;
+  onChange: (checked: boolean) => void;
+  disabled?: boolean;
+}) {
+  return (
+    <label className="flex min-h-12 cursor-pointer items-center gap-3 rounded-slot px-1 text-base font-semibold has-disabled:cursor-default has-disabled:text-graphite-soft">
+      <input
+        type="checkbox"
+        checked={checked}
+        disabled={disabled}
+        onChange={(e) => onChange(e.target.checked)}
+        className="size-6 shrink-0 accent-chalk"
+      />
+      <span>{label}</span>
+    </label>
+  );
+}
+
+/** A note to act on: crayon for something to re-check or fix, chalk for a plain hint. */
+export function Note({ tone = "check", children }: { tone?: "check" | "hint"; children: ReactNode }) {
+  const crayon = tone === "check";
+  return (
+    <div role={crayon ? "alert" : "note"} className={`flex items-start gap-2 rounded-slot p-3 ${crayon ? "bg-crayon-tint" : "bg-chalk-tint"}`}>
+      <Icon name={crayon ? "alert" : "check"} className={`mt-0.5 size-5 shrink-0 ${crayon ? "text-crayon" : "text-chalk-deep"}`} />
+      <div className="min-w-0 flex-1 font-semibold">{children}</div>
+    </div>
+  );
+}
+
+/** One row of a list that opens a screen: title, a short status under it, an arrow. */
+export function LinkRow({ to, title, status, done }: { to: string; title: string; status?: string; done?: boolean }) {
+  return (
+    <Link
+      to={to}
+      className="flex min-h-16 items-center gap-3 rounded-slot bg-board px-4 py-3 transition-colors duration-150 hover:bg-chalk-tint focus-visible:outline-3 focus-visible:outline-chalk"
+    >
+      {done !== undefined && (
+        <span
+          aria-hidden="true"
+          className={`grid size-7 shrink-0 place-items-center rounded-full border-2 ${done ? "border-tick bg-tick text-white" : "border-graphite-line"}`}
+        >
+          {done && <Icon name="check" className="size-4" />}
+        </span>
+      )}
+      <span className="min-w-0 flex-1">
+        <span className="block text-lg font-bold">{title}</span>
+        {status && <span className="block truncate text-sm text-graphite-soft">{status}</span>}
+      </span>
+      <Icon name="forward" className="size-5 shrink-0 text-graphite-soft" />
+    </Link>
+  );
+}
+
+/** A titled part of a screen, 1.5rem from the next. */
+export function Section({ title, children, actions }: { title: string; children: ReactNode; actions?: ReactNode }) {
+  const id = useId();
+  return (
+    <section aria-labelledby={id} className="space-y-3">
+      <div className="flex items-end justify-between gap-3">
+        <h2 id={id} className="text-xl font-extrabold">
+          {title}
+        </h2>
+        {actions}
+      </div>
+      {children}
+    </section>
   );
 }
 

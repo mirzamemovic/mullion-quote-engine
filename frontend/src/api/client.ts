@@ -15,21 +15,60 @@ export interface FieldError {
   message: string;
 }
 
+/** One problem in an uploaded file: the row a spreadsheet shows (header = 1) and the column. */
+export interface FileProblem {
+  row: number;
+  column: string;
+  message: string;
+}
+
 /** A failed request, carrying the server's problem details. */
 export class ApiError extends Error {
   readonly status: number;
   readonly title: string;
   readonly errors: FieldError[];
+  /** CSV imports: every problem found, with its row and column. */
+  readonly problems: FileProblem[];
+  /** A missing catalogue value: its name, such as ``deductions.sash_width``. */
+  readonly constant: string | undefined;
 
   constructor(status: number, body: unknown) {
-    const problem = (body ?? {}) as { title?: unknown; detail?: unknown; errors?: unknown };
+    const problem = (body ?? {}) as {
+      title?: unknown;
+      detail?: unknown;
+      errors?: unknown;
+      problems?: unknown;
+      constant?: unknown;
+    };
     const detail = typeof problem.detail === "string" ? problem.detail : `HTTP ${status}`;
     super(detail);
     this.name = "ApiError";
     this.status = status;
     this.title = typeof problem.title === "string" ? problem.title : "error";
     this.errors = Array.isArray(problem.errors) ? (problem.errors as FieldError[]) : [];
+    this.problems = Array.isArray(problem.problems) ? (problem.problems as FileProblem[]) : [];
+    this.constant = typeof problem.constant === "string" ? problem.constant : undefined;
   }
+}
+
+/** A step-up refusal: the action needs the password again. */
+export function needsReauth(error: unknown): boolean {
+  return error instanceof ApiError && error.status === 403 && /password/i.test(error.message);
+}
+
+/** The address of a file the API serves (CSV), for a plain download link on the same origin. */
+export function apiUrl(path: string): string {
+  return `${API_BASE}${path}`;
+}
+
+/** A file's bytes as base64, for JSON uploads (the server works out the encoding). */
+export async function fileBase64(file: File): Promise<string> {
+  const bytes = new Uint8Array(await file.arrayBuffer());
+  let binary = "";
+  for (let i = 0; i < bytes.length; i += 0x8000) {
+    binary += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
+  }
+  return btoa(binary);
 }
 
 export function csrfToken(cookies: string = document.cookie): string | undefined {

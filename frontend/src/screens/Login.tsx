@@ -14,7 +14,7 @@ const loginSchema = z.object({
 });
 type LoginForm = z.infer<typeof loginSchema>;
 
-function Frame({ title, children }: { title: string; children: React.ReactNode }) {
+export function Frame({ title, children }: { title: string; children: React.ReactNode }) {
   const { t } = useTranslation();
   return (
     <main className="mx-auto flex min-h-dvh max-w-md flex-col px-5 pt-10 pb-8">

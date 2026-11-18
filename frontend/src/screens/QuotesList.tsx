@@ -4,10 +4,11 @@ import { useTranslation } from "react-i18next";
 import { Link } from "react-router";
 
 import { useMe, useQuotes } from "../api/queries";
+import { useSetupStatus } from "../api/workshop";
 import type { QuoteStatus } from "../api/types";
 import { Icon } from "../components/Icon";
 import { ErrorNote, LanguageToggle, Loading, TopBar } from "../components/ui";
-import { euros } from "../lib/format";
+import { money } from "../lib/format";
 import { StatusPill } from "./StatusPill";
 
 const FILTERS = ["", "draft", "sent", "accepted", "expired", "rejected"] as const;
@@ -19,6 +20,7 @@ export function QuotesList() {
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState<string>("");
   const quotes = useQuotes(search.trim(), status);
+  const setup = useSetupStatus();
 
   return (
     <>
@@ -28,15 +30,20 @@ export function QuotesList() {
         actions={
           <div className="flex items-center gap-1">
             <LanguageToggle className="text-white" />
-            {me.data?.role === "admin" || me.data?.role === "owner" ? (
-              <Link to="/admin" aria-label={t("app.admin")} title={t("app.admin")} className="grid size-11 place-items-center rounded-slot hover:bg-shell-raised">
-                <Icon name="sliders" />
-              </Link>
-            ) : null}
+            <Link to="/workshop" aria-label={t("app.workshop")} title={t("app.workshop")} className="grid size-11 place-items-center rounded-slot hover:bg-shell-raised">
+              <Icon name="sliders" />
+            </Link>
           </div>
         }
       />
       <main className="mx-auto max-w-3xl px-4 pb-32">
+        {me.data?.role === "owner" && setup.data && !setup.data.ready && (
+          <Link to="/workshop/setup" className="mt-4 flex min-h-12 items-center gap-2 rounded-slot bg-chalk-tint px-4 py-3 font-semibold hover:bg-chalk-tint/70">
+            <Icon name="sliders" className="size-5 shrink-0 text-chalk-deep" />
+            <span className="flex-1">{t("quotes.setup", { percent: setup.data.percent })}</span>
+            <Icon name="forward" className="size-5 shrink-0 text-chalk-deep" />
+          </Link>
+        )}
         <div className="sticky top-16 z-10 -mx-4 bg-plaster px-4 pt-4 pb-3">
           <label className="relative block">
             <span className="sr-only">{t("quotes.search")}</span>
@@ -80,7 +87,7 @@ export function QuotesList() {
               >
                 <span className="min-w-0 truncate text-lg font-bold">{q.client_name}</span>
                 {q.total_cents != null ? (
-                  <span className="figure text-right text-figure-md">{euros(q.total_cents, lang)}</span>
+                  <span className="figure text-right text-figure-md">{money(q.total_cents, lang)}</span>
                 ) : (
                   <span className="text-right text-sm font-semibold text-graphite-soft">{t("quotes.noTotal")}</span>
                 )}

@@ -15,6 +15,25 @@ export type Payment = Schemas["PaymentOut"];
 export type PriceList = Schemas["PriceListOut"];
 export type Supplier = Schemas["SupplierOut"];
 export type Settings = Schemas["SettingsIO"];
+export type PriceEntry = Schemas["PriceEntryOut"];
+export type PriceEntryIn = Schemas["PriceEntryIn"];
+export type SetupStatus = Schemas["SetupStatusOut"];
+export type SystemCheck = Schemas["SystemCheckOut"];
+export type PriceCheck = Schemas["PriceCheckOut"];
+export type Sheet = Schemas["SheetOut"];
+export type SheetFields = Schemas["SheetFieldsOut"];
+export type ProfileSystemIn = Schemas["ProfileSystemIn"];
+export type HardwareSet = Schemas["HardwareSetOut"];
+export type HardwareSetIn = Schemas["HardwareSetIn"];
+export type ConstructionTypeState = Schemas["ConstructionTypeIO"];
+export type User = Schemas["UserOut"];
+export type SessionRow = Schemas["SessionOut"];
+export type Invite = Schemas["InviteOut"];
+export type InviteCreated = Schemas["InviteCreated"];
+export type InviteInfo = Schemas["InviteInfo"];
+export type Workshop = Schemas["WorkshopIO"];
+export type TotpSetup = Schemas["TotpSetupOut"];
+export type Role = "owner" | "staff";
 export type Colour = PositionIn["colour"];
 export type Opening = PositionIn["openings"][number];
 export type QuoteStatus = "draft" | "sent" | "accepted" | "rejected" | "expired";
@@ -84,6 +103,8 @@ export interface PositionPrice {
   rounding_cents: number;
   total_cents: number;
   unit_price_cents: number;
+  area_mm2: number;
+  cents_per_m2: number;
 }
 
 export interface JobPrice {

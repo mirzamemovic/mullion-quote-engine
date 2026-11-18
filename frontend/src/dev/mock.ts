@@ -17,8 +17,12 @@ const me = {
   email: "demo@example.invalid",
   role: "owner",
   workshop_id: "00000000-0000-0000-0000-0000000000aa",
-  workshop_name: "Probna radionica (izmišljeni podaci)",
+  workshop_name: "Sample workshop (invented data)",
   is_demo: true,
+  sandbox_expires_at: null,
+  currency: "EUR",
+  language: "en",
+  totp_enabled: false,
   totp_ok: true,
   csrf_token: "dev",
 };
@@ -61,7 +65,7 @@ function seed(): void {
   const aluminium = catalogue?.systems.find((s) => s.material === "aluminium");
   const premium = (aluminium?.id as string | undefined) ?? first;
   state.clients = [
-    { id: "c1", name: "Probni klijent", phone: "+000 00 000 001", place: "Probno mjesto", erased_at: null },
+    { id: "c1", name: "Sample client", phone: "+000 00 000 001", place: "Sample town", erased_at: null },
     { id: "c2", name: "Drugi probni klijent", phone: "", place: "Drugo mjesto", erased_at: null },
   ];
   const quote = (id: string, number: string, client: Json, status: string, system: string, positions: unknown[]) => ({

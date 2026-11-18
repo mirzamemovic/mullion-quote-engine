@@ -16,12 +16,13 @@ import {
   useSaveRevision,
   useSetStatus,
 } from "../api/queries";
-import type { Calculation, PositionOut, PositionPrice, QuoteDetail, QuoteStatus } from "../api/types";
+import type { Calculation, ExtraIn, PositionOut, PositionPrice, QuoteDetail, QuoteStatus } from "../api/types";
+import { usePriceList } from "../api/workshop";
 import { Icon } from "../components/Icon";
-import { Button, ErrorNote, Field, Loading, SizeMark, TopBar } from "../components/ui";
+import { Button, ErrorNote, Field, IconButton, Loading, Segmented, Select, SizeMark, TopBar } from "../components/ui";
 import { WindowDrawing } from "../components/WindowDrawing";
-import { day, euros, isoDate, size } from "../lib/format";
-import { workshopLabel } from "../lib/labels";
+import { currencySymbol, day, isoDate, money, moneyInput, parseMoney, size } from "../lib/format";
+import { unitLabel, workshopLabel } from "../lib/labels";
 import { revisionBody } from "../lib/revision";
 import { CuttingPlan } from "./CuttingPlan";
 import { StatusPill } from "./StatusPill";
@@ -131,6 +132,7 @@ function Quote({ quote }: { quote: QuoteDetail }) {
           </section>
         )}
 
+        {(draft || quote.revision.extra_lines.length > 0) && <Extras quote={quote} lines={calc.data?.price.extras} editable={draft} />}
         {draft && positions.length > 0 && <Adjustments quote={quote} />}
 
         {calc.data && Object.keys(calc.data.plans).length > 0 && (
@@ -184,7 +186,7 @@ function PositionRow({
           <span className="flex items-baseline justify-between gap-2">
             <span className="truncate text-lg font-bold">{p.ref}</span>
             <span className="figure shrink-0 text-figure-md">
-              {price ? euros(price.total_cents, lang) : "–"}
+              {price ? money(price.total_cents, lang) : "–"}
             </span>
           </span>
           <span className="block truncate text-base text-graphite-soft">
@@ -202,18 +204,19 @@ function PositionRow({
         <div className="border-t-2 border-plaster px-3 pt-3 pb-3">
           {price && (
             <dl className="space-y-1 text-base">
-              <Row label={t("summary.unitPrice", { qty: p.qty, unit: euros(price.unit_price_cents, lang) })} value={euros(price.total_cents, lang)} strong />
+              <Row label={t("summary.unitPrice", { qty: p.qty, unit: money(price.unit_price_cents, lang) })} value={money(price.total_cents, lang)} strong />
+              <p className="text-sm text-graphite-soft">{t("summary.perM2", { amount: money(price.cents_per_m2, lang) })}</p>
               {price.material.map((line, i) => (
-                <Row key={i} label={workshopLabel(line.label, lang)} value={euros(line.cents, lang)} soft />
+                <Row key={i} label={workshopLabel(line.label, lang)} value={money(line.cents, lang)} soft />
               ))}
-              <Row label={t("summary.material")} value={euros(price.material_cents, lang)} />
-              <Row label={t("summary.margin")} value={euros(price.margin_cents, lang)} />
-              <Row label={t("summary.labour")} value={euros(price.labour_cents, lang)} />
+              <Row label={t("summary.material")} value={money(price.material_cents, lang)} />
+              <Row label={t("summary.margin")} value={money(price.margin_cents, lang)} />
+              <Row label={t("summary.labour")} value={money(price.labour_cents, lang)} />
               {price.installation.map((line, i) => (
-                <Row key={i} label={workshopLabel(line.label, lang)} value={euros(line.cents, lang)} soft />
+                <Row key={i} label={workshopLabel(line.label, lang)} value={money(line.cents, lang)} soft />
               ))}
               {price.rounding_cents !== 0 && (
-                <Row label={t("summary.rounding")} value={euros(price.rounding_cents, lang)} soft />
+                <Row label={t("summary.rounding")} value={money(price.rounding_cents, lang)} soft />
               )}
             </dl>
           )}
@@ -256,10 +259,11 @@ function Adjustments({ quote }: { quote: QuoteDetail }) {
   const { t } = useTranslation();
   const save = useSaveRevision(quote.id);
   const rev = quote.revision;
-  const [discount, setDiscount] = useState(rev.discount_cents ? String(rev.discount_cents / 100) : "");
+  const { i18n } = useTranslation();
+  const [discount, setDiscount] = useState(rev.discount_cents ? moneyInput(rev.discount_cents, i18n.language) : "");
   const [km, setKm] = useState(rev.transport_km ? String(rev.transport_km) : "");
   const [openForm, setOpenForm] = useState(false);
-  const cents = Math.round(Number(discount.replace(",", ".") || "0") * 100);
+  const cents = discount.trim() ? parseMoney(discount) : 0;
   return (
     <section className="mx-4 mt-6">
       <button
@@ -278,13 +282,13 @@ function Adjustments({ quote }: { quote: QuoteDetail }) {
             e.preventDefault();
             save.mutate({
               revision: quote.revision_no,
-              body: { ...revisionBody(quote), discount_cents: Number.isFinite(cents) ? Math.max(0, cents) : 0, discount_bp: 0, transport_km: Number(km || 0) },
+              body: { ...revisionBody(quote), discount_cents: cents ?? 0, discount_bp: 0, transport_km: Number(km || 0) },
             });
           }}
         >
-          <Field label={t("summary.discountEuro")} inputMode="decimal" value={discount} onChange={(e) => setDiscount(e.target.value.replace(/[^\d,.]/g, ""))} />
+          <Field label={t("summary.discountEuro", { currency: currencySymbol() })} error={cents === null ? t("errors.number") : undefined} inputMode="decimal" value={discount} onChange={(e) => setDiscount(e.target.value.replace(/[^\d,.]/g, ""))} />
           <Field label={t("summary.transportKm")} inputMode="numeric" value={km} onChange={(e) => setKm(e.target.value.replace(/\D/g, "").slice(0, 4))} />
-          <Button type="submit" tone="secondary" className="col-span-2" busy={save.isPending}>
+          <Button type="submit" tone="secondary" className="col-span-2" busy={save.isPending} disabled={cents === null}>
             {t("app.save")}
           </Button>
         </form>
@@ -300,7 +304,7 @@ function Payments({ quote }: { quote: QuoteDetail }) {
   const add = useAddPayment(quote.id);
   const [amount, setAmount] = useState("");
   const [date, setDate] = useState(isoDate(new Date()));
-  const cents = Math.round(Number(amount.replace(",", ".") || "0") * 100);
+  const cents = parseMoney(amount) ?? 0;
   const kind = quote.paid_cents > 0 ? "balance" : "advance";
   return (
     <section className="mx-4 mt-6 rounded-slot bg-board p-4" aria-labelledby="payments">
@@ -309,7 +313,7 @@ function Payments({ quote }: { quote: QuoteDetail }) {
       </h2>
       {quote.total_cents != null && (
         <p className="mt-1 text-base text-graphite-soft">
-          {t("summary.paidTotal", { paid: euros(quote.paid_cents, lang), total: euros(quote.total_cents, lang) })}
+          {t("summary.paidTotal", { paid: money(quote.paid_cents, lang), total: money(quote.total_cents, lang) })}
         </p>
       )}
       <ul className="mt-2 space-y-1">
@@ -318,7 +322,7 @@ function Payments({ quote }: { quote: QuoteDetail }) {
             <span>
               {t(`summary.${p.kind}`)} · {day(p.received_on, lang)}
             </span>
-            <span className="figure text-figure-sm">{euros(p.amount_cents, lang)}</span>
+            <span className="figure text-figure-sm">{money(p.amount_cents, lang)}</span>
           </li>
         ))}
       </ul>
@@ -330,7 +334,7 @@ function Payments({ quote }: { quote: QuoteDetail }) {
             if (cents > 0) add.mutate({ kind, amount_cents: cents, received_on: date }, { onSuccess: () => setAmount("") });
           }}
         >
-          <Field label={`${t(`summary.${kind}`)} · ${t("summary.amount")}`} inputMode="decimal" value={amount} onChange={(e) => setAmount(e.target.value.replace(/[^\d,.]/g, ""))} />
+          <Field label={`${t(`summary.${kind}`)} · ${t("summary.amount", { currency: currencySymbol() })}`} inputMode="decimal" value={amount} onChange={(e) => setAmount(e.target.value.replace(/[^\d,.]/g, ""))} />
           <Field label={t("summary.receivedOn")} type="date" value={date} onChange={(e) => setDate(e.target.value)} />
           <Button type="submit" tone="secondary" className="col-span-2" icon="plus" busy={add.isPending} disabled={cents <= 0}>
             {t("summary.addPayment")}
@@ -346,9 +350,9 @@ function shareText(quote: QuoteDetail, calc: Calculation, t: TFunction, lang: st
   const prices = new Map(calc.price.positions.map((p) => [p.ref, p]));
   for (const p of quote.revision.positions) {
     const price = prices.get(p.ref);
-    lines.push(`${p.ref} ${t(`types.${p.construction_type}`)} ${size(p.width_mm, p.height_mm)} mm × ${p.qty}: ${price ? euros(price.total_cents, lang) : ""}`);
+    lines.push(`${p.ref} ${t(`types.${p.construction_type}`)} ${size(p.width_mm, p.height_mm)} mm × ${p.qty}: ${price ? money(price.total_cents, lang) : ""}`);
   }
-  lines.push(`${t("summary.total")}: ${euros(calc.price.total_cents, lang)}`);
+  lines.push(`${t("summary.total")}: ${money(calc.price.total_cents, lang)}`);
   if (quote.valid_until) lines.push(t("summary.validUntil", { date: day(quote.valid_until, lang) }));
   return lines.join("\n");
 }
@@ -396,30 +400,30 @@ function TotalSheet({ quote, calculation }: { quote: QuoteDetail; calculation: C
           )}
         </div>
         <p className="figure text-figure-lg whitespace-nowrap" aria-live="polite">
-          {price ? euros(price.total_cents, lang) : "–"}
+          {price ? money(price.total_cents, lang) : "–"}
         </p>
         {explain && price && (
           <dl className="mt-2 max-h-[45dvh] space-y-1 overflow-y-auto rounded-slot bg-plaster p-3 text-base">
             {price.positions.map((p) => (
-              <Row key={p.ref} label={p.ref} value={euros(p.total_cents, lang)} soft />
+              <Row key={p.ref} label={p.ref} value={money(p.total_cents, lang)} soft />
             ))}
             {price.extras.map((line, i) => (
-              <Row key={`e${i}`} label={workshopLabel(line.label, lang)} value={euros(line.cents, lang)} soft />
+              <Row key={`e${i}`} label={workshopLabel(line.label, lang)} value={money(line.cents, lang)} soft />
             ))}
-            {price.transport_cents > 0 && <Row label={t("summary.transport")} value={euros(price.transport_cents, lang)} soft />}
+            {price.transport_cents > 0 && <Row label={t("summary.transport")} value={money(price.transport_cents, lang)} soft />}
             {price.discount_cents > 0 && (
               <>
-                <Row label={t("summary.subtotal")} value={euros(price.subtotal_cents, lang)} />
-                <Row label={t("summary.discount")} value={euros(-price.discount_cents, lang)} />
+                <Row label={t("summary.subtotal")} value={money(price.subtotal_cents, lang)} />
+                <Row label={t("summary.discount")} value={money(-price.discount_cents, lang)} />
               </>
             )}
             {(price.discount_cents > 0 || price.vat_cents > 0) && (
-              <Row label={t("summary.net")} value={euros(price.net_cents, lang)} />
+              <Row label={t("summary.net")} value={money(price.net_cents, lang)} />
             )}
-            {price.vat_cents > 0 && <Row label={t("summary.vat")} value={euros(price.vat_cents, lang)} />}
-            <Row label={t("summary.total")} value={euros(price.total_cents, lang)} strong />
-            <Row label={t("summary.advance")} value={euros(price.advance_cents, lang)} soft />
-            <Row label={t("summary.balance")} value={euros(price.balance_cents, lang)} soft />
+            {price.vat_cents > 0 && <Row label={t("summary.vat")} value={money(price.vat_cents, lang)} />}
+            <Row label={t("summary.total")} value={money(price.total_cents, lang)} strong />
+            <Row label={t("summary.advance")} value={money(price.advance_cents, lang)} soft />
+            <Row label={t("summary.balance")} value={money(price.balance_cents, lang)} soft />
           </dl>
         )}
         {setStatus.isError && (
@@ -464,6 +468,147 @@ function TotalSheet({ quote, calculation }: { quote: QuoteDetail; calculation: C
           )}
         </div>
       </div>
+    </section>
+  );
+}
+
+const EXTRA_KINDS = ["sill", "shutter", "screen", "other"] as const;
+type ExtraKind = (typeof EXTRA_KINDS)[number];
+
+/**
+ * Sills (per metre), roller shutters and insect screens (per m²) from the quote's price list,
+ * and manual lines with their own price. The engine prices them; this only collects them.
+ */
+function Extras({ quote, lines, editable }: { quote: QuoteDetail; lines: { label: string; cents: number }[] | undefined; editable: boolean }) {
+  const { t, i18n } = useTranslation();
+  const lang = i18n.language;
+  const save = useSaveRevision(quote.id);
+  const prices = usePriceList(quote.revision.price_list_version_id);
+  const [adding, setAdding] = useState(false);
+  const [kind, setKind] = useState<ExtraKind>("sill");
+  const [ref, setRef] = useState("");
+  const [qty, setQty] = useState("1");
+  const [length, setLength] = useState("");
+  const [width, setWidth] = useState("");
+  const [height, setHeight] = useState("");
+  const [description, setDescription] = useState("");
+  const [price, setPrice] = useState("");
+  const extras = quote.revision.extra_lines;
+  const products = (prices.data?.entries ?? []).filter((e) => e.item_kind === kind);
+  const product = products.find((e) => e.item_ref === ref) ?? products[0];
+  const n = Number(qty);
+  const manual = parseMoney(price);
+  let extra: ExtraIn | null = null;
+  if (kind === "other") {
+    if (description.trim() && manual !== null && n >= 1) {
+      extra = { kind, ref: description.trim().slice(0, 50), qty: n, manual_price_cents: manual, description: description.trim() };
+    }
+  } else if (product && n >= 1) {
+    if (kind === "sill" && Number(length) > 0) {
+      extra = { kind, ref: product.item_ref, qty: n, colour: product.colour ?? "white", length_mm: Number(length), description: "" };
+    } else if (kind !== "sill" && Number(width) > 0 && Number(height) > 0) {
+      extra = { kind, ref: product.item_ref, qty: n, area_mm2: Number(width) * Number(height), description: "" };
+    }
+  }
+  const store = (next: ExtraIn[]) =>
+    save.mutate({ revision: quote.revision_no, body: { ...revisionBody(quote), extras: next } }, { onSuccess: () => setAdding(false) });
+  const digits = (set: (v: string) => void, count: number) => (e: { target: { value: string } }) =>
+    set(e.target.value.replace(/\D/g, "").slice(0, count));
+
+  return (
+    <section className="mx-4 mt-6 space-y-3" aria-labelledby="extras">
+      <h2 id="extras" className="text-xl font-extrabold">
+        {t("extras.title")}
+      </h2>
+      {extras.length > 0 && (
+        <ul className="space-y-2">
+          {extras.map((e, i) => (
+            <li key={`${e.kind}-${e.ref}-${i}`} className="flex items-center gap-3 rounded-slot bg-board px-4 py-3">
+              <span className="min-w-0 flex-1">
+                <span className="block font-semibold">
+                  {t(`extras.${e.kind}`)} · {e.kind === "other" ? e.description || e.ref : e.ref}
+                </span>
+                <span className="block text-sm text-graphite-soft">
+                  {e.qty} × {e.length_mm ? `${e.length_mm} mm` : e.area_mm2 ? `${(e.area_mm2 / 1_000_000).toFixed(2)} m²` : ""}
+                </span>
+              </span>
+              {lines?.[i] && <span className="figure shrink-0 text-figure-sm">{money(lines[i].cents, lang)}</span>}
+              {editable && (
+                <IconButton
+                  icon="trash"
+                  label={t("app.remove")}
+                  className="text-graphite-soft hover:bg-plaster"
+                  onClick={() => store((revisionBody(quote).extras ?? []).filter((_, j) => j !== i))}
+                />
+              )}
+            </li>
+          ))}
+        </ul>
+      )}
+      {editable && !adding && (
+        <Button tone="secondary" icon="plus" className="w-full" onClick={() => setAdding(true)}>
+          {t("extras.add")}
+        </Button>
+      )}
+      {editable && adding && (
+        <form
+          className="grid grid-cols-2 gap-3 rounded-slot bg-board p-3"
+          onSubmit={(e) => {
+            e.preventDefault();
+            if (extra) store([...(revisionBody(quote).extras ?? []), extra]);
+          }}
+        >
+          <div className="col-span-2">
+            <Segmented
+              label={t("extras.kind")}
+              value={kind}
+              onChange={(k) => {
+                setKind(k);
+                setRef("");
+              }}
+              options={EXTRA_KINDS.map((k) => ({ value: k, label: t(`extras.${k}`) }))}
+            />
+          </div>
+          {kind === "other" ? (
+            <>
+              <Field className="col-span-2" label={t("extras.description")} value={description} onChange={(e) => setDescription(e.target.value.slice(0, 200))} />
+              <Field label={t("extras.price", { currency: currencySymbol() })} inputMode="decimal" value={price} onChange={(e) => setPrice(e.target.value.replace(/[^\d,.]/g, ""))} />
+            </>
+          ) : products.length === 0 ? (
+            <p className="col-span-2 text-graphite-soft">{t("extras.noProducts")}</p>
+          ) : (
+            <>
+              <Select
+                className="col-span-2"
+                label={t("extras.ref")}
+                value={product?.item_ref ?? ""}
+                onChange={setRef}
+                options={products.map((e) => ({ value: e.item_ref, label: `${e.item_ref} · ${money(e.amount_cents, lang)} / ${unitLabel(e.unit, lang)}` }))}
+              />
+              {kind === "sill" ? (
+                <Field label={t("extras.length")} inputMode="numeric" value={length} onChange={digits(setLength, 5)} />
+              ) : (
+                <>
+                  <Field label={t("extras.width")} inputMode="numeric" value={width} onChange={digits(setWidth, 4)} />
+                  <Field label={t("extras.height")} inputMode="numeric" value={height} onChange={digits(setHeight, 4)} />
+                </>
+              )}
+            </>
+          )}
+          <Field label={t("position.qty")} inputMode="numeric" value={qty} onChange={digits(setQty, 2)} />
+          {save.isError && (
+            <div className="col-span-2">
+              <ErrorNote message={save.error.message} />
+            </div>
+          )}
+          <Button type="submit" className="col-span-2" busy={save.isPending} disabled={!extra}>
+            {t("extras.add")}
+          </Button>
+          <Button tone="quiet" className="col-span-2" onClick={() => setAdding(false)}>
+            {t("app.cancel")}
+          </Button>
+        </form>
+      )}
     </section>
   );
 }

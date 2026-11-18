@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { csrfToken } from "../api/client";
-import { day, euros, percent, size } from "./format";
+import { day, money, moneyInput, parseMoney, percent, size } from "./format";
 import { cutLabel, workshopLabel } from "./labels";
 import { cleanDigits, complete, emptyReadings, isFinished, nextSlot, parseReading, smallestSlots } from "./readings";
 import { nextRef, revisionBody } from "./revision";
@@ -9,10 +9,26 @@ import type { QuoteDetail } from "../api/types";
 
 describe("format", () => {
   it("formats cents in both languages without floats", () => {
-    expect(euros(123456, "bs")).toBe("1.234,56 €");
-    expect(euros(123456, "en")).toBe("€1,234.56");
-    expect(euros(5, "bs")).toBe("0,05 €");
-    expect(euros(-2500, "bs")).toBe("−25,00 €");
+    expect(money(123456, "bs")).toBe("1.234,56 €");
+    expect(money(123456, "en")).toBe("€1,234.56");
+    expect(money(5, "bs")).toBe("0,05 €");
+    expect(money(-2500, "bs")).toBe("−25,00 €");
+  });
+
+  it("writes every workshop currency, the euro sign first only in English", () => {
+    expect(money(123456, "en", "BAM")).toBe("1,234.56 KM");
+    expect(money(123456, "bs", "BAM")).toBe("1.234,56 KM");
+    expect(money(99, "en", "RSD")).toBe("0.99 RSD");
+  });
+
+  it("reads typed amounts as exact cents and writes them back", () => {
+    expect(parseMoney("21,60")).toBe(2160);
+    expect(parseMoney("21.6")).toBe(2160);
+    expect(parseMoney(" 1 234 ")).toBe(123400);
+    expect(parseMoney("0.1")).toBe(10);
+    for (const bad of ["", "-5", "1.234,50", "21.605", "abc"]) expect(parseMoney(bad)).toBeNull();
+    expect(moneyInput(2160, "bs")).toBe("21,60");
+    expect(moneyInput(2160, "en")).toBe("21.60");
   });
 
   it("formats basis points as percent", () => {
