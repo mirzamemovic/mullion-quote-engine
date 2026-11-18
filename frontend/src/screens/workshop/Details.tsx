@@ -7,9 +7,11 @@ import { useTranslation } from "react-i18next";
 
 import { useSaveSettings, useSettings } from "../../api/queries";
 import type { Settings, Workshop } from "../../api/types";
-import { useSaveWorkshop, useWorkshop } from "../../api/workshop";
+import { apiUrl, fileBase64 } from "../../api/client";
+import { useRemoveLogo, useSaveLogo, useSaveWorkshop, useWorkshop } from "../../api/workshop";
+import { Icon } from "../../components/Icon";
 import { ActionError } from "../../components/Reauth";
-import { Button, Check, ErrorNote, Field, Loading, Section, Select } from "../../components/ui";
+import { Button, Check, ErrorNote, Field, Loading, Note, Section, Select } from "../../components/ui";
 import { CURRENCIES } from "../../lib/format";
 import { Page } from "./Page";
 
@@ -18,8 +20,78 @@ export function Details() {
   return (
     <Page title={t("profile.title")}>
       <Profile />
+      <Logo />
       <QuoteSettings />
     </Page>
+  );
+}
+
+const LOGO_TYPES = ["image/png", "image/jpeg"];
+const LOGO_MAX_BYTES = 300 * 1024;
+
+/** The logo printed on client quotes. The server checks it again (type, size, pixels). */
+function Logo() {
+  const { t } = useTranslation();
+  const workshop = useWorkshop();
+  const save = useSaveLogo();
+  const remove = useRemoveLogo();
+  // Bumped after an upload so the image is fetched again under a new address.
+  const [version, setVersion] = useState(0);
+  // Kept until saved, so a password re-check can send the same file again.
+  const [file, setFile] = useState<File | null>(null);
+  const [problem, setProblem] = useState<string | null>(null);
+  if (!workshop.data) return null;
+  const hasLogo = workshop.data.has_logo ?? false;
+
+  const upload = async (chosen: File) => {
+    setProblem(null);
+    if (!LOGO_TYPES.includes(chosen.type)) return setProblem(t("logo.wrongType"));
+    if (chosen.size > LOGO_MAX_BYTES) return setProblem(t("logo.tooBig"));
+    setFile(chosen);
+    save.mutate(await fileBase64(chosen), {
+      onSuccess: () => {
+        setFile(null);
+        setVersion((v) => v + 1);
+      },
+    });
+  };
+
+  return (
+    <Section title={t("logo.title")}>
+      <div className="space-y-3 rounded-slot bg-board p-4">
+        {hasLogo ? (
+          <img src={`${apiUrl("/workshop/logo")}?v=${version}`} alt={t("logo.current")} className="max-h-20 max-w-full object-contain" />
+        ) : (
+          <p className="text-graphite-soft">{t("logo.none")}</p>
+        )}
+        <p className="text-sm text-graphite-soft">{t("logo.hint")}</p>
+        <div className="grid gap-2 sm:grid-cols-2">
+          <label className="flex min-h-14 cursor-pointer items-center justify-center gap-2 rounded-slot border-2 border-graphite bg-board px-5 text-lg font-bold transition-colors duration-150 hover:bg-plaster has-focus-visible:outline-3 has-focus-visible:outline-chalk">
+            <Icon name="plus" />
+            {hasLogo ? t("logo.replace") : t("logo.choose")}
+            <input
+              type="file"
+              accept="image/png,image/jpeg"
+              className="sr-only"
+              disabled={save.isPending}
+              onChange={(e) => {
+                const chosen = e.target.files?.[0];
+                e.target.value = "";
+                if (chosen) void upload(chosen);
+              }}
+            />
+          </label>
+          {hasLogo && (
+            <Button tone="quiet" icon="trash" busy={remove.isPending} onClick={() => remove.mutate()}>
+              {t("logo.remove")}
+            </Button>
+          )}
+        </div>
+        {problem && <Note>{problem}</Note>}
+        <ActionError error={save.error} retry={() => file && void upload(file)} />
+        <ActionError error={remove.error} retry={() => remove.mutate()} />
+      </div>
+    </Section>
   );
 }
 

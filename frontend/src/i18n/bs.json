@@ -432,5 +432,24 @@
     "description": "Opis",
     "price": "Cijena ({{currency}})",
     "noProducts": "Cjenovnik još nema cijena ove vrste."
+  },
+  "documents": {
+    "title": "Dokumenti",
+    "language": "Jezik primjerka za klijenta",
+    "quote": "Ponuda za klijenta (PDF)",
+    "workshop": "Radni nalog (PDF)",
+    "tapAgain": "PDF je spreman. Dodirni ponovo Pošalji klijentu.",
+    "textInstead": "Ovaj put bez PDF-a ({{reason}}), pa je sažetak poslan kao tekst."
+  },
+  "logo": {
+    "title": "Logo",
+    "hint": "PNG ili JPEG, do 300 KB. Štampa se na vrhu ponuda za klijente.",
+    "current": "Vaš logo",
+    "none": "Još nema loga. Ponude počinju imenom radionice.",
+    "choose": "Izaberi logo",
+    "replace": "Zamijeni logo",
+    "remove": "Ukloni logo",
+    "tooBig": "Ova datoteka je veća od 300 KB. Sačuvaj je manjom i pokušaj ponovo.",
+    "wrongType": "Mogu se koristiti samo PNG ili JPEG slike."
   }
 }

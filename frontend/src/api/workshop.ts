@@ -294,6 +294,23 @@ export function useSaveWorkshop() {
   });
 }
 
+/** The logo on client PDFs: a PNG or JPEG of at most 300 KB, sent as base64. */
+export function useSaveLogo() {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: (contentBase64: string) => put<Workshop>("/workshop/logo", { content_base64: contentBase64 }),
+    onSuccess: (saved) => client.setQueryData(workshopKeys.workshop, saved),
+  });
+}
+
+export function useRemoveLogo() {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: () => del<undefined>("/workshop/logo"),
+    onSuccess: () => void client.invalidateQueries({ queryKey: workshopKeys.workshop }),
+  });
+}
+
 export function useChangePassword() {
   return useMutation({
     mutationFn: (body: { current_password: string; new_password: string }) => post<undefined>("/me/password", body),

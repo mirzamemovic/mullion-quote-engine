@@ -8,8 +8,12 @@ import { useTranslation } from "react-i18next";
 import { Link, useNavigate, useParams } from "react-router";
 
 import {
+  type DocumentKind,
+  type DocumentLanguage,
   useAddPayment,
   useCalculation,
+  useDocument,
+  useMe,
   useNewRevision,
   usePayments,
   useQuote,
@@ -19,11 +23,12 @@ import {
 import type { Calculation, ExtraIn, PositionOut, PositionPrice, QuoteDetail, QuoteStatus } from "../api/types";
 import { usePriceList } from "../api/workshop";
 import { Icon } from "../components/Icon";
-import { Button, ErrorNote, Field, IconButton, Loading, Segmented, Select, SizeMark, TopBar } from "../components/ui";
+import { Button, ErrorNote, Field, IconButton, Loading, Note, Segmented, Select, SizeMark, TopBar } from "../components/ui";
 import { WindowDrawing } from "../components/WindowDrawing";
 import { currencySymbol, day, isoDate, money, moneyInput, parseMoney, size } from "../lib/format";
 import { unitLabel, workshopLabel } from "../lib/labels";
 import { revisionBody } from "../lib/revision";
+import { saveFile, type ShareResult, shareFile, shareText } from "../lib/share";
 import { CuttingPlan } from "./CuttingPlan";
 import { StatusPill } from "./StatusPill";
 
@@ -44,6 +49,9 @@ function Quote({ quote }: { quote: QuoteDetail }) {
   const positions = quote.revision.positions;
   const calc = useCalculation(quote.id, quote.revision_no, positions.length > 0);
   const [open, setOpen] = useState<string | null>(null);
+  const me = useMe();
+  // The client's PDF is in the workshop's language unless he picks the other one.
+  const [pdfLang, setPdfLang] = useState<DocumentLanguage>(() => (me.data?.language === "bs" ? "bs" : "en"));
   const draft = status === "draft";
   const prices = new Map((calc.data?.price.positions ?? []).map((p) => [p.ref, p]));
 
@@ -139,10 +147,12 @@ function Quote({ quote }: { quote: QuoteDetail }) {
           <CuttingPlan calculation={calc.data} />
         )}
 
+        {calc.data && <Documents quote={quote} language={pdfLang} onLanguage={setPdfLang} />}
+
         {(status === "accepted" || quote.paid_cents > 0) && <Payments quote={quote} />}
       </main>
 
-      {positions.length > 0 && <TotalSheet quote={quote} calculation={calc.data} />}
+      {positions.length > 0 && <TotalSheet quote={quote} calculation={calc.data} pdfLang={pdfLang} />}
     </>
   );
 }
@@ -345,7 +355,7 @@ function Payments({ quote }: { quote: QuoteDetail }) {
   );
 }
 
-function shareText(quote: QuoteDetail, calc: Calculation, t: TFunction, lang: string): string {
+function summaryText(quote: QuoteDetail, calc: Calculation, t: TFunction, lang: string): string {
   const lines = [`${t("quotes.title")} ${quote.number} · ${quote.client_name}`];
   const prices = new Map(calc.price.positions.map((p) => [p.ref, p]));
   for (const p of quote.revision.positions) {
@@ -357,25 +367,102 @@ function shareText(quote: QuoteDetail, calc: Calculation, t: TFunction, lang: st
   return lines.join("\n");
 }
 
-function TotalSheet({ quote, calculation }: { quote: QuoteDetail; calculation: Calculation | undefined }) {
+/** The client quote and the workshop sheet as PDFs, and the language of the client's copy. */
+function Documents({
+  quote,
+  language,
+  onLanguage,
+}: {
+  quote: QuoteDetail;
+  language: DocumentLanguage;
+  onLanguage: (lang: DocumentLanguage) => void;
+}) {
+  const { t } = useTranslation();
+  const pdf = useDocument(quote.id, quote.revision_no);
+  const [kind, setKind] = useState<DocumentKind>("quote");
+  const download = (next: DocumentKind) => {
+    setKind(next);
+    pdf.mutate({ kind: next, lang: language }, { onSuccess: saveFile });
+  };
+  return (
+    <section className="mx-4 mt-6 space-y-3" aria-labelledby="documents">
+      <h2 id="documents" className="text-xl font-extrabold">
+        {t("documents.title")}
+      </h2>
+      <Segmented
+        label={t("documents.language")}
+        value={language}
+        onChange={onLanguage}
+        options={[
+          { value: "en", label: t("profile.en") },
+          { value: "bs", label: t("profile.bs") },
+        ]}
+      />
+      <div className="grid gap-2 sm:grid-cols-2">
+        <Button tone="secondary" icon="download" busy={pdf.isPending && kind === "quote"} disabled={pdf.isPending} onClick={() => download("quote")}>
+          {t("documents.quote")}
+        </Button>
+        <Button tone="secondary" icon="download" busy={pdf.isPending && kind === "workshop"} disabled={pdf.isPending} onClick={() => download("workshop")}>
+          {t("documents.workshop")}
+        </Button>
+      </div>
+      {pdf.isError && <Note>{pdf.error.message}</Note>}
+    </section>
+  );
+}
+
+function TotalSheet({
+  quote,
+  calculation,
+  pdfLang,
+}: {
+  quote: QuoteDetail;
+  calculation: Calculation | undefined;
+  pdfLang: DocumentLanguage;
+}) {
   const { t, i18n } = useTranslation();
   const lang = i18n.language;
   const navigate = useNavigate();
   const [explain, setExplain] = useState(false);
   const setStatus = useSetStatus(quote.id);
   const newRevision = useNewRevision(quote.id);
+  const pdf = useDocument(quote.id, quote.revision_no);
+  // A PDF made but not yet handed on, when the browser asked for a fresh tap first.
+  // Kept with what it was made from, so a changed language or price makes a new one.
+  const [ready, setReady] = useState<{ file: File; made: string } | null>(null);
+  const [note, setNote] = useState<string | null>(null);
   const status = quote.status as QuoteStatus;
   const price = calculation?.price;
 
+  /** The client PDF through the share sheet (download where files cannot be shared). If no PDF
+   * can be made, the summary goes as text instead. A draft becomes "sent" once it went out. */
   async function share() {
     if (!calculation) return;
-    const text = shareText(quote, calculation, t, lang);
-    if (typeof navigator.share === "function") {
-      await navigator.share({ title: quote.number, text }).catch(() => undefined);
-    } else {
-      await navigator.clipboard?.writeText(text);
+    setNote(null);
+    const text = summaryText(quote, calculation, t, lang);
+    let result: ShareResult;
+    const made = `${pdfLang}:${calculation.price.total_cents}`;
+    let file = ready?.made === made ? ready.file : null;
+    if (!file) {
+      try {
+        file = await pdf.mutateAsync({ kind: "quote", lang: pdfLang });
+      } catch (error) {
+        setNote(t("documents.textInstead", { reason: error instanceof Error ? error.message : "" }));
+        file = null;
+      }
     }
-    if (status === "draft") setStatus.mutate("sent");
+    if (file) {
+      result = await shareFile(file, text);
+      if (result === "blocked") {
+        setReady({ file, made });
+        setNote(t("documents.tapAgain"));
+        return;
+      }
+      setReady(null);
+    } else {
+      result = await shareText(quote.number, text);
+    }
+    if (result !== "cancelled" && status === "draft") setStatus.mutate("sent");
   }
 
   return (
@@ -429,6 +516,11 @@ function TotalSheet({ quote, calculation }: { quote: QuoteDetail; calculation: C
         {setStatus.isError && (
           <p role="alert" className="mt-2 font-semibold text-crayon">
             {setStatus.error.message}
+          </p>
+        )}
+        {note && (
+          <p role="status" className="mt-2 text-base font-semibold text-graphite-soft">
+            {note}
           </p>
         )}
         <div className="mt-3 grid grid-cols-2 gap-2">

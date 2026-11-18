@@ -432,5 +432,24 @@
     "description": "Description",
     "price": "Price ({{currency}})",
     "noProducts": "The price list has no prices of this kind yet."
+  },
+  "documents": {
+    "title": "Documents",
+    "language": "Language of the client's copy",
+    "quote": "Client quote (PDF)",
+    "workshop": "Workshop sheet (PDF)",
+    "tapAgain": "The PDF is ready. Tap Send to client again.",
+    "textInstead": "No PDF this time ({{reason}}), so the summary was sent as text."
+  },
+  "logo": {
+    "title": "Logo",
+    "hint": "PNG or JPEG, up to 300 KB. It is printed at the top of client quotes.",
+    "current": "Your logo",
+    "none": "No logo yet. Client quotes start with the workshop's name.",
+    "choose": "Choose a logo",
+    "replace": "Replace the logo",
+    "remove": "Remove the logo",
+    "tooBig": "This file is over 300 KB. Save it smaller and try again.",
+    "wrongType": "Only PNG or JPEG images can be used."
   }
 }

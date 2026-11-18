@@ -1,10 +1,11 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { csrfToken } from "../api/client";
 import { day, money, moneyInput, parseMoney, percent, size } from "./format";
 import { cutLabel, workshopLabel } from "./labels";
 import { cleanDigits, complete, emptyReadings, isFinished, nextSlot, parseReading, smallestSlots } from "./readings";
 import { nextRef, revisionBody } from "./revision";
+import { shareFile } from "./share";
 import type { QuoteDetail } from "../api/types";
 
 describe("format", () => {
@@ -129,5 +130,43 @@ describe("revision body", () => {
 
   it("names the next window", () => {
     expect(nextRef(quote)).toBe("P2");
+  });
+});
+
+describe("share", () => {
+  const file = new File(["%PDF-1.7"], "quote-2026-0007-v1.pdf", { type: "application/pdf" });
+
+  function onNavigator(name: "share" | "canShare", value: unknown) {
+    Object.defineProperty(navigator, name, { value, configurable: true, writable: true });
+  }
+
+  afterEach(() => {
+    onNavigator("share", undefined);
+    onNavigator("canShare", undefined);
+    vi.restoreAllMocks();
+  });
+
+  it("asks for a fresh tap when the browser refuses a late share", async () => {
+    onNavigator("canShare", () => true);
+    onNavigator("share", () => Promise.reject(new DOMException("needs a tap", "NotAllowedError")));
+    expect(await shareFile(file, "text")).toBe("blocked");
+  });
+
+  it("downloads the file where files cannot be shared", async () => {
+    const names: string[] = [];
+    Object.defineProperty(URL, "createObjectURL", { value: () => "blob:pdf", configurable: true });
+    Object.defineProperty(URL, "revokeObjectURL", { value: () => undefined, configurable: true });
+    vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(function (this: HTMLAnchorElement) {
+      names.push(this.download);
+    });
+    onNavigator("canShare", () => false);
+    expect(await shareFile(file, "text")).toBe("saved");
+    expect(names).toEqual(["quote-2026-0007-v1.pdf"]);
+  });
+
+  it("passes on any other failure", async () => {
+    onNavigator("canShare", () => true);
+    onNavigator("share", () => Promise.reject(new TypeError("bad data")));
+    await expect(shareFile(file, "text")).rejects.toThrow("bad data");
   });
 });

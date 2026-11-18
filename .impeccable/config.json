@@ -1,0 +1,38 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "design-system-font",
+        "value": "noto sans latin",
+        "createdAt": "2026-11-18T16:24:34.939Z",
+        "reason": "DESIGN.md's Noto Sans: the same bundled latin file, named per script so the PDF renderer falls back to the latin-ext file"
+      },
+      {
+        "rule": "design-system-font",
+        "value": "noto sans latin ext",
+        "createdAt": "2026-11-18T16:24:35.059Z",
+        "reason": "DESIGN.md's Noto Sans: the same bundled latin-ext file, named per script for the PDF renderer's fallback"
+      },
+      {
+        "rule": "design-system-color",
+        "value": "rgb(0, 0, 0)",
+        "files": [
+          "backend/src/quote_engine/pdf/templates/quote.html"
+        ],
+        "createdAt": "2026-11-18T16:51:45.653Z",
+        "reason": "Jinja child template: its ink (#23272b) comes from base.html via extends, which the detector cannot follow; rendered PDFs checked visually"
+      },
+      {
+        "rule": "design-system-color",
+        "value": "rgb(0, 0, 0)",
+        "files": [
+          "backend/src/quote_engine/pdf/templates/workshop.html"
+        ],
+        "createdAt": "2026-11-18T16:51:45.836Z",
+        "reason": "Jinja child template: its ink (#23272b) comes from base.html via extends, which the detector cannot follow; rendered PDFs checked visually"
+      }
+    ]
+  }
+}

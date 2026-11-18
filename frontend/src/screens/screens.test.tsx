@@ -255,3 +255,184 @@ describe("MeasureStep", () => {
     await waitFor(() => expect(onDone).toHaveBeenCalledOnce());
   });
 });
+
+describe("Quote documents", () => {
+  const position = {
+    ref: "P1",
+    construction_type: "fixed",
+    width_mm: 1000,
+    height_mm: 1000,
+    qty: 1,
+    colour: "white",
+    glass_build: "4-16-4",
+    openings: ["fixed"],
+    readings: null,
+    installation: { install: true, ral: false, old_window_removal: false, wall_repair: false },
+  };
+  const quote = {
+    id: "q1",
+    number: "2026-0007",
+    client_id: "c",
+    client_name: "Sample client",
+    status: "draft",
+    revision_no: 1,
+    sent_at: null,
+    accepted_at: null,
+    valid_until: null,
+    total_cents: null,
+    paid_cents: 0,
+    revisions: [1],
+    revision: {
+      revision_no: 1,
+      margin_bp: 2500,
+      discount_cents: 0,
+      discount_bp: 0,
+      vat_bp: 0,
+      valid_days: 15,
+      transport_km: 0,
+      locked_at: null,
+      price_list_version_id: "p",
+      system_sheet_version_id: "s",
+      positions: [position],
+      extra_lines: [],
+    },
+  };
+  const calculation = {
+    cut_lists: { P1: { pieces: [], steel: [], glass: [], hardware_sets: [], gasket_mm: 0 } },
+    plans: {},
+    warnings: [],
+    versions: {},
+    price: {
+      positions: [
+        {
+          ref: "P1",
+          material: [],
+          material_cents: 0,
+          margin_cents: 0,
+          labour_cents: 0,
+          installation: [],
+          installation_cents: 0,
+          rounding_cents: 0,
+          total_cents: 10_000,
+          unit_price_cents: 10_000,
+          area_mm2: 1_000_000,
+          cents_per_m2: 10_000,
+        },
+      ],
+      extras: [],
+      transport_cents: 0,
+      subtotal_cents: 10_000,
+      discount_cents: 0,
+      net_cents: 10_000,
+      vat_cents: 0,
+      total_cents: 10_000,
+      advance_cents: 0,
+      balance_cents: 10_000,
+    },
+  };
+  const pdf = () =>
+    Promise.resolve(
+      new Response(new Blob(["%PDF-1.7"], { type: "application/pdf" }), {
+        status: 200,
+        headers: { "Content-Type": "application/pdf", "Content-Disposition": 'attachment; filename="ponuda-2026-0007-v1.pdf"' },
+      }),
+    );
+  const noPdf = () => json(503, { title: "PDFs are not available", status: 503, detail: "PDFs cannot be made on this server" });
+
+  function api(document: () => Promise<Response>) {
+    return vi.fn((url: string) => {
+      if (url.endsWith("/auth/me")) return json(200, owner);
+      if (url.endsWith("/calculate")) return json(200, calculation);
+      if (url.includes(".pdf")) return document();
+      if (url.endsWith("/status")) return json(200, { ...quote, status: "sent" });
+      if (url.endsWith("/quotes/q1")) return json(200, quote);
+      if (url.includes("/price-lists/")) return json(200, { id: "p", status: "published", entries: [] });
+      return json(200, []);
+    });
+  }
+
+  function onNavigator(name: "share" | "canShare", value: unknown) {
+    Object.defineProperty(navigator, name, { value, configurable: true, writable: true });
+  }
+
+  // File names of the downloads the screen started.
+  const downloads: string[] = [];
+  beforeEach(() => {
+    downloads.length = 0;
+    Object.defineProperty(URL, "createObjectURL", { value: vi.fn(() => "blob:pdf"), configurable: true });
+    Object.defineProperty(URL, "revokeObjectURL", { value: vi.fn(), configurable: true });
+    vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(function (this: HTMLAnchorElement) {
+      downloads.push(this.download);
+    });
+  });
+  afterEach(() => {
+    vi.restoreAllMocks();
+    onNavigator("share", undefined);
+    onNavigator("canShare", undefined);
+  });
+
+  /** "Send to client", once the price is there (it is disabled until then). */
+  async function sendButton(): Promise<HTMLButtonElement> {
+    const button = await screen.findByRole<HTMLButtonElement>("button", { name: /Pošalji klijentu/ });
+    await waitFor(() => expect(button.disabled).toBe(false));
+    return button;
+  }
+
+  it("downloads the client PDF in the language picked for the client", async () => {
+    const fetch = api(pdf);
+    vi.stubGlobal("fetch", fetch);
+    render(wrap(<App />, "/quotes/q1"));
+
+    fireEvent.click(await screen.findByRole("radio", { name: "English" }));
+    fireEvent.click(screen.getByRole("button", { name: /Ponuda za klijenta \(PDF\)/ }));
+
+    await waitFor(() => expect(downloads).toEqual(["ponuda-2026-0007-v1.pdf"]));
+    expect(fetch.mock.calls.some(([url]) => url.endsWith("/quotes/q1/revisions/1/quote.pdf?lang=en"))).toBe(true);
+  });
+
+  it("sends the PDF through the share sheet and marks the draft sent", async () => {
+    const share = vi.fn(() => Promise.resolve());
+    onNavigator("canShare", () => true);
+    onNavigator("share", share);
+    const fetch = api(pdf);
+    vi.stubGlobal("fetch", fetch);
+    render(wrap(<App />, "/quotes/q1"));
+
+    fireEvent.click(await sendButton());
+
+    await waitFor(() => expect(share).toHaveBeenCalled());
+    const [data] = share.mock.calls[0] as unknown as [{ files: File[] }];
+    expect(data.files[0]?.name).toBe("ponuda-2026-0007-v1.pdf");
+    expect(fetch.mock.calls.some(([url]) => url.endsWith("/quote.pdf?lang=bs"))).toBe(true);
+    await waitFor(() => expect(fetch.mock.calls.some(([url]) => url.endsWith("/quotes/q1/status"))).toBe(true));
+  });
+
+  it("does not mark the quote sent when he closes the share sheet", async () => {
+    onNavigator("canShare", () => true);
+    onNavigator("share", vi.fn(() => Promise.reject(new DOMException("closed", "AbortError"))));
+    const fetch = api(pdf);
+    vi.stubGlobal("fetch", fetch);
+    render(wrap(<App />, "/quotes/q1"));
+
+    fireEvent.click(await sendButton());
+
+    await waitFor(() => expect(fetch.mock.calls.some(([url]) => url.includes(".pdf"))).toBe(true));
+    await act(() => Promise.resolve());
+    expect(fetch.mock.calls.some(([url]) => url.endsWith("/status"))).toBe(false);
+  });
+
+  it("sends the summary as text when no PDF can be made, and says so", async () => {
+    const share = vi.fn(() => Promise.resolve());
+    onNavigator("share", share);
+    vi.stubGlobal("fetch", api(noPdf));
+    render(wrap(<App />, "/quotes/q1"));
+
+    fireEvent.click(await sendButton());
+
+    await waitFor(() => expect(share).toHaveBeenCalled());
+    const [data] = share.mock.calls[0] as unknown as [{ text: string; files?: File[] }];
+    expect(data.files).toBeUndefined();
+    expect(data.text).toContain("2026-0007");
+    expect(await screen.findByText(/Ovaj put bez PDF-a \(PDFs cannot be made on this server\)/)).toBeTruthy();
+  });
+});

@@ -8,6 +8,7 @@ const PATHS = {
   search: "M10.5 17a6.5 6.5 0 1 0 0-13 6.5 6.5 0 0 0 0 13zM15.5 15.5L20 20",
   copy: "M8 8h11v11H8zM5 16V5h11",
   share: "M12 4v11M7.5 8.5L12 4l4.5 4.5M5 14v5h14v-5",
+  download: "M12 4v11M7.5 10.5L12 15l4.5-4.5M5 19h14",
   logout: "M14 4h5v16h-5M10 8l-4 4 4 4M6 12h9",
   sliders: "M4 7h9M17 7h3M4 17h3M11 17h9M15 5v4M9 15v4",
   edit: "M5 19l1-4 10-10 3 3-10 10-4 1zM14 7l3 3",

@@ -61,6 +61,20 @@ export function apiUrl(path: string): string {
   return `${API_BASE}${path}`;
 }
 
+/** A file the API makes, such as a quote PDF, named as the server's Content-Disposition says. */
+export async function getFile(path: string, fallbackName: string): Promise<File> {
+  const response = await fetch(`${API_BASE}${path}`, {
+    credentials: "same-origin",
+    headers: { Accept: "application/pdf, application/problem+json" },
+  });
+  if (!response.ok) {
+    throw new ApiError(response.status, await response.json().catch(() => null));
+  }
+  const blob = await response.blob();
+  const name = /filename="([^"]+)"/.exec(response.headers.get("Content-Disposition") ?? "")?.[1];
+  return new File([blob], name ?? fallbackName, { type: blob.type || "application/pdf" });
+}
+
 /** A file's bytes as base64, for JSON uploads (the server works out the encoding). */
 export async function fileBase64(file: File): Promise<string> {
   const bytes = new Uint8Array(await file.arrayBuffer());

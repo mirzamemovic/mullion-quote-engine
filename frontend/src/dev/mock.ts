@@ -193,6 +193,10 @@ async function route(method: string, path: string, body: Json): Promise<Response
   }
   const quote = state.quotes.find((q) => q.id === b);
   if (a === "quotes" && quote) {
+    if (c === "revisions" && e?.endsWith(".pdf")) {
+      // The preview has no PDF renderer: answer as a server without one does.
+      return reply(503, { title: "PDFs are not available", status: 503, detail: "Nema PDF-a u pregledu." });
+    }
     if (c === "revisions" && e === "calculate") {
       const positions = (quote.revision as Json).positions as unknown[];
       if (positions.length === 0) return reply(422, { title: "invalid input", status: 422, detail: "Nema prozora." });

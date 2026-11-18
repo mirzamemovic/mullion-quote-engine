@@ -820,6 +820,23 @@
         "title": "LoginIn",
         "type": "object"
       },
+      "LogoIn": {
+        "additionalProperties": false,
+        "description": "A PNG or JPEG of at most 300 KB, in base64 (so no multipart parser is needed).",
+        "properties": {
+          "content_base64": {
+            "maxLength": 409600,
+            "minLength": 1,
+            "title": "Content Base64",
+            "type": "string"
+          }
+        },
+        "required": [
+          "content_base64"
+        ],
+        "title": "LogoIn",
+        "type": "object"
+      },
       "MeOut": {
         "additionalProperties": false,
         "properties": {
@@ -2878,8 +2895,9 @@
         "title": "ValidationError",
         "type": "object"
       },
-      "WorkshopIO": {
+      "WorkshopOut": {
         "additionalProperties": false,
+        "description": "The workshop's details with whether it has a logo. A PUT may send it back as read;\n``has_logo`` is then ignored (the logo has its own endpoints).",
         "properties": {
           "address": {
             "default": "",
@@ -2904,6 +2922,11 @@
             "maxLength": 200,
             "title": "Email",
             "type": "string"
+          },
+          "has_logo": {
+            "default": false,
+            "title": "Has Logo",
+            "type": "boolean"
           },
           "language": {
             "default": "en",
@@ -2941,7 +2964,7 @@
         "required": [
           "name"
         ],
-        "title": "WorkshopIO",
+        "title": "WorkshopOut",
         "type": "object"
       }
     }
@@ -5108,6 +5131,144 @@
         ]
       }
     },
+    "/api/v1/quotes/{quote_id}/revisions/{number}/quote.pdf": {
+      "get": {
+        "description": "The client's quote as a PDF, in ``lang`` or else the workshop's language.",
+        "operationId": "quote_pdf_api_v1_quotes__quote_id__revisions__number__quote_pdf_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "quote_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Quote Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "number",
+            "required": true,
+            "schema": {
+              "title": "Number",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "lang",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "en",
+                    "bs"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Lang"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/pdf": {}
+            },
+            "description": "The PDF, as a download."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Quote Pdf",
+        "tags": [
+          "quotes"
+        ]
+      }
+    },
+    "/api/v1/quotes/{quote_id}/revisions/{number}/workshop.pdf": {
+      "get": {
+        "description": "The cutting plan, cut list, glass order and purchase list as a PDF, without prices.",
+        "operationId": "workshop_pdf_api_v1_quotes__quote_id__revisions__number__workshop_pdf_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "quote_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Quote Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "number",
+            "required": true,
+            "schema": {
+              "title": "Number",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "lang",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "en",
+                    "bs"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Lang"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/pdf": {}
+            },
+            "description": "The PDF, as a download."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Workshop Pdf",
+        "tags": [
+          "quotes"
+        ]
+      }
+    },
     "/api/v1/quotes/{quote_id}/status": {
       "post": {
         "operationId": "set_status_api_v1_quotes__quote_id__status_post",
@@ -6047,7 +6208,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/WorkshopIO"
+                  "$ref": "#/components/schemas/WorkshopOut"
                 }
               }
             },
@@ -6066,7 +6227,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/WorkshopIO"
+                "$ref": "#/components/schemas/WorkshopOut"
               }
             }
           },
@@ -6077,7 +6238,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/WorkshopIO"
+                  "$ref": "#/components/schemas/WorkshopOut"
                 }
               }
             },
@@ -6095,6 +6256,77 @@
           }
         },
         "summary": "Put Workshop",
+        "tags": [
+          "workshop"
+        ]
+      }
+    },
+    "/api/v1/workshop/logo": {
+      "delete": {
+        "operationId": "delete_logo_api_v1_workshop_logo_delete",
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Delete Logo",
+        "tags": [
+          "workshop"
+        ]
+      },
+      "get": {
+        "description": "The logo printed on client PDFs, served with the type read from its own bytes.",
+        "operationId": "get_logo_api_v1_workshop_logo_get",
+        "responses": {
+          "200": {
+            "content": {
+              "image/jpeg": {},
+              "image/png": {}
+            },
+            "description": "The logo"
+          }
+        },
+        "summary": "Get Logo",
+        "tags": [
+          "workshop"
+        ]
+      },
+      "put": {
+        "description": "A PNG or JPEG of at most 300 KB and 2000 x 2000 pixels for the client PDFs.",
+        "operationId": "put_logo_api_v1_workshop_logo_put",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LogoIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkshopOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Put Logo",
         "tags": [
           "workshop"
         ]

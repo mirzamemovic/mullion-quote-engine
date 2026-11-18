@@ -1,7 +1,7 @@
 /** Server state through TanStack Query: one hook per thing the screens read or change. */
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
-import { ApiError, get, patch, post, put } from "./client";
+import { ApiError, get, getFile, patch, post, put } from "./client";
 import type {
   Calculation,
   Client,
@@ -104,6 +104,17 @@ export function useCalculation(id: string, revision: number, enabled: boolean) {
     queryFn: () => post<Calculation>(`/quotes/${id}/revisions/${revision}/calculate`),
     enabled,
     retry: false,
+  });
+}
+
+export type DocumentKind = "quote" | "workshop";
+export type DocumentLanguage = "en" | "bs";
+
+/** A revision's client quote or workshop sheet as a PDF file. */
+export function useDocument(id: string, revision: number) {
+  return useMutation({
+    mutationFn: ({ kind, lang }: { kind: DocumentKind; lang: DocumentLanguage }) =>
+      getFile(`/quotes/${id}/revisions/${revision}/${kind}.pdf?lang=${lang}`, `${kind}.pdf`),
   });
 }
 

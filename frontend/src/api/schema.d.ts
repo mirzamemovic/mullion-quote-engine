@@ -789,6 +789,46 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/quotes/{quote_id}/revisions/{number}/quote.pdf": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Quote Pdf
+         * @description The client's quote as a PDF, in ``lang`` or else the workshop's language.
+         */
+        get: operations["quote_pdf_api_v1_quotes__quote_id__revisions__number__quote_pdf_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/quotes/{quote_id}/revisions/{number}/workshop.pdf": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Workshop Pdf
+         * @description The cutting plan, cut list, glass order and purchase list as a PDF, without prices.
+         */
+        get: operations["workshop_pdf_api_v1_quotes__quote_id__revisions__number__workshop_pdf_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/quotes/{quote_id}/status": {
         parameters: {
             query?: never;
@@ -1151,6 +1191,31 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/workshop/logo": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Logo
+         * @description The logo printed on client PDFs, served with the type read from its own bytes.
+         */
+        get: operations["get_logo_api_v1_workshop_logo_get"];
+        /**
+         * Put Logo
+         * @description A PNG or JPEG of at most 300 KB and 2000 x 2000 pixels for the client PDFs.
+         */
+        put: operations["put_logo_api_v1_workshop_logo_put"];
+        post?: never;
+        /** Delete Logo */
+        delete: operations["delete_logo_api_v1_workshop_logo_delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -1490,6 +1555,14 @@ export interface components {
             email: string;
             /** Password */
             password: string;
+        };
+        /**
+         * LogoIn
+         * @description A PNG or JPEG of at most 300 KB, in base64 (so no multipart parser is needed).
+         */
+        LogoIn: {
+            /** Content Base64 */
+            content_base64: string;
         };
         /** MeOut */
         MeOut: {
@@ -2331,8 +2404,12 @@ export interface components {
             /** Error Type */
             type: string;
         };
-        /** WorkshopIO */
-        WorkshopIO: {
+        /**
+         * WorkshopOut
+         * @description The workshop's details with whether it has a logo. A PUT may send it back as read;
+         *     ``has_logo`` is then ignored (the logo has its own endpoints).
+         */
+        WorkshopOut: {
             /**
              * Address
              * @default
@@ -2349,6 +2426,11 @@ export interface components {
              * @default
              */
             email: string;
+            /**
+             * Has Logo
+             * @default false
+             */
+            has_logo: boolean;
             /**
              * Language
              * @default en
@@ -3979,6 +4061,74 @@ export interface operations {
             };
         };
     };
+    quote_pdf_api_v1_quotes__quote_id__revisions__number__quote_pdf_get: {
+        parameters: {
+            query?: {
+                lang?: ("en" | "bs") | null;
+            };
+            header?: never;
+            path: {
+                quote_id: string;
+                number: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The PDF, as a download. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/pdf": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    workshop_pdf_api_v1_quotes__quote_id__revisions__number__workshop_pdf_get: {
+        parameters: {
+            query?: {
+                lang?: ("en" | "bs") | null;
+            };
+            header?: never;
+            path: {
+                quote_id: string;
+                number: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The PDF, as a download. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/pdf": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     set_status_api_v1_quotes__quote_id__status_post: {
         parameters: {
             query?: never;
@@ -4656,7 +4806,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["WorkshopIO"];
+                    "application/json": components["schemas"]["WorkshopOut"];
                 };
             };
         };
@@ -4670,7 +4820,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["WorkshopIO"];
+                "application/json": components["schemas"]["WorkshopOut"];
             };
         };
         responses: {
@@ -4680,7 +4830,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["WorkshopIO"];
+                    "application/json": components["schemas"]["WorkshopOut"];
                 };
             };
             /** @description Validation Error */
@@ -4691,6 +4841,78 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
                 };
+            };
+        };
+    };
+    get_logo_api_v1_workshop_logo_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The logo */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "image/jpeg": unknown;
+                    "image/png": unknown;
+                };
+            };
+        };
+    };
+    put_logo_api_v1_workshop_logo_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LogoIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WorkshopOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_logo_api_v1_workshop_logo_delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };
