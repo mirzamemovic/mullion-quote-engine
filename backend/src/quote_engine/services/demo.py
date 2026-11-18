@@ -14,6 +14,7 @@ from datetime import date, datetime
 from sqlalchemy import delete, select
 from sqlalchemy.orm import Session as DbSession
 
+from quote_engine.db.base import utc_now
 from quote_engine.db.models import (
     WORKSHOP_SCOPED,
     Client,
@@ -37,7 +38,7 @@ from quote_engine.services.demo_catalogue import (
 )
 from quote_engine.services.workshops import create_user, create_workshop
 
-DEMO_NAME = "Probna radionica (izmišljeni podaci)"
+DEMO_NAME = "Demo workshop (invented data)"
 DEMO_EMAIL = "demo@example.invalid"
 SUPPLIER_KINDS = {"profile": "profile", "glass": "glass", "other": "hardware"}
 
@@ -94,13 +95,13 @@ def seed_demo(
                 profile_system_id=system.id,
                 version=1,
                 constants=demo_system.sheet(),
-                source_pages={"all": "odbici izmišljeni za demo; cijene: docs/market-prices.md"},
+                source_pages={"all": "invented deductions; prices: docs/market-prices.md"},
             )
         )
     for opening in (Opening.TILT_TURN_LEFT, Opening.TILT_TURN_RIGHT):
         add(
             HardwareSet(
-                name=f"Probni okov {opening.value}",
+                name=f"Sample hardware {opening.value}",
                 opening_type=opening.value,
                 max_width_mm=1300,
                 max_height_mm=2400,
@@ -108,7 +109,7 @@ def seed_demo(
                 max_weight_g=100_000,
             )
         )
-    prices = add(PriceListVersion(valid_from=today, note=PRICE_NOTE))
+    prices = add(PriceListVersion(valid_from=today, note=PRICE_NOTE, published_at=utc_now()))
     for row in price_rows("profile", "glass", "other"):
         supplier = suppliers[str(row.pop("supplier_id"))]
         add(
@@ -120,7 +121,7 @@ def seed_demo(
                 **row,
             )
         )
-    add(Client(name="Probni klijent", phone="", place="Probno mjesto"))
+    add(Client(name="Sample client", phone="", place="Sample town"))
     return workshop, password
 
 

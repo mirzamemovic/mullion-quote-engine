@@ -42,15 +42,11 @@ class Scoped:
         return row
 
     def all[M: Base](self, model: type[M], *where: Any, order_by: Any = None) -> Sequence[M]:
-        query = self.select(model).where(*where)
-        if order_by is not None:
-            query = query.order_by(order_by)
-        return self.session.scalars(query).all()
+        """Rows matching ``where``; ``order_by`` is one column or a tuple of them."""
+        return self.session.scalars(_ordered(self.select(model).where(*where), order_by)).all()
 
     def first[M: Base](self, model: type[M], *where: Any, order_by: Any = None) -> M | None:
-        query = self.select(model).where(*where)
-        if order_by is not None:
-            query = query.order_by(order_by)
+        query = _ordered(self.select(model).where(*where), order_by)
         return self.session.scalars(query.limit(1)).first()
 
     def add[M: Base](self, row: M) -> M:
@@ -65,3 +61,9 @@ class Scoped:
             raise NotFoundError(type(row), row.id)
         self.session.delete(row)
         self.session.flush()
+
+
+def _ordered[M](query: Select[M], order_by: Any) -> Select[M]:
+    if order_by is None:
+        return query
+    return query.order_by(*order_by) if isinstance(order_by, tuple) else query.order_by(order_by)

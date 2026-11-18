@@ -81,7 +81,12 @@ def current_price_list(db: Scoped, today: date) -> PriceListVersion:
         PriceListVersion,
         PriceListVersion.status == PUBLISHED,
         PriceListVersion.valid_from <= today,
-        order_by=PriceListVersion.valid_from.desc(),
+        # Two lists from the same day: the one published last is the one in use.
+        order_by=(
+            PriceListVersion.valid_from.desc(),
+            PriceListVersion.published_at.desc().nulls_last(),
+            PriceListVersion.created_at.desc(),
+        ),
     )
     if version is None:
         raise QuoteError("there is no price list valid today")

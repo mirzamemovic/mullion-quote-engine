@@ -631,7 +631,7 @@ def test_a_supplier_bump_makes_a_new_version(
     assert response.status_code == 201, response.text
     new = response.json()
     assert new["id"] != source["id"]
-    assert "+4% · Probni dobavljač stakla" in new["note"]
+    assert "+4% · Sample glass supplier" in new["note"]
     before = {(e["item_kind"], e["item_ref"], e["colour"]): e for e in source["entries"]}
     for entry in new["entries"]:
         old = before[(entry["item_kind"], entry["item_ref"], entry["colour"])]
@@ -1097,3 +1097,22 @@ def test_the_sheet_editor_is_told_which_values_to_ask_for(
     assert {"sash_width", "frame_steel", "fixed_glass"} <= set(fields["deductions"])
     unreinforced = api.get(f"{API}/systems/{alu['id']}/sheet-fields?reinforced=false").json()
     assert not [d for d in unreinforced["deductions"] if "steel" in d]
+
+
+def test_of_two_lists_from_the_same_day_the_one_published_last_is_used(
+    api: TestClient, shop_a: SampleWorkshop
+) -> None:
+    """A draft started first but published last wins: publishing time decides, not creation."""
+    log_in(api, shop_a.email)
+    current = api.get(f"{API}/price-lists").json()[0]
+    early = api.post(f"{API}/price-lists/drafts", json={"copy_from": current["id"]}).json()
+    late = api.post(f"{API}/price-lists/drafts", json={"copy_from": current["id"]}).json()
+    publish = {"valid_from": str(today())}
+    assert api.post(f"{API}/price-lists/{late['id']}/publish", json=publish).status_code == 200
+    assert api.post(f"{API}/price-lists/{early['id']}/publish", json=publish).status_code == 200
+
+    assert api.get(f"{API}/price-lists").json()[0]["id"] == early["id"]
+    quote = new_quote(api)
+    api.put(f"{API}/quotes/{quote['id']}/revisions/1", json=revision_body())
+    calc = api.post(f"{API}/quotes/{quote['id']}/revisions/1/calculate").json()
+    assert calc["versions"]["price_list"] == early["id"]

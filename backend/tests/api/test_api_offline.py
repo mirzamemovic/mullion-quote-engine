@@ -308,9 +308,9 @@ def test_aluminium_costs_more_than_pvc_and_premium_more_than_budget() -> None:
 
 
 def test_demo_data_is_marked_as_sample() -> None:
-    assert "izmišljeni" in demo.DEMO_NAME
+    assert "invented" in demo.DEMO_NAME
     assert demo.DEMO_EMAIL.endswith(".invalid")
-    assert "nisu cijene radionice" in demo_catalogue.PRICE_NOTE
+    assert "not a workshop's own prices" in demo_catalogue.PRICE_NOTE
 
 
 # --- development demo endpoints -----------------------------------------------------------------

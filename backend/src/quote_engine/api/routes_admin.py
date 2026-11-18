@@ -207,7 +207,7 @@ def _check_suppliers(db: Scoped, supplier_ids: set[uuid.UUID]) -> None:
 
 
 def _new_price_list(db: Scoped, valid_from: Any, note: str, entries: list[dict[str, Any]]) -> Any:
-    version = db.add(PriceListVersion(valid_from=valid_from, note=note))
+    version = db.add(PriceListVersion(valid_from=valid_from, note=note, published_at=svc.utc_now()))
     for entry in entries:
         db.add(PriceEntry(price_list_version_id=version.id, **entry))
     db.session.refresh(version)
@@ -216,7 +216,12 @@ def _new_price_list(db: Scoped, valid_from: Any, note: str, entries: list[dict[s
 
 @router.get("/price-lists")
 def list_price_lists(a: LoggedIn) -> list[PriceListOut]:
-    rows = a.db.all(PriceListVersion, order_by=PriceListVersion.valid_from.desc())
+    order = (
+        PriceListVersion.valid_from.desc(),
+        PriceListVersion.published_at.desc().nulls_last(),
+        PriceListVersion.created_at.desc(),
+    )
+    rows = a.db.all(PriceListVersion, order_by=order)
     return [PriceListOut.model_validate(r) for r in rows]
 
 

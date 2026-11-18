@@ -113,7 +113,7 @@ SYSTEMS: tuple[DemoSystem, ...] = (
     DemoSystem(
         key="rehau-euro-design-70",
         brand="REHAU",
-        series="Euro-Design 70 (5 komora)",
+        series="Euro-Design 70 (5 chambers)",
         material=Material.PVC,
         depth_mm=70,
         bar_length_mm=6000,
@@ -134,7 +134,7 @@ SYSTEMS: tuple[DemoSystem, ...] = (
     DemoSystem(
         key="salamander-greenevolution-76",
         brand="Salamander",
-        series="greenEvolution 76 (5-7 komora)",
+        series="greenEvolution 76 (5-7 chambers)",
         material=Material.PVC,
         depth_mm=76,
         bar_length_mm=6000,
@@ -155,7 +155,7 @@ SYSTEMS: tuple[DemoSystem, ...] = (
     DemoSystem(
         key="rehau-synego-80",
         brand="REHAU",
-        series="SYNEGO 80 (7 komora)",
+        series="SYNEGO 80 (7 chambers)",
         material=Material.PVC,
         depth_mm=80,
         bar_length_mm=6000,
@@ -176,7 +176,7 @@ SYSTEMS: tuple[DemoSystem, ...] = (
     DemoSystem(
         key="alumil-m9400",
         brand="Alumil",
-        series="COMFORT M9400 (bez termoprekida)",
+        series="COMFORT M9400 (no thermal break)",
         material=Material.ALUMINIUM,
         depth_mm=45,
         bar_length_mm=6000,
@@ -197,7 +197,7 @@ SYSTEMS: tuple[DemoSystem, ...] = (
     DemoSystem(
         key="alumil-smartia-s67",
         brand="Alumil",
-        series="SMARTIA S67 (termoprekid)",
+        series="SMARTIA S67 (thermal break)",
         material=Material.ALUMINIUM,
         depth_mm=67,
         bar_length_mm=6000,
@@ -218,7 +218,7 @@ SYSTEMS: tuple[DemoSystem, ...] = (
     DemoSystem(
         key="alumil-smartia-m11000",
         brand="Alumil",
-        series="SMARTIA M11000 (termoprekid)",
+        series="SMARTIA M11000 (thermal break)",
         material=Material.ALUMINIUM,
         depth_mm=77,
         bar_length_mm=6000,
@@ -350,14 +350,14 @@ def price_rows(profile: str, glass: str, other: str) -> list[dict[str, object]]:
 
 
 SUPPLIER_NAMES = {
-    "profile": "Probni dobavljač profila",
-    "glass": "Probni dobavljač stakla",
-    "other": "Probni dobavljač okova",
+    "profile": "Sample profile supplier",
+    "glass": "Sample glass supplier",
+    "other": "Sample hardware supplier",
 }
 SUPPLIER_IDS = {
     kind: uuid.uuid5(uuid.NAMESPACE_URL, f"mjera-demo/{kind}") for kind in SUPPLIER_NAMES
 }
-PRICE_NOTE = "Procjena tržišta Kosova (bez PDV-a), nisu cijene radionice"
+PRICE_NOTE = "Kosovo market estimates (without VAT), not a workshop's own prices"
 
 
 def demo_settings() -> WorkshopSettings:

@@ -197,6 +197,8 @@ class PriceListVersion(WorkshopScoped, Base):
     note: Mapped[str] = mapped_column(String(NAME), default="")
     # draft (being edited, never used by a quote) | published (immutable once used)
     status: Mapped[str] = mapped_column(String(SHORT), default=PUBLISHED, server_default=PUBLISHED)
+    # Orders two lists valid from the same day: the one published last is in use.
+    published_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), default=None)
     entries: Mapped[list["PriceEntry"]] = relationship(
         back_populates="version", cascade="all, delete-orphan", order_by="PriceEntry.item_kind"
     )

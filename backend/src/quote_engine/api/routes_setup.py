@@ -155,6 +155,7 @@ def publish_price_list(list_id: uuid.UUID, body: PublishIn, a: OwnerStepUp) -> P
         raise svc.QuoteError("an empty price list cannot be published")
     version.valid_from = body.valid_from
     version.status = PUBLISHED
+    version.published_at = svc.utc_now()
     svc.audit(a.db, a.user.id, "publish", "price_list", version.id)
     return PriceListOut.model_validate(version)
 
