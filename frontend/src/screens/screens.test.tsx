@@ -421,6 +421,34 @@ describe("Quote documents", () => {
     expect(fetch.mock.calls.some(([url]) => url.endsWith("/status"))).toBe(false);
   });
 
+  it("opens the total into its layers", async () => {
+    vi.stubGlobal("fetch", api(pdf));
+    render(wrap(<App />, "/quotes/q1"));
+
+    fireEvent.click(await screen.findByRole("button", { name: "Od čega se sastoji?" }));
+
+    const layers = screen.getByText("Ostatak").closest("dl");
+    expect(layers?.textContent).toContain("100,00 €");
+    expect(screen.getByRole("button", { name: "Sakrij" })).toBeTruthy();
+  });
+
+  it("locks an accepted quote: no sending, no editing", async () => {
+    const accepted = { ...quote, status: "accepted", accepted_at: "2026-11-18T10:00:00Z" };
+    vi.stubGlobal(
+      "fetch",
+      vi.fn((url: string) => {
+        if (url.endsWith("/quotes/q1")) return json(200, accepted);
+        if (url.endsWith("/payments")) return json(200, []);
+        return api(pdf)(url);
+      }),
+    );
+    render(wrap(<App />, "/quotes/q1"));
+
+    expect(await screen.findByText("Prihvaćena ponuda se više ne mijenja.")).toBeTruthy();
+    expect(screen.queryByRole("button", { name: /Pošalji klijentu/ })).toBeNull();
+    expect(screen.queryByRole("link", { name: /Dodaj prozor/ })).toBeNull();
+  });
+
   it("sends the summary as text when no PDF can be made, and says so", async () => {
     const share = vi.fn(() => Promise.resolve());
     onNavigator("share", share);
