@@ -193,7 +193,7 @@ Plan approved 2026-11-17, in phases, each on its own branch stacked on `feat/m8-
 | 1 Verify the base | `feat/m6-verify`, verified on `feat/m6-catalogue-setup` | Done 2026-11-17: every database test ran against PostgreSQL 18 for the first time |
 | 2 Workshops, roles, invites, sandbox | `feat/m6-workshops` | Built; offline tests pass; database tests written, not run |
 | 3 Setup checklist, drafts, CSV prices | `feat/m6-catalogue-setup` | Backend built; offline tests pass; database tests written, not run; screens come in phase 4 |
-| 4 Admin panel and remaining screens | `feat/m8-admin-panel` | todo |
+| 4 Admin panel and remaining screens | `feat/m8-admin-panel` | Done 2026-11-18: built, checked in the browser on the real database, end-to-end test passes |
 | 5 PDFs | `feat/m7-pdfs` | todo |
 | 6 Pricing policy and quality | `feat/m5-pricing-policy`, `feat/m9-quality` | todo |
 | 7 Deploy | `feat/m9-deploy-live` | waiting for the Oracle account and a domain |
@@ -217,3 +217,11 @@ First run: 68 of 71 database tests passed. The three failures were real:
 - An M6 test picked the first system in the list, which became an aluminium one when aluminium was added on 2026-11-14; it had never run. It now picks its system by key and checks the rule above.
 
 After the fixes, with `QUOTE_ENGINE_REQUIRE_DATABASE=1`: `pytest --cov` 659 passed, 3 skipped (the golden jobs), total coverage 93.3% (floor 80%).
+
+### Phase 4: the screens (2026-11-18)
+
+Screens (under `frontend/src/`): `screens/Landing.tsx` (what the app does, "Try it", sign in), `screens/Join.tsx` (invite links, token after `#`), and under `screens/workshop/` the workshop menu, the setup checklist, profile systems with window types and hardware sets, the sheet editor (the engine lists the fields; every value has its catalogue page; a test cut runs the real rules), prices and suppliers with the supplier bump, the price-list editor (drafts, missing prices added in one tap, CSV download and upload with row-numbered problems, publish), the team (invite links to copy or share, roles, devices), workshop details with the quote settings, and the person's own login (password, two-step). The quote screen gained extras (sills, shutters, screens, manual lines) and the price per m². English is the default; Bosnian stays one tap away. Amounts use the workshop's currency and are read from text as exact cents. The old `/admin` screen is replaced (its address redirects).
+
+Found and fixed while checking in the browser: two price lists published on the same day had no defined order (migration 0005 adds `published_at`; the one published last is in use); the demo's names, note and suppliers were still in Bosnian in an English sandbox; three phone layouts (the landing's main action below the fold, the extras switch, the sheet editor's page fields).
+
+Checks: Vitest 30 tests; Playwright end-to-end (Try it, a quote with two measured windows and a sill, the total following, the setup checklist; axe on each main screen) passes against the running app; axe (WCAG 2.2 AA) 0 violations on 13 screens; the design detector reports nothing; backend `pytest` with the database 660 passed, 3 skipped (golden).
