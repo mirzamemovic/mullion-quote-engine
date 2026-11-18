@@ -16,6 +16,7 @@ from sqlalchemy import (
     DateTime,
     ForeignKey,
     Integer,
+    LargeBinary,
     String,
     Text,
     UniqueConstraint,
@@ -48,6 +49,9 @@ class Workshop(Base):
     language: Mapped[str] = mapped_column(String(SHORT), default="en", server_default="en")
     # A "Try it" sandbox is deleted after this moment; a real workshop has none.
     expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), default=None)
+    # The logo on the client PDF: a PNG or JPEG of at most 300 KB, checked by pdf/images.py on
+    # upload and again whenever a PDF is made. Its type is read from its bytes, never stored.
+    logo: Mapped[bytes | None] = mapped_column(LargeBinary, default=None)
 
 
 class User(WorkshopScoped, Base):

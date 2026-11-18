@@ -5,6 +5,7 @@ see ``conftest.py``.
 """
 
 import base64
+import io
 import uuid
 from datetime import UTC, date, datetime, timedelta
 from typing import Any
@@ -14,6 +15,7 @@ import pytest
 from alembic.autogenerate import compare_metadata
 from alembic.migration import MigrationContext
 from fastapi.testclient import TestClient
+from pypdf import PdfReader
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
@@ -40,17 +42,20 @@ from quote_engine.db.models import (
 from quote_engine.db.models import Session as SessionRow
 from quote_engine.db.repository import NotFoundError, Scoped
 from quote_engine.engine.rules.registry import TYPES
+from quote_engine.pdf import labels
 from quote_engine.services import (
     auth,
     calculation,
     demo,
     demo_catalogue,
+    documents,
     price_csv,
     sandbox,
     workshops,
 )
 from quote_engine.services import quotes as svc
 from tests.api.conftest import PASSWORD, SampleWorkshop, log_in
+from tests.pdf.test_images import png, real_png
 
 API = "/api/v1"
 
@@ -1116,3 +1121,150 @@ def test_of_two_lists_from_the_same_day_the_one_published_last_is_used(
     api.put(f"{API}/quotes/{quote['id']}/revisions/1", json=revision_body())
     calc = api.post(f"{API}/quotes/{quote['id']}/revisions/1/calculate").json()
     assert calc["versions"]["price_list"] == early["id"]
+
+
+# --- PDFs ---------------------------------------------------------------------------------------
+
+
+def pdf_text(response: Any) -> str | None:
+    """The PDF's text, or ``None`` where this machine cannot lay out PDFs (no Pango)."""
+    if response.status_code == 503:
+        assert response.json()["title"] == "PDFs are not available"
+        return None
+    assert response.status_code == 200, response.text
+    assert response.headers["content-type"] == "application/pdf"
+    assert response.headers["cache-control"] == "no-store"
+    reader = PdfReader(io.BytesIO(response.content))
+    return "\n".join(page.extract_text() for page in reader.pages).replace(chr(0xA0), " ")
+
+
+def test_a_quote_downloads_as_a_client_pdf_and_a_workshop_sheet(
+    api: TestClient, shop_a: SampleWorkshop
+) -> None:
+    log_in(api, shop_a.email)
+    quote = new_quote(api)
+    api.put(f"{API}/quotes/{quote['id']}/revisions/1", json=revision_body())
+    calc = api.post(f"{API}/quotes/{quote['id']}/revisions/1/calculate").json()
+    base = f"{API}/quotes/{quote['id']}/revisions/1"
+
+    client_pdf = api.get(f"{base}/quote.pdf?lang=bs")
+    text = pdf_text(client_pdf)
+    if text is not None:
+        assert client_pdf.headers["content-disposition"] == (
+            f'attachment; filename="ponuda-{quote["number"]}-v1.pdf"'
+        )
+        assert f"Ponuda {quote['number']}" in text
+        assert (
+            labels.money(calc["price"]["total_cents"], "bs", "EUR").replace(chr(0xA0), " ") in text
+        )
+
+    sheet = api.get(f"{base}/workshop.pdf")
+    text = pdf_text(sheet)
+    if text is not None:
+        assert sheet.headers["content-disposition"].endswith(f'-{quote["number"]}-v1.pdf"')
+        assert "Cutting plan" in text
+        assert calc["cut_lists"]["P1"]["pieces"][0]["formula"].split(" = ")[-1] in text
+        assert "€" not in text
+
+
+def test_pdfs_follow_the_quote_rules(
+    api: TestClient, db: Session, shop_a: SampleWorkshop, shop_b: SampleWorkshop
+) -> None:
+    log_in(api, shop_a.email)
+    quote = new_quote(api)
+    api.put(f"{API}/quotes/{quote['id']}/revisions/1", json=revision_body())
+    base = f"{API}/quotes/{quote['id']}/revisions"
+
+    assert api.get(f"{base}/1/quote.pdf?lang=sq").status_code == 422
+    assert api.get(f"{base}/9/quote.pdf").status_code == 409  # no such revision, as elsewhere
+
+    staff_login(api, db, shop_a)
+    assert api.get(f"{base}/1/workshop.pdf").status_code in (200, 503)
+
+    log_in(api, shop_b.email)
+    assert api.get(f"{base}/1/quote.pdf").status_code == 404
+    assert api.get(f"{base}/1/workshop.pdf").status_code == 404
+
+
+def test_pdfs_are_limited_per_workshop(
+    api: TestClient, shop_a: SampleWorkshop, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(documents, "PDFS_PER_MINUTE", 2)
+    documents.limiter.clear()
+    log_in(api, shop_a.email)
+    quote = new_quote(api)
+    api.put(f"{API}/quotes/{quote['id']}/revisions/1", json=revision_body())
+    url = f"{API}/quotes/{quote['id']}/revisions/1/quote.pdf"
+
+    assert [api.get(url).status_code in (200, 503) for _ in range(2)] == [True, True]
+    refused = api.get(url)
+    assert refused.status_code == 429
+    assert refused.json()["title"] == "too many PDFs"
+    documents.limiter.clear()
+
+
+# --- the workshop logo --------------------------------------------------------------------------
+
+
+def as_base64(data: bytes) -> dict[str, str]:
+    return {"content_base64": base64.b64encode(data).decode("ascii")}
+
+
+def test_the_owner_sets_a_logo_that_prints_on_client_pdfs(
+    api: TestClient, db: Session, shop_a: SampleWorkshop
+) -> None:
+    log_in(api, shop_a.email)
+    assert api.get(f"{API}/workshop").json()["has_logo"] is False
+    assert api.get(f"{API}/workshop/logo").status_code == 404
+
+    logo = real_png(320, 120)
+    saved = api.put(f"{API}/workshop/logo", json=as_base64(logo))
+    assert saved.status_code == 200, saved.text
+    assert saved.json()["has_logo"] is True
+    served = api.get(f"{API}/workshop/logo")
+    assert served.headers["content-type"] == "image/png"
+    assert served.content == logo
+
+    quote = new_quote(api)
+    api.put(f"{API}/quotes/{quote['id']}/revisions/1", json=revision_body())
+    pdf = api.get(f"{API}/quotes/{quote['id']}/revisions/1/quote.pdf")
+    if pdf.status_code == 200:
+        assert len(PdfReader(io.BytesIO(pdf.content)).pages[0].images) == 1
+
+    staff_login(api, db, shop_a)
+    assert api.get(f"{API}/workshop/logo").status_code == 200
+    assert api.put(f"{API}/workshop/logo", json=as_base64(logo)).status_code == 403
+    assert api.delete(f"{API}/workshop/logo").status_code == 403
+
+    log_in(api, shop_a.email)
+    assert api.delete(f"{API}/workshop/logo").status_code == 204
+    assert api.get(f"{API}/workshop").json()["has_logo"] is False
+
+
+@pytest.mark.parametrize(
+    ("body", "reason"),
+    [
+        pytest.param(as_base64(b"GIF89a" + b"\0" * 30), "PNG or JPEG", id="gif"),
+        pytest.param(as_base64(png(5000, 100)), "pixels", id="too-many-pixels"),
+        pytest.param({"content_base64": "not base64!"}, "base64", id="not-base64"),
+        pytest.param({"content_base64": "A" * 409_601}, "", id="too-long-to-read"),
+    ],
+)
+def test_only_a_small_png_or_jpeg_is_a_logo(
+    api: TestClient, shop_a: SampleWorkshop, body: dict[str, str], reason: str
+) -> None:
+    log_in(api, shop_a.email)
+    refused = api.put(f"{API}/workshop/logo", json=body)
+    assert refused.status_code == 422
+    assert reason in refused.text
+    assert api.get(f"{API}/workshop").json()["has_logo"] is False
+
+
+def test_a_logo_needs_a_recent_password_check(
+    api: TestClient, db: Session, shop_a: SampleWorkshop
+) -> None:
+    log_in(api, shop_a.email)
+    for row in db.scalars(select(SessionRow)):
+        row.reauth_at = datetime(2020, 1, 1, tzinfo=UTC)
+    db.commit()
+    assert api.put(f"{API}/workshop/logo", json=as_base64(png(10, 10))).status_code == 403

@@ -78,6 +78,11 @@ def per_metre(length_mm: Mm, cents_per_m: Cents) -> Cents:
     return Cents((length_mm * cents_per_m + MM_PER_M // 2) // MM_PER_M)
 
 
+def hundredths_of_m2(area_mm2: Mm2) -> int:
+    """``area_mm2`` in hundredths of a square metre, rounded half up (1 254 000 mm² -> 125)."""
+    return (area_mm2 * 100 + MM2_PER_M2 // 2) // MM2_PER_M2
+
+
 def per_m2(area_mm2: Mm2, cents_per_m2: Cents) -> Cents:
     """Return the price of ``area_mm2`` at ``cents_per_m2`` per square metre, rounded half up."""
     return Cents((area_mm2 * cents_per_m2 + MM2_PER_M2 // 2) // MM2_PER_M2)

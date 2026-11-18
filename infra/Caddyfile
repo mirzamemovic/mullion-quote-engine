@@ -2,6 +2,12 @@
 {$DOMAIN} {
 	encode zstd gzip
 
+	# The largest real upload is a 1 MB price CSV (about 1.4 MB as base64 JSON). Anything bigger
+	# is refused here, before the app reads it into memory.
+	request_body {
+		max_size 2MB
+	}
+
 	header {
 		Strict-Transport-Security "max-age=31536000; includeSubDomains"
 		Content-Security-Policy "default-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"

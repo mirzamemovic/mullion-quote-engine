@@ -1,13 +1,24 @@
-"""The workshop's own profile and its invite links (owner only, except reading the profile)."""
+"""The workshop's own profile, its logo and its invite links (owner only, except reading)."""
 
+import base64
+import binascii
 import uuid
 
-from fastapi import APIRouter, status
+from fastapi import APIRouter, HTTPException, Response, status
 
 from quote_engine.api.deps import LoggedIn, Owner, OwnerStepUp
-from quote_engine.api.schemas import InviteCreated, InviteIn, InviteOut, WorkshopIO
+from quote_engine.api.schemas import (
+    InviteCreated,
+    InviteIn,
+    InviteOut,
+    LogoIn,
+    WorkshopIO,
+    WorkshopOut,
+)
 from quote_engine.db.models import Invite, Workshop
 from quote_engine.db.repository import NotFoundError
+from quote_engine.engine.errors import InvalidInput
+from quote_engine.pdf import images
 from quote_engine.services import workshops
 from quote_engine.services.quotes import audit, utc_now
 
@@ -21,24 +32,66 @@ def _workshop(a: LoggedIn) -> Workshop:
     return found
 
 
+def _out(row: Workshop) -> WorkshopOut:
+    details = WorkshopIO.model_validate(row).model_dump()
+    return WorkshopOut(**details, has_logo=row.logo is not None)
+
+
 @router.get("/workshop")
-def get_workshop(a: LoggedIn) -> WorkshopIO:
-    return WorkshopIO.model_validate(_workshop(a))
+def get_workshop(a: LoggedIn) -> WorkshopOut:
+    return _out(_workshop(a))
 
 
 @router.put("/workshop")
-def put_workshop(body: WorkshopIO, a: OwnerStepUp) -> WorkshopIO:
+def put_workshop(body: WorkshopOut, a: OwnerStepUp) -> WorkshopOut:
     """Name, contact details, VAT, language and (before the first quote) the currency."""
     row = _workshop(a)
     workshops.change_currency(a.db.session, row, body.currency)
     changed = []
-    for name, value in body.model_dump(exclude={"currency"}).items():
+    for name, value in body.model_dump(exclude={"currency", "has_logo"}).items():
         if getattr(row, name) != value:
             changed.append(name)
             setattr(row, name, value)
     # Field names only: the values may be contact details.
     audit(a.db, a.user.id, "update", "workshop", row.id, {"fields": changed})
-    return WorkshopIO.model_validate(row)
+    return _out(row)
+
+
+@router.get(
+    "/workshop/logo",
+    response_class=Response,
+    responses={200: {"content": {"image/png": {}, "image/jpeg": {}}, "description": "The logo"}},
+)
+def get_logo(a: LoggedIn) -> Response:
+    """The logo printed on client PDFs, served with the type read from its own bytes."""
+    row = _workshop(a)
+    info = images.sniff(row.logo) if row.logo else None
+    if row.logo is None or info is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "this workshop has no logo")
+    return Response(row.logo, media_type=info.media_type, headers={"Cache-Control": "no-cache"})
+
+
+@router.put("/workshop/logo")
+def put_logo(body: LogoIn, a: OwnerStepUp) -> WorkshopOut:
+    """A PNG or JPEG of at most 300 KB and 2000 x 2000 pixels for the client PDFs."""
+    try:
+        data = base64.b64decode(body.content_base64, validate=True)
+    except binascii.Error:
+        raise InvalidInput("the logo is not valid base64") from None
+    problem = images.problem(data)
+    if problem is not None:
+        raise InvalidInput(problem)
+    row = _workshop(a)
+    row.logo = data
+    audit(a.db, a.user.id, "update", "workshop", row.id, {"fields": ["logo"]})
+    return _out(row)
+
+
+@router.delete("/workshop/logo", status_code=status.HTTP_204_NO_CONTENT)
+def delete_logo(a: OwnerStepUp) -> None:
+    row = _workshop(a)
+    row.logo = None
+    audit(a.db, a.user.id, "update", "workshop", row.id, {"fields": ["logo"]})
 
 
 @router.get("/invites")

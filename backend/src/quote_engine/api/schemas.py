@@ -136,6 +136,19 @@ class WorkshopIO(Model):
     language: Literal["en", "bs"] = "en"
 
 
+class WorkshopOut(WorkshopIO):
+    """The workshop's details with whether it has a logo. A PUT may send it back as read;
+    ``has_logo`` is then ignored (the logo has its own endpoints)."""
+
+    has_logo: bool = False
+
+
+class LogoIn(Model):
+    """A PNG or JPEG of at most 300 KB, in base64 (so no multipart parser is needed)."""
+
+    content_base64: Annotated[str, Field(min_length=1, max_length=409_600)]
+
+
 # --- clients ------------------------------------------------------------------------------------
 
 

@@ -1,0 +1,164 @@
+{% extends "base.html" %}
+
+{% block style %}
+.note { margin-top: 3mm; color: #4b5258; }
+.group { margin-bottom: 5mm; }
+.group h3 .soft { font-weight: 400; }
+.bar { break-inside: avoid; margin: 0 0 3.5mm; }
+.strip {
+  display: flex;
+  height: 6mm;
+  overflow: hidden;
+  border: 0.35mm solid #23272b;
+  background: repeating-linear-gradient(135deg, #d3d8d7 0, #d3d8d7 0.8mm, #ffffff 0.8mm, #ffffff 1.6mm);
+}
+.cut {
+  flex: none;
+  height: 100%;
+  overflow: hidden;
+  background: #dbe5f7;
+  border-right: 0.35mm solid #23272b;
+  font-size: 7pt;
+  font-weight: 700;
+  line-height: 5.3mm;
+  text-align: center;
+}
+table.cuts { width: 100%; border-collapse: collapse; margin-top: 1mm; }
+table.cuts td { padding: 0.3mm 2mm 0.3mm 0; }
+table.cuts td.n { width: 6mm; font-weight: 700; }
+table.cuts td.num { width: 18mm; padding-right: 0; font-weight: 700; }
+table.cuts tr.off td { color: #4b5258; font-weight: 400; border-top: 0.25mm solid #d3d8d7; }
+.position { break-inside: avoid; margin-bottom: 6mm; }
+.head { display: flex; gap: 4mm; align-items: flex-start; margin-bottom: 1.5mm; }
+.head .pic { width: 22mm; flex: none; }
+td.formula { font-size: 8pt; color: #4b5258; }
+{% endblock %}
+
+{% block body %}
+<header class="top">
+  <div>
+    <h1>{{ t("workshop_sheet") }} {{ doc.number }}</h1>
+    <p class="soft">{{ doc.workshop_name }} · {{ t("version", n=doc.version) }} · {{ doc.issued }}</p>
+  </div>
+  <div>
+    <table class="facts">
+      <tr>
+        <th>{{ t("client") }}</th>
+        <td>{{ doc.client_name }}{% if doc.client_place %}, {{ doc.client_place }}{% endif %}</td>
+      </tr>
+      <tr><th>{{ t("system") }}</th><td>{{ doc.system }}</td></tr>
+    </table>
+  </div>
+</header>
+<p class="note">{{ t("internal") }}</p>
+
+<h2>{{ t("cutting_plan") }}</h2>
+{% for g in doc.groups %}
+<section class="group">
+  <h3>{{ g.title }} <span class="soft">· {{ g.bars_label }} · {{ g.waste }}</span></h3>
+  {% for bar in g.bars %}
+  <div class="bar">
+    <div class="strip">
+      {% for c in bar.cuts %}<span class="cut" style="width: {{ c.width }}">{{ c.number }}</span>{% endfor %}
+    </div>
+    <table class="cuts">
+      {% for c in bar.cuts %}
+      <tr><td class="n">{{ c.number }}</td><td>{{ c.label }}</td><td class="num">{{ c.length_mm }}</td></tr>
+      {% endfor %}
+      <tr class="off">
+        <td></td>
+        <td>{{ t("offcut") }}{% if bar.keep %} · {{ t("keep") }}{% endif %}</td>
+        <td class="num">{{ bar.offcut_mm }}</td>
+      </tr>
+    </table>
+  </div>
+  {% endfor %}
+</section>
+{% endfor %}
+
+<h2>{{ t("cut_list") }}</h2>
+{% for p in doc.positions %}
+<section class="position">
+  <div class="head">
+    <div class="pic">{{ p.drawing | drawing }}</div>
+    <div>
+      <h3>{{ p.ref }}</h3>
+      <p class="soft">{{ p.title }}</p>
+      {% if p.hardware %}
+      <p>{{ t("hardware") }}: {{ p.hardware | join(", ") }}</p>
+      {% endif %}
+    </div>
+  </div>
+  <table class="lines compact">
+    <thead>
+      <tr>
+        <th>{{ t("piece") }}</th>
+        <th class="num">{{ t("length") }}</th>
+        <th class="num">{{ t("angles") }}</th>
+        <th class="num">{{ t("qty") }}</th>
+        <th>{{ t("formula") }}</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for r in p.pieces %}
+      <tr>
+        <td>{{ r.label }}</td>
+        <td class="num strong">{{ r.length_mm }}</td>
+        <td class="num">{{ r.angles }}</td>
+        <td class="num">{{ r.qty }}</td>
+        <td class="formula">{{ r.formula }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+{% endfor %}
+
+{% if doc.glass %}
+<h2>{{ t("glass_order") }}</h2>
+<table class="lines compact">
+  <thead>
+    <tr>
+      <th>{{ t("build") }}</th>
+      <th class="num">{{ t("size") }}</th>
+      <th class="num">{{ t("qty") }}</th>
+      <th>{{ t("positions") }}</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for g in doc.glass %}
+    <tr>
+      <td>{{ g.build }}</td>
+      <td class="num strong">{{ g.size }}</td>
+      <td class="num">{{ g.qty }}</td>
+      <td>{{ g.positions }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endif %}
+
+{% if doc.to_buy %}
+<h2>{{ t("to_buy") }}</h2>
+<table class="lines compact">
+  <thead>
+    <tr>
+      <th>{{ t("item") }}</th>
+      <th class="num">{{ t("qty") }}</th>
+      <th></th>
+      <th>{{ t("supplier") }}</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for b in doc.to_buy %}
+    <tr>
+      <td>{{ b.item }}</td>
+      <td class="num strong">{{ b.qty }}</td>
+      <td>{{ b.unit }}</td>
+      <td>{{ b.supplier }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endif %}
+{% endblock %}

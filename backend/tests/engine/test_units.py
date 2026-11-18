@@ -9,6 +9,7 @@ from quote_engine.engine.units import (
     Mm,
     Mm2,
     divide_half_up,
+    hundredths_of_m2,
     pct,
     per_m2,
     per_metre,
@@ -128,3 +129,17 @@ def test_per_m2(area_mm2: int, cents_per_m2: int, expected: int) -> None:
 )
 def test_results_are_whole_numbers(result: int) -> None:
     assert type(result) is int
+
+
+@pytest.mark.parametrize(
+    ("area_mm2", "expected"),
+    [
+        pytest.param(1_254_000, 125, id="rounds-down"),
+        pytest.param(1_255_000, 126, id="exact-half-goes-up"),
+        pytest.param(9_999, 1, id="a-tiny-area-still-shows"),
+        pytest.param(4_999, 0, id="under-half-a-hundredth"),
+        pytest.param(0, 0, id="nothing"),
+    ],
+)
+def test_hundredths_of_m2(area_mm2: int, expected: int) -> None:
+    assert hundredths_of_m2(Mm2(area_mm2)) == expected

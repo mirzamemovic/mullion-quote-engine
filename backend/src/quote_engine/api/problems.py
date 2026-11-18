@@ -9,7 +9,9 @@ from starlette.exceptions import HTTPException
 
 from quote_engine.db.repository import NotFoundError
 from quote_engine.engine.errors import InvalidInput, MissingConstant, MissingPrice
+from quote_engine.pdf.render import PdfUnavailableError
 from quote_engine.services.auth import AuthError, RateLimitedError
+from quote_engine.services.documents import PdfBusyError, PdfLimitError
 from quote_engine.services.price_csv import CsvError
 from quote_engine.services.quotes import QuoteError
 from quote_engine.services.sandbox import SandboxError, SandboxFullError, SandboxLimitError
@@ -83,3 +85,15 @@ def install(app: FastAPI) -> None:
             return problem(429, "too many sandboxes", str(error))
         status = 503 if isinstance(error, SandboxFullError) else 409
         return problem(status, "no sandbox now", str(error))
+
+    @app.exception_handler(PdfLimitError)
+    async def pdf_limit(_: Request, error: PdfLimitError) -> JSONResponse:
+        return problem(429, "too many PDFs", str(error))
+
+    @app.exception_handler(PdfBusyError)
+    async def pdf_busy(_: Request, error: PdfBusyError) -> JSONResponse:
+        return problem(503, "PDFs are busy", str(error))
+
+    @app.exception_handler(PdfUnavailableError)
+    async def pdf_unavailable(_: Request, error: PdfUnavailableError) -> JSONResponse:
+        return problem(503, "PDFs are not available", str(error))

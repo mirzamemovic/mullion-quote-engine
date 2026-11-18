@@ -1,0 +1,135 @@
+{% extends "base.html" %}
+
+{% block style %}
+.workshop .name { font-size: 12pt; font-weight: 800; margin-bottom: 0.5mm; }
+.workshop .logo { display: block; max-width: 45mm; max-height: 18mm; margin-bottom: 2mm; }
+.client { margin-top: 7mm; }
+.client .name { font-size: 11pt; font-weight: 700; }
+td.pic { width: 24mm; padding-right: 4mm; }
+.ref { font-weight: 700; }
+.sum { margin-top: 5mm; margin-left: auto; width: 82mm; break-inside: avoid; }
+.totals { width: 100%; border-collapse: collapse; }
+.totals th { font-weight: 400; text-align: left; padding: 0.8mm 0; }
+.totals td { text-align: right; padding: 0.8mm 0; font-variant-numeric: tabular-nums; }
+.totals tr.grand th, .totals tr.grand td {
+  font-size: 12pt;
+  font-weight: 800;
+  border-top: 0.4mm solid #23272b;
+  padding-top: 1.5mm;
+}
+.payment { margin-top: 4mm; }
+.signatures { display: flex; gap: 12mm; margin-top: 16mm; break-inside: avoid; }
+.signatures > div { flex: 1; }
+.signatures .line { border-bottom: 0.3mm solid #23272b; height: 12mm; margin-bottom: 1.5mm; }
+{% endblock %}
+
+{% block body %}
+<header class="top">
+  <div class="workshop">
+    {% if doc.header.logo %}
+    <img class="logo" src="{{ doc.header.logo }}" alt="">
+    {% endif %}
+    <p class="name">{{ doc.header.name }}</p>
+    {% for line in doc.header.lines %}
+    <p class="soft">{{ line }}</p>
+    {% endfor %}
+  </div>
+  <div class="meta">
+    <h1>{{ t("quote") }} {{ doc.number }}</h1>
+    <p class="soft">{{ t("version", n=doc.version) }}</p>
+    <table class="facts">
+      <tr><th>{{ t("date") }}</th><td>{{ doc.issued }}</td></tr>
+      <tr><th>{{ t("valid_until") }}</th><td>{{ doc.valid_until }}</td></tr>
+    </table>
+  </div>
+</header>
+
+<section class="client">
+  <p class="label">{{ t("client") }}</p>
+  <p class="name">{{ doc.client_name }}</p>
+  {% if doc.client_place %}
+  <p>{{ doc.client_place }}</p>
+  {% endif %}
+</section>
+
+<h2>{{ t("windows") }}</h2>
+<table class="lines">
+  <thead>
+    <tr>
+      <th class="pic"></th>
+      <th>{{ t("description") }}</th>
+      <th class="num">{{ t("size") }}</th>
+      <th class="num">{{ t("qty") }}</th>
+      <th class="num">{{ t("unit_price") }}</th>
+      <th class="num">{{ t("line_total") }}</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for p in doc.positions %}
+    <tr>
+      <td class="pic">{{ p.drawing | drawing }}</td>
+      <td>
+        <p class="ref">{{ p.ref }}</p>
+        {% for line in p.details %}
+        <p class="soft">{{ line }}</p>
+        {% endfor %}
+      </td>
+      <td class="num">{{ p.size }}</td>
+      <td class="num">{{ p.qty }}</td>
+      <td class="num">{{ p.unit_price }}</td>
+      <td class="num strong">{{ p.amount }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+{% if doc.extras %}
+<h2>{{ t("extras") }}</h2>
+<table class="lines">
+  <thead>
+    <tr>
+      <th>{{ t("description") }}</th>
+      <th class="num">{{ t("qty") }}</th>
+      <th class="num">{{ t("line_total") }}</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for e in doc.extras %}
+    <tr>
+      <td>{{ e.description }}</td>
+      <td class="num">{{ e.qty }}</td>
+      <td class="num strong">{{ e.amount }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endif %}
+
+<div class="sum">
+  <table class="totals">
+    {% for row in doc.totals %}
+    <tr class="{{ 'grand' if row.strong else '' }}"><th>{{ row.label }}</th><td>{{ row.value }}</td></tr>
+    {% endfor %}
+  </table>
+  {% if doc.payment %}
+  <p class="label payment">{{ t("payment") }}</p>
+  <table class="totals">
+    {% for row in doc.payment %}
+    <tr><th>{{ row.label }}</th><td>{{ row.value }}</td></tr>
+    {% endfor %}
+  </table>
+  {% endif %}
+</div>
+
+<section class="signatures">
+  <div>
+    <p class="line"></p>
+    <p class="label">{{ t("for_workshop") }}</p>
+  </div>
+  <div>
+    <p class="line"></p>
+    <p class="label">{{ t("accepted_by") }}</p>
+    <p class="soft">{{ t("signature") }}</p>
+  </div>
+</section>
+{% endblock %}

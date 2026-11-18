@@ -2,9 +2,9 @@
 
 import uuid
 from datetime import date
-from typing import Any
+from typing import Any, Literal
 
-from fastapi import APIRouter, status
+from fastapi import APIRouter, Response, status
 from sqlalchemy import or_
 
 from quote_engine.api.deps import LoggedIn
@@ -28,7 +28,7 @@ from quote_engine.engine.rules.registry import cut_position
 from quote_engine.engine.sheet import system_constants_from_mapping
 from quote_engine.engine.units import Mm
 from quote_engine.engine.warnings import readings_warnings
-from quote_engine.services import calculation
+from quote_engine.services import calculation, documents
 from quote_engine.services import quotes as svc
 
 router = APIRouter(tags=["quotes"])
@@ -157,6 +157,51 @@ def calculate(quote_id: uuid.UUID, number: int, a: LoggedIn) -> dict[str, Any]:
     if rev.calc_snapshot is not None:
         return rev.calc_snapshot
     return calculation.calculate(rev, calculation.load_inputs(a.db, rev), today())
+
+
+PDF_RESPONSE: dict[int | str, dict[str, Any]] = {
+    200: {"content": {"application/pdf": {}}, "description": "The PDF, as a download."}
+}
+
+
+def _pdf(pdf: documents.Pdf) -> Response:
+    """A PDF download. It holds client details, so no cache keeps a copy."""
+    return Response(
+        pdf.data,
+        media_type="application/pdf",
+        headers={
+            "Content-Disposition": f'attachment; filename="{pdf.filename}"',
+            "Cache-Control": "no-store",
+        },
+    )
+
+
+@router.get(
+    "/quotes/{quote_id}/revisions/{number}/quote.pdf",
+    response_class=Response,
+    responses=PDF_RESPONSE,
+)
+def quote_pdf(
+    quote_id: uuid.UUID, number: int, a: LoggedIn, lang: Literal["en", "bs"] | None = None
+) -> Response:
+    """The client's quote as a PDF, in ``lang`` or else the workshop's language."""
+    quote = a.db.get(Quote, quote_id)
+    rev = svc.revision(a.db, quote, number)
+    return _pdf(documents.client_pdf(a.db, quote, rev, lang, today()))
+
+
+@router.get(
+    "/quotes/{quote_id}/revisions/{number}/workshop.pdf",
+    response_class=Response,
+    responses=PDF_RESPONSE,
+)
+def workshop_pdf(
+    quote_id: uuid.UUID, number: int, a: LoggedIn, lang: Literal["en", "bs"] | None = None
+) -> Response:
+    """The cutting plan, cut list, glass order and purchase list as a PDF, without prices."""
+    quote = a.db.get(Quote, quote_id)
+    rev = svc.revision(a.db, quote, number)
+    return _pdf(documents.workshop_pdf(a.db, quote, rev, lang, today()))
 
 
 @router.post("/quotes/{quote_id}/status")

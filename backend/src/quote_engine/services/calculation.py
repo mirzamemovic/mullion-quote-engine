@@ -27,7 +27,7 @@ from quote_engine.engine.measuring import measure_opening
 from quote_engine.engine.model import Colour, CutList, Opening, PositionSpec, SystemConstants
 from quote_engine.engine.optimizer.ffd import ffd
 from quote_engine.engine.optimizer.groups import PieceGroup, group_pieces
-from quote_engine.engine.optimizer.plan import plan_stats
+from quote_engine.engine.optimizer.plan import CuttingPlan, plan_stats
 from quote_engine.engine.prices import Price, PriceBook, PriceKey, PriceUnit
 from quote_engine.engine.pricing import (
     Discount,
@@ -180,14 +180,19 @@ def cut_revision(inputs: Inputs) -> Cuts:
     return Cuts(constants, cut_lists, groups)
 
 
+def plan_cuts(cuts: Cuts) -> dict[str, CuttingPlan]:
+    """The cutting plan of every bar group (first fit decreasing)."""
+    c = cuts.constants
+    return {
+        g.name: ffd(g.demands, g.bar_length_mm, c.kerf_mm, c.bar_end_trim_mm) for g in cuts.groups
+    }
+
+
 def calculate(revision: QuoteRevision, inputs: Inputs, today: date) -> dict[str, Any]:
     """Cut, optimize and price one revision. Returns plain data (also the accepted snapshot)."""
     cuts = cut_revision(inputs)
     constants, cut_lists, groups = cuts.constants, cuts.cut_lists, cuts.groups
-    plans = {
-        g.name: ffd(g.demands, g.bar_length_mm, constants.kerf_mm, constants.bar_end_trim_mm)
-        for g in groups
-    }
+    plans = plan_cuts(cuts)
     job = QuoteJob(
         positions=inputs.positions,
         cut_lists=cut_lists,
