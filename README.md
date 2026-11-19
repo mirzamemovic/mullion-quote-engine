@@ -57,7 +57,7 @@ A small window workshop quotes with pencil and paper, and every opening repeats 
 | Backend | FastAPI, Pydantic 2, SQLAlchemy 2, Alembic, PostgreSQL 18, Argon2 (argon2-cffi), pyotp, WeasyPrint and Jinja2 for PDFs |
 | Frontend | React 19, TypeScript 6, Vite 8, Tailwind CSS 4, TanStack Query 5, React Hook Form and Zod, i18next, React Router |
 | Quality | pytest, Hypothesis, coverage; Ruff, mypy (strict), import-linter; Vitest and Testing Library; Playwright with axe |
-| Delivery | Docker (multi-stage image), Caddy, GitHub Actions workflows (written, see [Limitations](#limitations)) |
+| Delivery | Docker (multi-stage image), Caddy, GitHub Actions (CI, security scans, CodeQL; deploy written, see [Limitations](#limitations)) |
 
 ## Architecture
 
@@ -179,7 +179,7 @@ The database tests run on a real PostgreSQL in a separate `quote_engine_test` da
 ## Limitations
 
 - **Not yet checked against real jobs.** The golden-test harness is ready, but the real past jobs, real system sheets and real prices are still to be added. Every deduction in the repository is an invented sample, and the demo's prices are market estimates, flagged as such in every quote that uses them.
-- **Not deployed.** The Docker image, production compose file, Caddy config, deploy, backup and restore scripts are written and reviewed but have not run on a server. The GitHub Actions workflows ran once, early on; the later ones have not run.
+- **Not deployed.** The Docker image, production compose file, Caddy config, deploy, backup and restore scripts are written and reviewed but have not run on a server. CI (including the Docker build), the security scans and CodeQL run on GitHub; the deploy workflow stays off until there is a server.
 - **PDFs need Pango**, which the Docker image has. On Windows the three render tests skip.
 - **Dates are UTC.** There is no per-workshop time zone, so around midnight "today" can be the day before in Kosovo.
 - **Not built yet:** the Albanian PDF, a delivery time on the client PDF, error reporting (Sentry).

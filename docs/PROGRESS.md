@@ -9,7 +9,7 @@ Git is local only. Each milestone has its own branch; a branch is merged into `m
 
 | Milestone | Status | Branch | Notes |
 |---|---|---|---|
-| M0 Repo and tooling | done | merged into `main` | All checks pass locally; CI passed once on GitHub (2026-11-12). |
+| M0 Repo and tooling | done | merged into `main` | All checks pass locally and in CI on GitHub (public since 2026-11-19). |
 | M1 Requirements | waiting for Mirza | | Mirza's work with the workshop owner. |
 | M2 Engine types and measuring | done | `main`, plus `feat/engine-parts` | Gap table written 2026-11-13 at Mirza's request. |
 | M3 Cut rules | done | `main`, plus `feat/engine-parts` | Five formulas written 2026-11-13 at Mirza's request; real deductions come from each system's sheet. |
@@ -18,7 +18,7 @@ Git is local only. Each milestone has its own branch; a branch is merged into `m
 | M6 Database and API | in progress | `feat/m6-database-api`, then `feat/m6-verify`, `feat/m6-workshops` | Built past Gate 2 at Mirza's request (2026-11-13). Since 2026-11-17 any workshop can run its own quote engine (see "Mullion"). The database tests run on PostgreSQL 18 on this machine since 2026-11-17. |
 | M7 PDFs and messages | in progress | `feat/m7-pdfs` | Client quote and workshop sheet PDFs built 2026-11-18 (see "Phase 5: PDFs"). Not done: the Albanian PDF (later, by decision), the price-request message per supplier. |
 | M8 Frontend | in progress | `feat/m8-frontend` | Owner screens designed with Impeccable and built (see the M8 section). Not done: the admin catalogue screens (systems, sheets, profiles, hardware, users, sessions), extras editing, PDF download (M7). The e2e test is written but needs the running stack. |
-| M9 Deploy and operations | waiting for Mirza | merged into `main` | Files written and reviewed; nothing has run on a server or on GitHub. Needs a server, a domain and the GitHub repository. Retention jobs, demo wipe and Sentry wait for M6. |
+| M9 Deploy and operations | waiting for Mirza | merged into `main` | Files written and reviewed. The image builds and answers its health check in CI (2026-11-19); nothing has run on a server. Needs a server and a domain. Retention jobs, demo wipe and Sentry wait for M6. |
 | M10 Shadow mode and live use | waiting for Mirza | | Mirza's work with the workshop owner. |
 | M11 Docs and presentation | in progress | `feat/m11-presentation` | README, screenshots and an audit with fixes done 2026-11-19 (see "Phase 8"). The case study, ADR decisions and video are Mirza's. |
 
@@ -51,6 +51,8 @@ Only Mirza writes "Gate N passed" here.
 | Make the old public `quote-engine` GitHub repository private or delete it before anything new is published | GitHub | Its history predates the rewrite |
 | Review `docs/adr/0008-any-workshop.md` (status: proposed) | docs | ADR decisions are yours |
 | Write `stored_size`: what the API stores when a measured window's size disagrees with its readings (keep the measured size, or refuse with 422). The call, the docstring and the tests are in place; the tests are `xfail` until then | `backend/src/quote_engine/services/quotes.py` (one `TODO(human)`) | Phase 8: a stored size must never contradict its readings |
+| Review Dependabot's update pull requests: merge the patch and minor ones whose checks pass; the bump of the image to Python 3.15 does not fit the project's 3.13 | GitHub pull requests | Keeping dependencies current |
+| Check the GitHub settings listed in `docs/security.md` ("GitHub settings") and add the repository description and topics | GitHub repository settings | Publishing |
 | Drop the scratch database `quote_engine_screens` if it is not wanted (made on 2026-11-19 for the screenshots; invented sandbox data only): `DROP DATABASE quote_engine_screens;` | local PostgreSQL | Nothing; tidiness |
 
 ## Decisions
@@ -109,11 +111,13 @@ Only Mirza writes "Gate N passed" here.
 
 | File | State |
 |---|---|
-| `.github/workflows/ci.yml` | Ran once on GitHub on 2026-11-12 for the M0 branch: all three jobs passed. Later changes have only run locally. |
-| `.github/dependabot.yml` | Never run. |
-| `.github/workflows/deploy.yml` | Never run. Needs the four `DEPLOY_*` secrets and a `production` environment. |
-| `.github/workflows/codeql.yml` | Never run. The CodeQL action uses the `v3` tag; pin it to a commit SHA once the repository is on GitHub. |
-| `infra/Dockerfile` (multi-stage), `compose.prod.yaml`, `Caddyfile`, `setup-server.sh`, `deploy.sh`, `backup.sh`, `restore.sh`, `systemd/` | Never run: no Docker here and no server. Shell scripts pass `bash -n`; YAML parses; `tests/test_infra.py` checks what can be checked offline. The CI `stack` job will build the new Dockerfile on the first push. |
+| `.github/workflows/ci.yml` | Runs. First run on the public repository (2026-11-19, `022011e`): backend on PostgreSQL 18, frontend and the Docker stack all passed. The PDF render tests still skipped there (no Pango); since `chore/ci-after-publishing` the backend job installs Pango and `QUOTE_ENGINE_REQUIRE_PDF=1` makes a skip fail. |
+| `.github/workflows/security.yml` | Runs. Passed on 2026-11-19. |
+| `.github/workflows/codeql.yml` | Runs. Passed on 2026-11-19. The CodeQL action still uses the `v3` tag; pin it to a commit SHA. |
+| `.github/dependabot.yml` | Runs. It opened its first update pull requests on 2026-11-19; reviewing them is Mirza's. |
+| `.github/workflows/deploy.yml` | Off: skipped on 2026-11-19 as intended. Runs once the repository variable `DEPLOY_ENABLED` is `true`; needs the four `DEPLOY_*` secrets and a `production` environment. |
+| `infra/Dockerfile` (multi-stage) | Builds and starts in the CI `stack` job (2026-11-19). |
+| `compose.prod.yaml`, `Caddyfile`, `setup-server.sh`, `deploy.sh`, `backup.sh`, `restore.sh`, `systemd/` | Never run: no server. Shell scripts pass `bash -n`; YAML parses; `tests/test_infra.py` checks what can be checked offline. |
 
 ## M0 Repo and tooling (built 2026-11-11 to 2026-11-12)
 
@@ -279,3 +283,5 @@ Looked at and left as is: authorization (every catalogue, price, settings and te
 Checks: ruff, format, mypy strict, import-linter, OpenAPI current; `pytest --cov` with the database required 777 passed, 6 skipped (3 golden, 3 Pango), 4 xfailed (`stored_size`), coverage 94%; frontend lint, typecheck, 40 tests, build; Playwright end to end passes against the built app served by FastAPI on a fresh database.
 
 Before publishing (2026-11-19): Gitleaks v8.27.2 over all 128 commits on every branch found no leaks; the whole history of `main` has no personal email, phone number, local path or private key, every author is the noreply address, and the only database passwords are the local and CI ones. The market research notes (`reports/`, `research_notes/`), the desktop preview config and the personal setup guide are git-ignored and stay on this machine. `claude-config-update/` (an older copy of the instructions and two skills, all in history) is untracked and can be deleted. All 16 other local branches are contained in `feat/m11-presentation`, so nothing is lost by publishing only `main`.
+
+Published on 2026-11-19: `main` (100 commits, `022011e`) at `https://github.com/mirzamemovic/mullion-quote-engine`, created by Mirza; `origin` points there. The first CI, Security and CodeQL runs passed and Deploy was skipped. CI's backend job had no Pango, so the PDF render tests skipped there as well; the CI backend job now installs the Dockerfile's Pango libraries and requires those tests (`QUOTE_ENGINE_REQUIRE_PDF=1`, checked by `tests/test_infra.py`).

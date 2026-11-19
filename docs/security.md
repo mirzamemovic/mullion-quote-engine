@@ -20,16 +20,16 @@ The security design of Mullion (PLAN.md section 9), mapped to OWASP ASVS Level 1
 | Input validation | Pydantic on the API with limits on sizes, counts and lengths, mirrored by Zod in the frontend; the engine refuses bad input with `InvalidInput` | API, engine | tested |
 | Errors | RFC 9457 problem JSON for every error, unexpected ones included; validation errors name the field but never echo the input; an unexpected error says nothing about its cause | `api/problems.py` | tested |
 | CSV | Imports are checked row by row; exports neutralise cells that a spreadsheet would run as a formula | `services/price_csv.py` | tested |
-| PDFs | WeasyPrint with a `url_fetcher` that only serves the bundled fonts and a checked logo; autoescaped templates; logos checked from their first bytes; 20 PDFs a minute per workshop | `pdf/`, `services/documents.py` | tested (render tests in Docker) |
+| PDFs | WeasyPrint with a `url_fetcher` that only serves the bundled fonts and a checked logo; autoescaped templates; logos checked from their first bytes; 20 PDFs a minute per workshop | `pdf/`, `services/documents.py` | tested (render tests run in CI, which requires them) |
 | Transport | HTTPS only, HSTS | `infra/Caddyfile` | written |
 | Headers | `Content-Security-Policy: default-src 'self'; frame-ancestors 'none'`, `X-Content-Type-Options: nosniff`, `Referrer-Policy: same-origin`; request bodies over 2 MB refused | `infra/Caddyfile` | written |
 | Secrets | Deploy secrets as GitHub `production` environment secrets limited to `main`; on the server `/etc/quote-engine/app.env`, readable by root and the deploy group only (the deploy user can run Docker, which is root-equivalent, so it is a trusted account); nothing in git | deploy workflow, server | written |
 | Containers | App runs as a non-root user; only Caddy publishes ports | `infra/Dockerfile`, `compose.prod.yaml` | written |
 | Server | SSH keys only, firewall for 22/80/443, unattended security upgrades | `infra/setup-server.sh` | written |
 | Backups | Encrypted with age; the private key is never on the server; a restore drill | `infra/backup.sh`, `infra/restore.sh` | written |
-| Supply chain | Locked dependencies (`uv.lock`, `package-lock.json`), Dependabot, GitHub Actions pinned to commit SHAs (CodeQL to a tag until the repository is published) | repository | written |
-| Scanning | CodeQL; pip-audit, npm audit, Gitleaks over the whole history, Trivy on the lock files and the Dockerfile | `.github/workflows/` | written; the scanners were run by hand on 2026-11-18 with no finding in shipped code |
-| Deploy | Runs only after CI passes on `main`; SSH host key pinned from a secret; rollback on a failed health check | `deploy.yml`, `deploy.sh` | written |
+| Supply chain | Locked dependencies (`uv.lock`, `package-lock.json`), Dependabot, GitHub Actions pinned to commit SHAs (CodeQL to a tag until the repository is published) | repository | tested (a test checks the pins); Dependabot runs on GitHub |
+| Scanning | CodeQL; pip-audit, npm audit, Gitleaks over the whole history, Trivy on the lock files and the Dockerfile | `.github/workflows/` | runs on GitHub; passed on the first push (2026-11-19) |
+| Deploy | Runs only after CI passes on `main`, and only once the repository variable `DEPLOY_ENABLED` is `true`; SSH host key pinned from a secret; rollback on a failed health check | `deploy.yml`, `deploy.sh` | written; off until there is a server |
 | Error reporting | Sentry with `send_default_pii=False` and a `before_send` that removes names and phones | app | not built |
 
 ## Known limits
@@ -39,11 +39,14 @@ The security design of Mullion (PLAN.md section 9), mapped to OWASP ASVS Level 1
 - **No alerting yet.** Failed logins are recorded but nobody is told about them; Sentry is not wired in.
 - **`npm audit`** reports moderate findings in development-only lint tooling (ESLint and minimatch); none in the packages the app ships.
 
-## Before publishing the repository
+## GitHub settings
 
-- Audit the full history for secrets and private data (no real client names, phones or prices).
-- In the GitHub settings: secret scanning with push protection, a rule protecting `main`, approval for workflow runs from outside contributors.
-- Pin `github/codeql-action` to a commit SHA.
+The full history was audited for secrets and private data before it was published (2026-11-19, see `docs/PROGRESS.md`). Still to check in the repository settings:
+
+- Secret scanning with push protection.
+- A rule protecting `main`.
+- Approval for workflow runs from outside contributors.
+- `github/codeql-action` pinned to a commit SHA.
 
 ## Reporting a problem
 
