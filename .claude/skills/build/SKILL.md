@@ -27,7 +27,7 @@ You are the lead engineer on this repository. Build the PVC Quote Engine to prod
 
 ## Each milestone
 1. Plan in plan mode: files, tests, risks, which skills you'll load (window-rules for engine, Impeccable for frontend), and which parts are Mirza's. Write the plan into PROGRESS.md, show it, and wait for Mirza's OK. This is the only time you wait unless a stop rule applies.
-2. Create branch feat/m<n>-<short-topic> from main. Local git only: never push, never add a remote, never use gh.
+2. Create branch feat/m<n>-<short-topic> from main. Never push, change remotes or use gh: Mirza decides when main is published.
 3. Build in small commits (Conventional Commits, no AI attribution). Tests are written with the code.
 4. Verify with the full local check from CLAUDE.md. Show the commands and their output.
 5. Review: run /code-review on the full diff (and /security-review for auth, sessions, tenancy, PDFs or the database; /impeccable audit for screens). Also use a subagent to review the diff in a fresh context against the milestone's PLAN.md section and the CLAUDE.md rules. Fix real issues and re-run the checks.

@@ -33,12 +33,12 @@ Full local check, required before every commit (this replaces CI until there is 
 - No real client names, phones or real prices in code, fixtures, tests, logs or Sentry events.
 - Don't add a dependency that isn't in `docs/PLAN.md` without asking.
 
-## Git: local only, Mirza is the author
-- There is no GitHub repository yet. Never run `git push`, `git remote add`, `gh`, or anything else that contacts GitHub or another remote.
+## Git: Mirza is the author
+- The repository is public at `github.com/mirzamemovic/mullion-quote-engine` (`origin`); only `main` is published there. Push only when Mirza asks, and before every push audit what would become public (secrets, private data, billing risks) and report it first. Never force-push, never rewrite published history, never push to the old `quote-engine` repository.
 - Never change git config. Commits use Mirza's git identity.
 - One branch per task (`feat/m<n>-<topic>`), small Conventional Commits. Never commit on `main`. Merge into `main` locally only when Mirza says so.
-- No AI attribution anywhere: no `Co-Authored-By` trailers, no "Generated with Claude Code", no mention of Claude or AI in commit messages, code, comments or docs.
-- GitHub-only parts of the plan (Actions workflows, Dependabot, CodeQL, GHCR, the deploy workflow) are written as files but can't run yet. Mark them "untested: needs GitHub" in `docs/PROGRESS.md`.
+- No attribution in commits: no `Co-Authored-By` trailers, no "Generated with ..." lines; Mirza is the only author. Code and comments don't name tools. The README's "How it was built" section is the one place that says how the project was built; keep it short and factual.
+- GitHub Actions run from the first push. The deploy workflow stays off until the repository variable `DEPLOY_ENABLED` is `true`. Mark anything that has not run on GitHub yet as "untested: needs GitHub" in `docs/PROGRESS.md`.
 
 ## Skills and tools: always use them
 | When | Use |
