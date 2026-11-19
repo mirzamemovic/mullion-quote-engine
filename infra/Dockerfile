@@ -2,7 +2,7 @@
 # Stage 1 builds the React app; stage 2 is the Python runtime with the system libraries
 # WeasyPrint needs for PDFs (M7). Builds for amd64 and arm64 (the Oracle Ampere server).
 
-FROM node:24-slim AS frontend
+FROM node:26-slim AS frontend
 WORKDIR /frontend
 COPY frontend/package.json frontend/package-lock.json ./
 RUN npm ci --no-audit --no-fund
