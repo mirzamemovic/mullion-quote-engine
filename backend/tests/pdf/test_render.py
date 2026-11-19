@@ -1,11 +1,14 @@
 """The renderer: autoescaped templates, nothing fetched but bundled fonts and checked logos.
 
 Laying out a real PDF needs WeasyPrint's system libraries (Pango). Those tests skip where the
-libraries are missing (Windows) and run in the Docker image and in CI (PLAN.md section 10).
+libraries are missing (Windows) and run in the Docker image and in CI (PLAN.md section 10), where
+``QUOTE_ENGINE_REQUIRE_PDF=1`` turns the skip into a failure.
 """
 
 import base64
 import io
+import os
+from typing import NoReturn
 
 import pytest
 from pypdf import PdfReader
@@ -97,11 +100,17 @@ def test_pages_have_their_parts() -> None:
     assert "€" not in sheet
 
 
+def _without_pango() -> NoReturn:
+    if os.environ.get("QUOTE_ENGINE_REQUIRE_PDF") == "1":
+        pytest.fail("WeasyPrint's system libraries (Pango) are missing where PDFs are required")
+    pytest.skip("WeasyPrint's system libraries (Pango) are not installed here")
+
+
 def _pdf_text(template: str, document: object, title: str) -> str:
     try:
         data = render.pdf(template, document, title)
     except render.PdfUnavailableError:
-        pytest.skip("WeasyPrint's system libraries (Pango) are not installed here")
+        _without_pango()
     assert data.startswith(b"%PDF-")
     return "\n".join(page.extract_text() for page in PdfReader(io.BytesIO(data)).pages)
 
@@ -130,5 +139,5 @@ def test_client_pdf_prints_the_logo() -> None:
     try:
         data = render.pdf("quote.html", doc, "Quote 2026-007")
     except render.PdfUnavailableError:
-        pytest.skip("WeasyPrint's system libraries (Pango) are not installed here")
+        _without_pango()
     assert len(PdfReader(io.BytesIO(data)).pages[0].images) == 1

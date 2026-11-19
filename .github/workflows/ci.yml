@@ -35,10 +35,17 @@ jobs:
       QUOTE_ENGINE_TEST_DATABASE_URL: postgresql+psycopg://quote_engine:ci-only@localhost:5432/quote_engine_test
       # In CI the database tests must run: a missing database fails instead of skipping.
       QUOTE_ENGINE_REQUIRE_DATABASE: "1"
+      # The same for the PDF render tests, which need Pango (installed below).
+      QUOTE_ENGINE_REQUIRE_PDF: "1"
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+      - name: WeasyPrint's system libraries (as in infra/Dockerfile)
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes --no-install-recommends \
+            libpango-1.0-0 libpangoft2-1.0-0 libharfbuzz-subset0
       - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
       - name: Install dependencies
         run: uv sync --locked
@@ -85,8 +92,8 @@ jobs:
       - name: Build
         run: npm run build
 
-  # Docker is not available on the development machine, so this job is where compose.yaml
-  # and infra/Dockerfile are proven. It grows into the e2e job in milestone M8.
+  # Proves compose.yaml and infra/Dockerfile on a clean machine: the image builds, the
+  # migrations run and the app answers its health check.
   stack:
     name: Local stack
     runs-on: ubuntu-24.04

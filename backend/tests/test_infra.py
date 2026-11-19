@@ -86,6 +86,19 @@ def test_actions_are_pinned_by_commit(name: str) -> None:
     assert all(re.fullmatch(r"[\w.-]+/[\w./-]+@[0-9a-f]{40}", ref) for ref in uses), uses
 
 
+def test_ci_renders_real_pdfs() -> None:
+    """The PDF render tests skip where Pango is missing; CI installs it and turns a skip into a
+    failure, as it does for the database tests."""
+    workflow = read_yaml(ROOT / ".github" / "workflows" / "ci.yml")
+    backend = workflow["jobs"]["backend"]
+    commands = " ".join(step.get("run", "") for step in backend["steps"])
+
+    assert backend["env"]["QUOTE_ENGINE_REQUIRE_PDF"] == "1"
+    for package in ("libpango-1.0-0", "libpangoft2-1.0-0", "libharfbuzz-subset0"):
+        assert package in commands  # the same libraries as infra/Dockerfile
+        assert package in (INFRA / "Dockerfile").read_text(encoding="utf-8")
+
+
 def test_security_scanners_are_pinned_versions() -> None:
     text = (ROOT / ".github" / "workflows" / "security.yml").read_text(encoding="utf-8")
 
