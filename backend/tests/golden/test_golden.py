@@ -42,7 +42,7 @@ def ffd_function() -> FfdFunction:
     except ModuleNotFoundError as error:
         if error.name != "quote_engine.engine.optimizer.ffd":
             raise
-        pytest.xfail("waiting for Mirza: ffd.py")
+        pytest.xfail("engine/optimizer/ffd.py is missing")
     ffd: FfdFunction = module.ffd
     return ffd
 

@@ -4,8 +4,8 @@
 
 Writes ``benchmarks/results.csv``: one row per order and method with bars, lower bound, waste,
 scrap and runtime. Random orders are made from a fixed seed, so a run can be repeated.
-It needs ``optimizer/ffd.py`` and ``exact.build_assignment_model`` (both Mirza's); until they
-exist it says what is missing and writes nothing.
+It needs ``optimizer/ffd.py`` and ``exact.build_assignment_model``; if either is missing it says
+so and writes nothing.
 """
 
 import argparse
@@ -138,7 +138,7 @@ def main(argv: Sequence[str] | None = None) -> int:
 
     ffd = load_ffd()
     if ffd is None:
-        sys.stderr.write("benchmark needs engine/optimizer/ffd.py (Mirza's); nothing written\n")
+        sys.stderr.write("benchmark needs engine/optimizer/ffd.py; nothing written\n")
         return 1
     orders = list(random_orders(args.orders, args.seed))
     try:

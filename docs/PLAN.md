@@ -208,7 +208,7 @@ class CutList:    pieces, steel, glass, hardware_sets, gasket_mm
 | `balcony_door_tilt_turn` | Balcony door, tilt-and-turn | 800 x 2200 |
 
 Each type is a function `def cut(pos: PositionSpec, c: SystemConstants) -> CutList` registered in `rules/registry.py`.
-Formulas are code; constants are data. The **formulas are written by Mirza** (Learning output style or by hand). Claude writes the registry, scaffolding and test harness.
+Formulas are code; constants are data. The formulas were planned as Mirza's and written for him on 2026-11-13, like the registry, scaffolding and test harness (section 13).
 
 Rules known now (defaults, confirm per system):
 - Frame and sash pieces: cut at 45°, welded; length = nominal + 2 × weld allowance.
@@ -468,14 +468,15 @@ Migrations are backward compatible (expand, then contract in a later release), s
 
 ## 13. Who writes what
 
+The code is written by Claude from this plan and Mirza's decisions. This section first gave Mirza the engine's decision parts: `ffd.py`, the five cut formulas, the gap table, the solver model in `exact.py`, the cost split and the size classes, plus the hook's PowerShell list. On 2026-11-13 he chose to have them written for him too (see "Deviations" in `docs/PROGRESS.md`). What stays Mirza's:
+
 | Part | Author |
 |---|---|
-| `engine/optimizer/ffd.py` | **Mirza only, AI off.** Hook-protected. (Changed 2026-11-13: Mirza chose to have it written; see PROGRESS.md.) |
-| `tests/golden/jobs/*.yaml` | **Mirza only**, from the owner's real jobs. Hook-protected. |
-| Cut-rule formulas in `engine/rules/*.py` | Mirza, using the Learning output style (`TODO(human)`) or by hand |
-| `exact.py`, `pricing.py`, `measuring.py`, auth/session code | Claude with the Learning output style: Mirza writes the decision parts |
+| `tests/golden/jobs/*.yaml`, the real system sheets and price lists | **Mirza only**, from the owner's real jobs. Hook-protected. |
+| Product decisions: approving each milestone's plan, the answers recorded as his in `docs/PROGRESS.md`, marking a gate passed | Mirza |
+| A decision left in the code as one `TODO(human)` with `xfail` tests (open now: `stored_size`) | Mirza |
 | ADR decisions, requirements, case study text | Mirza writes; Claude may review |
-| Scaffolding, models, migrations, CRUD endpoints, React screens, PDF templates, Docker, CI, scripts | Claude; Mirza reviews every diff |
+| Everything else: engine, API, auth, database, screens, PDFs, Docker, CI, scripts | Claude |
 
 Every PR description ends with one line: `AI use: <what Claude wrote> / <what Mirza wrote>`.
 
@@ -504,11 +505,11 @@ Dates: built by 10 Jan 2027, live 25 Jan 2027, portfolio-ready 28 Feb 2027.
 - Done when: engine coverage ≥ 95%, mypy strict clean.
 
 ### M3 Cut rules
-- `rules/registry.py`, system-sheet constants loading, the 5 types (formulas by Mirza), formula strings, `MissingConstant` on gaps.
+- `rules/registry.py`, system-sheet constants loading, the 5 types (formulas planned as Mirza's, see section 13), formula strings, `MissingConstant` on gaps.
 - Rule tests per type with hand-checked numbers.
 
 ### M4 Optimizer
-- `bounds.py`, `validate.py` (Claude), `ffd.py` (Mirza), `exact.py` (Learning style).
+- `bounds.py`, `validate.py`, `ffd.py`, `exact.py` (`ffd.py` and the solver model were planned as Mirza's, see section 13).
 - Property tests (invariants in section 10). `benchmarks/run.py` → CSV; `docs/optimizer.md` with the table.
 
 ### M5 Pricing, warnings, lists, golden tests

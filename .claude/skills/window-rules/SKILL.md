@@ -44,7 +44,7 @@ Every piece formula must be printable: `"H + 2a = 1400 + 6 = 1406"`.
 - Group pieces by role + profile + colour; one bar length per group.
 - Capacity: `Σ(length + kerf) ≤ bar_length − end_trim`. Same rule for FFD, exact and lower bound.
 - Goal: fewest bars first, then the longest reusable offcut.
-- Quotes use FFD (`ffd.py`, written by Mirza). The CP-SAT solver is for the benchmark and the admin compare button only.
+- Quotes use FFD (`ffd.py`). The CP-SAT solver is for the benchmark and the admin compare button only.
 
 ## Price layers (in this order)
 1. Material cost: profiles and steel as **whole bars used** × price per bar (by colour), allocated to positions by consumed length with largest remainder; gasket per metre; one hardware set per opening sash; glass per m² per pane with a minimum billable area (default 0.3 m², **confirm** with the glass company); consumables per window; optional price-risk bp.
