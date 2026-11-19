@@ -9,6 +9,9 @@ name: Deploy
 #   DEPLOY_USER          the deploy user created by infra/setup-server.sh
 #   DEPLOY_SSH_KEY       private key of a key pair used only for deploys
 #   DEPLOY_HOST_KEY      the server's SSH host key line (from `ssh-keyscan <host>`, checked by hand)
+#
+# Nothing runs until the repository variable DEPLOY_ENABLED is set to `true`, once the server
+# and those secrets exist (docs/runbook.md, first setup).
 
 on:
   workflow_run:
@@ -30,6 +33,7 @@ jobs:
       github.event.workflow_run.conclusion == 'success'
       && github.event.workflow_run.event == 'push'
       && github.event.workflow_run.head_repository.full_name == github.repository
+      && vars.DEPLOY_ENABLED == 'true'
     runs-on: ubuntu-24.04-arm
     permissions:
       contents: read

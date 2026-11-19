@@ -28,7 +28,7 @@ Files on the server:
 4. Fill in `/etc/quote-engine/app.env`. Generate the database password with `openssl rand -base64 32`.
 5. Backups: create an age key pair on your own computer (`age-keygen -o quote-engine-backup.key`), put the public key in `BACKUP_AGE_RECIPIENT`, and store the private key in your password manager only. As root, run `rclone config` for the OCI Object Storage and Cloudflare R2 remotes and put their names in the env file.
 6. DNS: point `quote.<name>.me` at the server in Cloudflare (DNS only, not proxied, so Caddy can get the certificate).
-7. In GitHub: create a `production` environment limited to the `main` branch, and add the four `DEPLOY_*` values listed at the top of `.github/workflows/deploy.yml` as secrets of that environment (not as repository secrets, which every branch can read).
+7. In GitHub: create a `production` environment limited to the `main` branch, and add the four `DEPLOY_*` values listed at the top of `.github/workflows/deploy.yml` as secrets of that environment (not as repository secrets, which every branch can read). Then add the repository variable `DEPLOY_ENABLED` with the value `true`; until it exists the deploy workflow does nothing.
 8. Push to `main`: CI runs, then the deploy workflow builds and pushes the image.
 9. The image package on GHCR starts private, so the server cannot pull it yet. Either make the package public (GitHub → Packages → quote-engine → Package settings), or create a token with only `read:packages` and run `docker login ghcr.io` once as the deploy user on the server.
 10. Re-run the deploy workflow (or run `deploy.sh` by hand, below).

@@ -112,6 +112,8 @@ def test_deploy_runs_only_after_ci_passes_on_main() -> None:
     assert "conclusion == 'success'" in condition
     assert "event == 'push'" in condition
     assert "head_repository.full_name == github.repository" in condition
+    # Off until a server exists: without it every green CI run on main ended in a failed deploy.
+    assert "vars.DEPLOY_ENABLED == 'true'" in condition
 
 
 @pytest.mark.parametrize("script", ["deploy.sh", "backup.sh", "restore.sh", "purge-sandboxes.sh"])
