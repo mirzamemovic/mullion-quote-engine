@@ -4,6 +4,8 @@
 
 Mullion turns six tape-measure readings of a wall opening into a priced quote, a cut list in which every piece shows its formula, and a cutting plan that packs the pieces onto as few stock bars as possible. It was built for a family-run PVC window workshop in Kosovo, and any workshop can use it with its own profile systems, deductions, prices and team.
 
+I designed the quoting workflow around my father's workshop, planned the milestones, and reviewed the implementation. I used Claude Code to write the application code.
+
 > **Status:** the quoting workflow, workshop setup, PDFs and multi-workshop accounts are built and tested against a real PostgreSQL database. The app is not deployed yet, and the engine still has to be checked against the workshop's real past jobs (see [Limitations](#limitations)).
 
 | Measure | Pick the type | The quote |
@@ -191,9 +193,7 @@ Prices, margins and cutting constants in this repository are sample defaults for
 
 ## How it was built
 
-The code was written with an AI coding assistant, working from a written specification ([`docs/PLAN.md`](docs/PLAN.md)) and project rules ([`CLAUDE.md`](CLAUDE.md), [`.claude/`](.claude)) that fix the engine's limits: pure Python, integer units, a formula on every cut piece, no invented catalogue values, tests with every change and the full check before every commit. Hooks in `.claude/hooks/` enforce part of these rules, and the decisions and deviations from the plan are recorded in [`docs/PROGRESS.md`](docs/PROGRESS.md).
-
-I made the product decisions: each milestone's plan, the choices recorded in the progress file, and when a gate counts as passed. The parts that need the workshop's real data are mine to add: the golden jobs, the real system sheets and the prices. Section 13 of the plan lists who writes what.
+The work follows a written plan ([`docs/PLAN.md`](docs/PLAN.md), whose section 13 says who writes what) and project rules ([`CLAUDE.md`](CLAUDE.md), [`.claude/`](.claude)). Decisions and deviations from the plan are recorded in [`docs/PROGRESS.md`](docs/PROGRESS.md).
 
 ## Licence
 
