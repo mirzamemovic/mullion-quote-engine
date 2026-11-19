@@ -7,8 +7,14 @@ infra/secrets/
 # Real price lists for golden tests: on Mirza's machine only
 backend/tests/golden/private/
 
-# Personal editor settings
+# Personal tool settings and setup notes
 .claude/settings.local.json
+.claude/launch.json
+docs/CLAUDE-CODE-SETUP.md
+
+# Market research notes, kept on this machine (docs/market-prices.md is the published summary)
+/reports/
+/research_notes/
 
 # Python
 __pycache__/
