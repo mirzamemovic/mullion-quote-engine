@@ -193,6 +193,8 @@ Prices, margins and cutting constants in this repository are sample defaults for
 
 The code was written with an AI coding assistant, working from a written specification ([`docs/PLAN.md`](docs/PLAN.md)) and project rules ([`CLAUDE.md`](CLAUDE.md), [`.claude/`](.claude)) that fix the engine's limits: pure Python, integer units, a formula on every cut piece, no invented catalogue values, tests with every change and the full check before every commit. Hooks in `.claude/hooks/` enforce part of these rules, and the decisions and deviations from the plan are recorded in [`docs/PROGRESS.md`](docs/PROGRESS.md).
 
+I made the product decisions: each milestone's plan, the choices recorded in the progress file, and when a gate counts as passed. The parts that need the workshop's real data are mine to add: the golden jobs, the real system sheets and the prices. Section 13 of the plan lists who writes what.
+
 ## Licence
 
 No licence is granted: the code is public to be read, and all rights are reserved.
