@@ -256,6 +256,55 @@ describe("MeasureStep", () => {
   });
 });
 
+describe("Position editor", () => {
+  const glass = (ref: string) => ({ item_kind: "glass", item_ref: ref });
+  const quote = {
+    id: "q1",
+    number: "2026-0007",
+    client_name: "Sample client",
+    status: "draft",
+    revision_no: 1,
+    revision: {
+      revision_no: 1,
+      price_list_version_id: "used",
+      positions: [
+        {
+          ref: "P1",
+          construction_type: "fixed",
+          width_mm: 1000,
+          height_mm: 1000,
+          qty: 1,
+          colour: "white",
+          glass_build: "4-16-4",
+          openings: ["fixed"],
+          readings: null,
+          installation: { install: true, ral: false, old_window_removal: false, wall_repair: false },
+        },
+      ],
+      extra_lines: [],
+    },
+  };
+  // Newest first, as the API lists them: a draft being edited, then the list the quote uses.
+  const lists = [
+    { id: "draft", status: "draft", valid_from: "2026-01-02", entries: [glass("Draft-only glass")] },
+    { id: "used", status: "published", valid_from: "2026-01-01", entries: [glass("4-12-4-12-4"), glass("4-16-4")] },
+  ];
+
+  it("offers the glass of the price list the quote is priced with", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn((url: string) =>
+        url.endsWith("/auth/me") ? json(200, owner) : url.endsWith("/quotes/q1") ? json(200, quote) : url.endsWith("/price-lists") ? json(200, lists) : json(200, []),
+      ),
+    );
+    render(wrap(<App />, "/quotes/q1/positions/P1"));
+
+    expect(await screen.findByRole("button", { name: "4-12-4-12-4" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "4-16-4" })).toHaveAttribute("aria-pressed", "true");
+    expect(screen.queryByRole("button", { name: "Draft-only glass" })).not.toBeInTheDocument();
+  });
+});
+
 describe("Quote documents", () => {
   const position = {
     ref: "P1",

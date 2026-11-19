@@ -42,10 +42,11 @@ function Editor({ quote, editRef }: { quote: QuoteDetail; editRef: string | unde
   const [colour, setColour] = useState<Colour>(existing?.colour ?? last.colour ?? "white");
   const [type, setType] = useState<string | null>(existing?.construction_type ?? null);
   const [sizeEditable, setSizeEditable] = useState(!existing?.readings && existing !== undefined);
-  const today = new Date().toISOString().slice(0, 10);
-  const current = prices.data?.find((list) => list.valid_from <= today);
+  // The glass on offer is what this revision is priced with: its own price list, the one the
+  // calculation uses. Never a draft being edited, nor a newer list the quote does not use yet.
+  const pricedWith = prices.data?.find((list) => list.id === quote.revision.price_list_version_id);
   const glassBuilds = [
-    ...new Set((current?.entries ?? []).filter((e) => e.item_kind === "glass").map((e) => e.item_ref)),
+    ...new Set((pricedWith?.entries ?? []).filter((e) => e.item_kind === "glass").map((e) => e.item_ref)),
   ];
   const [details, setDetails] = useState<Details>(() => ({
     ref: editRef ?? nextRef(quote),
