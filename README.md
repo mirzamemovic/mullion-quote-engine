@@ -188,3 +188,11 @@ The database tests run on a real PostgreSQL in a separate `quote_engine_test` da
 ## About the numbers
 
 Prices, margins and cutting constants in this repository are sample defaults for development and demos. A workshop's real prices, margins and client data are never stored here.
+
+## How it was built
+
+The code was written with an AI coding assistant, working from a written specification ([`docs/PLAN.md`](docs/PLAN.md)) and project rules ([`CLAUDE.md`](CLAUDE.md), [`.claude/`](.claude)) that fix the engine's limits: pure Python, integer units, a formula on every cut piece, no invented catalogue values, tests with every change and the full check before every commit. Hooks in `.claude/hooks/` enforce part of these rules, and the decisions and deviations from the plan are recorded in [`docs/PROGRESS.md`](docs/PROGRESS.md).
+
+## Licence
+
+No licence is granted: the code is public to be read, and all rights are reserved.
