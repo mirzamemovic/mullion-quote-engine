@@ -15,12 +15,12 @@ Git is local only. Each milestone has its own branch; a branch is merged into `m
 | M3 Cut rules | done | `main`, plus `feat/engine-parts` | Five formulas written 2026-11-13 at Mirza's request; real deductions come from each system's sheet. |
 | M4 Optimizer | done | `main`, plus `feat/engine-parts` | FFD and the solver model written 2026-11-13; benchmark run (see `docs/optimizer.md`). |
 | M5 Pricing, warnings, lists, golden tests | waiting for Mirza | `main`, plus `feat/engine-parts` | Everything built. Only the golden jobs, real system sheets and private price lists remain: they are Mirza's real data. Gate 2 waits for them. |
-| M6 Database and API | in progress | `feat/m6-database-api`, then `feat/m6-verify`, `feat/m6-workshops` | Built past Gate 2 at Mirza's request (2026-11-13). Since 2026-11-17 any workshop can run its own quote engine (see "Mullion"). The database tests have not run yet: no PostgreSQL on this machine (see "Waiting for Mirza"). |
+| M6 Database and API | in progress | `feat/m6-database-api`, then `feat/m6-verify`, `feat/m6-workshops` | Built past Gate 2 at Mirza's request (2026-11-13). Since 2026-11-17 any workshop can run its own quote engine (see "Mullion"). The database tests run on PostgreSQL 18 on this machine since 2026-11-17. |
 | M7 PDFs and messages | in progress | `feat/m7-pdfs` | Client quote and workshop sheet PDFs built 2026-11-18 (see "Phase 5: PDFs"). Not done: the Albanian PDF (later, by decision), the price-request message per supplier. |
 | M8 Frontend | in progress | `feat/m8-frontend` | Owner screens designed with Impeccable and built (see the M8 section). Not done: the admin catalogue screens (systems, sheets, profiles, hardware, users, sessions), extras editing, PDF download (M7). The e2e test is written but needs the running stack. |
 | M9 Deploy and operations | waiting for Mirza | merged into `main` | Files written and reviewed; nothing has run on a server or on GitHub. Needs a server, a domain and the GitHub repository. Retention jobs, demo wipe and Sentry wait for M6. |
 | M10 Shadow mode and live use | waiting for Mirza | | Mirza's work with the workshop owner. |
-| M11 Docs and presentation | todo | | The case study, ADR decisions and video are Mirza's. |
+| M11 Docs and presentation | in progress | `feat/m11-presentation` | README, screenshots and an audit with fixes done 2026-11-19 (see "Phase 8"). The case study, ADR decisions and video are Mirza's. |
 
 ## Gates
 
@@ -49,8 +49,10 @@ Only Mirza writes "Gate N passed" here.
 | Give the size-class limits (small / standard / large, in mm²) when creating the real workshop | `python -m quote_engine.manage create-workshop` | PLAN.md says they are settings but has no default |
 | Create the Oracle Always Free account and register a domain; then I follow `docs/runbook.md` | Oracle, a registrar | Phase 7 (live demo) |
 | Make the old public `quote-engine` GitHub repository private or delete it before anything new is published | GitHub | Its history predates the rewrite |
-| Edit the attribution rule in `CLAUDE.md` so the README can carry a short "How I built this" section (your choice of 2026-11-17) | `CLAUDE.md` | Phase 8 |
+| Edit the attribution rule in `CLAUDE.md` so it allows the README's short "How it was built" section (your choice of 2026-11-17, confirmed 2026-11-19) | `CLAUDE.md` | Publishing: the push waits for it |
 | Review `docs/adr/0008-any-workshop.md` (status: proposed) | docs | ADR decisions are yours |
+| Write `stored_size`: what the API stores when a measured window's size disagrees with its readings (keep the measured size, or refuse with 422). The call, the docstring and the tests are in place; the tests are `xfail` until then | `backend/src/quote_engine/services/quotes.py` (one `TODO(human)`) | Phase 8: a stored size must never contradict its readings |
+| Drop the scratch database `quote_engine_screens` if it is not wanted (made on 2026-11-19 for the screenshots; invented sandbox data only): `DROP DATABASE quote_engine_screens;` | local PostgreSQL | Nothing; tidiness |
 
 ## Decisions
 
@@ -78,6 +80,13 @@ Only Mirza writes "Gate N passed" here.
 | 2026-11-13 | M6: the demo workshop is seeded from invented data (`services/demo.py`, the same fake system sheet as the tests, invented prices for every price key, `demo@example.invalid`). `seed-demo` wipes the old demo first. | PLAN.md sections 7 and 12; no real prices or names anywhere. |
 | 2026-11-13 | M6: the database tests run on a real PostgreSQL in a separate `quote_engine_test` database, rebuilt from the migrations once per run, each test in a rolled-back transaction. Without a server they skip with a reason; in CI (`QUOTE_ENGINE_REQUIRE_DATABASE=1`) they fail instead. | PLAN.md section 10 asks for real PostgreSQL. |
 | 2026-11-13 | A position is checked against its type before its rule runs: the number of fields must match; a fixed window has only fixed fields; every other type has only opening fields. A rule's output must carry its own position ref. | Catches wrong input and rule bugs before they reach the optimizer. |
+| 2026-11-19 | Quote numbers are taken under a `FOR NO KEY UPDATE` lock on the workshop's row, so two quotes created at once get consecutive numbers. | Two staff creating a quote at the same moment both counted the same quotes and the second failed on the unique number (500). The weaker lock still lets the workshop's other writes through. |
+| 2026-11-19 | The quotes list filters by status in SQL, before its limit of 200. | Filtering after the limit hid older matches. `expired` is computed, so it selects sent quotes and is told apart from live ones afterwards. |
+| 2026-11-19 | Unexpected errors are problem JSON (500, "unexpected error") with no detail about the cause. | Every other error already was; the cause can name tables, columns or values. |
+| 2026-11-19 | A measured window's readings are measured again when the revision is saved: readings the gap table cannot take are refused (422) then, and the size goes through `stored_size` (Mirza's decision, see "Waiting for Mirza"). | The API stored the size and the readings without checking them against each other; even the test data had a size its readings did not give. |
+| 2026-11-19 | Price-list entries are ordered by kind, item and colour; the window editor offers the glass of the price list its revision is priced with. | The order inside a kind was the database's row order, so the default glass of a new window (the first in the list) differed between workshops; and the editor took the newest list by date, drafts included, which quotes never use. |
+| 2026-11-19 | Publishing: `main` (fast-forwarded to `feat/m11-presentation`, history kept as it is) goes to a new public repository `mirzamemovic/mullion-quote-engine`; no other branch is published. The README says in two sentences how the project was built; `docs/CLAUDE-CODE-SETUP.md` is kept on this machine only; no licence (all rights reserved); the town stays named in `docs/PLAN.md` and the window-rules skill. | Mirza's answers of 2026-11-19. Older commits name the town too, and history is not rewritten. |
+| 2026-11-19 | The deploy workflow runs only when the repository variable `DEPLOY_ENABLED` is `true`. | There is no server yet: every green CI run on `main` would have pushed an image and ended in a failed deploy. |
 | 2026-11-17 | The product becomes **Mullion**: any window workshop runs its own quote engine (its systems, sheets, prices and team), told as "built for a family-run PVC workshop in Kosovo". Roles per workshop are owner and staff (the admin role is folded into owner); people join by one-time invite links; two-step login is optional for all; "Try it" makes a private sandbox workshop per visitor for 24 h; each workshop picks its currency (EUR, BAM, RSD, ALL, MKD) and language (English first, Bosnian kept); prices come in through an editor and CSV, optionally starting from flagged estimates; the platform is run from the command line only. Details and reasons: `docs/adr/0008-any-workshop.md`. | Mirza's answers of 2026-11-17 |
 
 ## Deviations from PLAN.md
@@ -197,7 +206,7 @@ Plan approved 2026-11-17, in phases, each on its own branch stacked on `feat/m8-
 | 5 PDFs | `feat/m7-pdfs` | Done 2026-11-18: PDFs rendered and tested in Docker against PostgreSQL |
 | 6 Pricing policy and quality | `feat/m5-pricing-policy` (one branch: the two parts share files) | Done 2026-11-18 |
 | 7 Deploy | `feat/m9-deploy-live` | waiting for the Oracle account and a domain |
-| 8 Presentation | `feat/m11-presentation` | todo |
+| 8 Presentation | `feat/m11-presentation` (stacked on `feat/m5-pricing-policy`) | In progress 2026-11-19: audit fixes, README, screenshots; waiting for Mirza's `stored_size` |
 
 Phase 2 files (under `backend/src/quote_engine/`): migration `0003` (workshop email, currency, language, sandbox expiry; `invites`; `sandbox_requests`; former admins become owners), `services/workshops.py` (currencies, roles, one active owner, invites), `services/sandbox.py` (create, limits, purge), `services/auth.py` (`open_session`, optional TOTP, password change), `api/routes_me.py`, `api/routes_workshop.py`, `api/routes_join.py`, owner-only rights in `api/routes_admin.py` and client export/erase, `manage.py` (`create-workshop` prints the owner's invite link, `invite`, `purge-sandboxes`), `infra/purge-sandboxes.sh` with an hourly systemd timer.
 
@@ -253,3 +262,20 @@ Quality:
 Run on this machine on 2026-11-18 with those versions: Gitleaks over all 124 commits found nothing once the two demo keys were excepted (the 10 hits in the working folder are all in git-ignored files: `.venv` libraries and a design-tool seed); pip-audit found no known vulnerabilities; npm audit found 0 in the shipped packages and 9 moderate in lint tooling (ESLint and minimatch); Trivy found no high or critical issue in `uv.lock`, `package-lock.json` or `infra/Dockerfile`.
 
 Checks: ruff, format, mypy, import-linter, OpenAPI current; `pytest --cov` 770 passed, 6 skipped (3 golden, 3 that need Pango), coverage 94%, engine 99%; frontend lint, typecheck, 39 tests, build; Playwright end-to-end passes against the running app.
+
+### Phase 8: audit and presentation (2026-11-19)
+
+An audit of the whole project, then fixes, each with a test that failed first:
+- Quote numbers under concurrency (`services/quotes.py: next_number`): the test opens two real connections and waits until the second is blocked on the first (`pg_stat_activity`), so it cannot pass by timing luck. Before the fix the second creation failed with a unique violation.
+- The quotes list's status filter (`api/routes_quotes.py`), tested with the limit lowered to 2.
+- Unexpected errors as problem JSON (`api/problems.py`).
+- Readings checked when a revision is saved (`api/routes_quotes.py: _stored_position`); Mirza's `stored_size` decides what happens to a size they contradict. The shared test position (`revision_body`) had readings giving 810 x 1410 for an 800 x 1400 window; its readings now give its size.
+- Price-list entries in a stable order (`db/models.py`), and the glass on offer from the revision's own price list (`screens/position/PositionEditor.tsx`). Found by taking the same scripted screenshots twice: the default glass, and so the total, differed between two sandboxes.
+
+Presentation: the README is rewritten from the code (it still said "under construction" and named parts as hand-written that are not); six screenshots taken from the running app in a sandbox (`frontend/e2e/screenshots.spec.ts`, off unless `SCREENSHOTS=1`); the 15 November documentation moved to `docs/archive/` with a note that it is out of date; `docs/security.md` brought up to date with a "Known limits" section.
+
+Looked at and left as is: authorization (every catalogue, price, settings and team route is owner-only; staff are limited to quotes, clients and payments), the auth flows (failed attempts are committed before the error), CSV formula injection (handled), PDF URL fetching (only bundled files), the proxy header trust (safe while only Caddy reaches the app, now written down). Known and not fixed: the quotes list makes three queries per quote (fine at the 200 cap), the frontend ships as one 609 kB bundle (185 kB gzipped), dates are UTC.
+
+Checks: ruff, format, mypy strict, import-linter, OpenAPI current; `pytest --cov` with the database required 777 passed, 6 skipped (3 golden, 3 Pango), 4 xfailed (`stored_size`), coverage 94%; frontend lint, typecheck, 40 tests, build; Playwright end to end passes against the built app served by FastAPI on a fresh database.
+
+Before publishing (2026-11-19): Gitleaks v8.27.2 over all 128 commits on every branch found no leaks; the whole history of `main` has no personal email, phone number, local path or private key, every author is the noreply address, and the only database passwords are the local and CI ones. The market research notes (`reports/`, `research_notes/`), the desktop preview config and the personal setup guide are git-ignored and stay on this machine. `claude-config-update/` (an older copy of the instructions and two skills, all in history) is untracked and can be deleted. All 16 other local branches are contained in `feat/m11-presentation`, so nothing is lost by publishing only `main`.
