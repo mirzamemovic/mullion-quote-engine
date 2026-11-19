@@ -29,6 +29,7 @@ from quote_engine.db.models import (
     WorkshopSettings,
 )
 from quote_engine.db.repository import Scoped
+from quote_engine.engine.measuring import Measurement
 from quote_engine.services import calculation
 
 STATUSES = ("draft", "sent", "accepted", "rejected")
@@ -107,6 +108,15 @@ def current_sheet(db: Scoped, system_id: uuid.UUID) -> SystemSheetVersion:
 
 
 def next_number(db: Scoped, year: int) -> str:
+    """The next ``<year>-<NNNN>`` of this workshop, taken under a lock on the workshop's row.
+
+    The lock lasts until the transaction ends, so two quotes created at the same moment get
+    consecutive numbers instead of the same one. ``NO KEY UPDATE`` does not block the workshop's
+    other writes: inserting a row that refers to the workshop only takes a key-share lock.
+    """
+    db.session.execute(
+        select(Workshop.id).where(Workshop.id == db.workshop_id).with_for_update(key_share=True)
+    )
     prefix = f"{year}-"
     count = db.session.scalar(
         select(func.count())
@@ -212,6 +222,25 @@ def new_revision(db: Scoped, quote: Quote, user_id: uuid.UUID, today: date) -> Q
     db.session.refresh(new)
     audit(db, user_id, "new_revision", "quote", quote.id, {"revision": new.revision_no})
     return new
+
+
+def stored_size(ref: str, sent: tuple[int, int], measured: Measurement) -> tuple[int, int]:
+    """The width and height to store for position ``ref``, which was measured on site.
+
+    ``measured`` is what the engine works out from the six readings and the installation gap of
+    the window's colour (``measured.width_mm``, ``measured.height_mm``). ``sent`` is the width and
+    height the request carried. The app sends the size the engine showed, so they agree; they
+    differ only for a client bug or a hand-made request. Pricing uses the stored size and the
+    warnings use the readings, so a stored position must never keep a size its readings
+    contradict. Decide which way the API goes when they differ, and say why here:
+
+    - the readings are the record: store the measured size and ignore the sent one, or
+    - the request is wrong: raise ``InvalidInput`` naming ``ref`` (answered as 422).
+
+    Tests: ``tests/api/test_api_offline.py`` and ``tests/api/test_api_db.py`` (``*_readings_*``).
+    """
+    # TODO(human)
+    return sent
 
 
 @dataclass(frozen=True)

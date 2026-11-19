@@ -97,3 +97,9 @@ def install(app: FastAPI) -> None:
     @app.exception_handler(PdfUnavailableError)
     async def pdf_unavailable(_: Request, error: PdfUnavailableError) -> JSONResponse:
         return problem(503, "PDFs are not available", str(error))
+
+    @app.exception_handler(Exception)
+    async def unexpected(_: Request, error: Exception) -> JSONResponse:
+        # A bug, not the caller's fault. The server still logs the traceback; the caller learns
+        # nothing about the cause, which may name tables, columns or values.
+        return problem(500, "unexpected error", "something went wrong on our side, try again")

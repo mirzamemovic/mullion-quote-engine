@@ -6,6 +6,8 @@ see ``conftest.py``.
 
 import base64
 import io
+import threading
+import time
 import uuid
 from datetime import UTC, date, datetime, timedelta
 from typing import Any
@@ -16,9 +18,10 @@ from alembic.autogenerate import compare_metadata
 from alembic.migration import MigrationContext
 from fastapi.testclient import TestClient
 from pypdf import PdfReader
-from sqlalchemy import func, select
+from sqlalchemy import Engine, func, select, text
 from sqlalchemy.orm import Session
 
+from quote_engine.api import routes_quotes
 from quote_engine.api.deps import CSRF_HEADER
 from quote_engine.db.base import Base
 from quote_engine.db.models import (
@@ -36,6 +39,7 @@ from quote_engine.db.models import (
     QuoteRevision,
     SandboxRequest,
     Supplier,
+    SystemSheetVersion,
     User,
     Workshop,
 )
@@ -84,7 +88,8 @@ def revision_body(**changes: Any) -> dict[str, Any]:
                 "colour": "white",
                 "glass_build": "4-16-4",
                 "openings": ["tilt_turn_right"],
-                "readings": {"widths": [830, 832, 831], "heights": [1430, 1431, 1430]},
+                # 820 - 2 x 10 = 800 and 1420 - 2 x 10 = 1400: the readings give this size.
+                "readings": {"widths": [820, 822, 821], "heights": [1420, 1421, 1420]},
             },
             {
                 "ref": "P2",
@@ -562,6 +567,55 @@ def test_measure_returns_the_window_size_and_its_formula(
     assert body["warnings"] == ["height"]  # 1430 to 1470 is more than 10 mm apart
 
 
+def test_a_window_whose_size_agrees_with_its_readings_is_stored_as_sent(
+    api: TestClient, shop_a: SampleWorkshop
+) -> None:
+    log_in(api, shop_a.email)
+    quote = new_quote(api)
+
+    saved = api.put(f"{API}/quotes/{quote['id']}/revisions/1", json=revision_body())
+
+    assert saved.status_code == 200, saved.text
+    p1 = saved.json()["revision"]["positions"][0]
+    assert (p1["width_mm"], p1["height_mm"]) == (800, 1400)
+
+
+@pytest.mark.xfail(reason="waits for Mirza: stored_size in services/quotes.py", strict=False)
+def test_a_window_never_keeps_a_size_its_readings_contradict(
+    api: TestClient, shop_a: SampleWorkshop
+) -> None:
+    """Same readings, but foiled: the gap is 15 mm a side, so the window is 790 x 1390. The
+    800 x 1400 sent is the white size, as if the colour changed after measuring."""
+    log_in(api, shop_a.email)
+    quote = new_quote(api)
+    body = revision_body()
+    body["positions"][0]["colour"] = "foil_one_side"
+
+    saved = api.put(f"{API}/quotes/{quote['id']}/revisions/1", json=body)
+
+    # Either way is right: refuse and name the window, or keep the size the readings give.
+    if saved.status_code == 422:
+        assert "P1" in saved.json()["detail"]
+    else:
+        p1 = saved.json()["revision"]["positions"][0]
+        assert (p1["width_mm"], p1["height_mm"]) == (790, 1390)
+
+
+def test_readings_outside_the_gap_table_are_refused_when_saved(
+    api: TestClient, shop_a: SampleWorkshop
+) -> None:
+    """An opening wider than 3500 mm has no installation gap, so there is no window size."""
+    log_in(api, shop_a.email)
+    quote = new_quote(api)
+    body = revision_body()
+    body["positions"][0]["readings"]["widths"] = [3600, 3600, 3600]
+
+    saved = api.put(f"{API}/quotes/{quote['id']}/revisions/1", json=body)
+
+    assert saved.status_code == 422
+    assert saved.headers["content-type"] == "application/problem+json"
+
+
 def test_preview_cuts_one_position(api: TestClient, shop_a: SampleWorkshop) -> None:
     log_in(api, shop_a.email)
     position = revision_body()["positions"][0]
@@ -918,6 +972,93 @@ def test_new_quotes_are_numbered_per_workshop(
     assert svc.next_number(Scoped(db, shop_a.workshop.id), today().year).endswith("0002")
 
 
+def test_the_status_filter_looks_past_the_newest_quotes(
+    api: TestClient, db: Session, shop_a: SampleWorkshop, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """The list shows at most ``LIST_LIMIT`` quotes; a filter must pick them from every quote,
+    not from the newest few. Here the limit is 2 and the one accepted quote is the oldest."""
+    log_in(api, shop_a.email)
+    oldest = new_quote(api)
+    new_quote(api)
+    new_quote(api)
+    accepted = Scoped(db, shop_a.workshop.id).get(Quote, uuid.UUID(oldest["id"]))
+    accepted.status = "accepted"
+    db.commit()
+    monkeypatch.setattr(routes_quotes, "LIST_LIMIT", 2)
+
+    assert len(api.get(f"{API}/quotes").json()) == 2
+    found = api.get(f"{API}/quotes", params={"status_filter": "accepted"}).json()
+    assert [q["number"] for q in found] == [oldest["number"]]
+    drafts = api.get(f"{API}/quotes", params={"status_filter": "draft"}).json()
+    assert len(drafts) == 2
+    assert all(q["status"] == "draft" for q in drafts)
+
+
+def _wait_for_a_lock_wait(engine: Engine, worker: threading.Thread) -> None:
+    """Until another connection is waiting on a lock (or the worker has already finished)."""
+    query = text(
+        "SELECT count(*) FROM pg_stat_activity "
+        "WHERE datname = current_database() AND wait_event_type = 'Lock'"
+    )
+    deadline = time.monotonic() + 10
+    with engine.connect() as watcher:
+        while worker.is_alive() and time.monotonic() < deadline:
+            if watcher.scalar(query):
+                return
+            time.sleep(0.05)
+    # Without a wait seen, the second may have run after the first: the test would prove nothing.
+    assert not worker.is_alive(), "the second connection never waited on the first"
+
+
+def test_two_quotes_created_at_once_get_the_next_numbers(db_engine: Engine) -> None:
+    """Two people create a quote in one workshop at the same moment: the second waits for the
+    first and takes the next number, instead of failing on the unique quote number.
+
+    Two real connections are needed, so this sample workshop is committed and deleted after.
+    """
+    with Session(db_engine) as setup:
+        workshop, _ = demo.seed_demo(
+            setup, today(), PASSWORD, "race@example.invalid", is_demo=False
+        )
+        setup.commit()
+        shop = Scoped(setup, workshop.id)
+        client, user = shop.first(Client), shop.first(User)
+        sheet = shop.first(SystemSheetVersion, SystemSheetVersion.status == "published")
+        assert client is not None
+        assert user is not None
+        assert sheet is not None
+        ids = (client.id, sheet.profile_system_id, user.id)
+
+    first, second = Session(db_engine), Session(db_engine)
+    found: dict[str, object] = {}
+
+    def create_the_second() -> None:
+        try:
+            second.execute(text("SET lock_timeout = '10s'"))
+            found["number"] = svc.create_quote(Scoped(second, workshop.id), *ids, today()).number
+            second.commit()
+        except Exception as error:  # reported by the assertions below
+            found["error"] = error
+
+    try:
+        number = svc.create_quote(Scoped(first, workshop.id), *ids, today()).number
+        worker = threading.Thread(target=create_the_second)
+        worker.start()
+        _wait_for_a_lock_wait(db_engine, worker)  # the second is now waiting on the first
+        first.commit()
+        worker.join(timeout=15)
+    finally:
+        first.close()
+        second.close()
+        with Session(db_engine) as cleanup:
+            demo.delete_workshops(cleanup, [workshop.id])
+            cleanup.commit()
+
+    assert "error" not in found, found.get("error")
+    year = today().year
+    assert (number, found["number"]) == (f"{year}-0001", f"{year}-0002")
+
+
 # --- setup: checklist, starter prices, drafts, CSV, sheet editor --------------------------------
 
 
@@ -989,6 +1130,50 @@ def test_starter_prices_only_fit_a_euro_workshop(api: TestClient, db: Session) -
 
 def strip_ids(entries: list[dict[str, Any]]) -> list[dict[str, Any]]:
     return [{k: v for k, v in e.items() if k != "id"} for e in entries]
+
+
+def test_price_list_entries_come_back_in_a_stable_order(
+    api: TestClient, shop_a: SampleWorkshop
+) -> None:
+    """By kind, then item, then colour, whatever order they were stored in. The app offers the
+    first glass of the list as a new window's default, so the order must not depend on where
+    the database happens to keep the rows."""
+    log_in(api, shop_a.email)
+    supplier = api.get(f"{API}/suppliers").json()[0]["id"]
+    draft = api.post(f"{API}/price-lists/drafts", json={}).json()
+
+    def entry(kind: str, ref: str, colour: str | None = None) -> dict[str, Any]:
+        unit = "m2" if kind == "glass" else "piece"
+        return {
+            "item_kind": kind,
+            "item_ref": ref,
+            "colour": colour,
+            "supplier_id": supplier,
+            "unit": unit,
+            "amount_cents": 100,
+            "quoted_on": str(today()),
+        }
+
+    stored = [
+        entry("glass", "sample-z"),
+        entry("consumables", "pvc"),
+        entry("glass", "sample-a"),
+        entry("sill", "sample", "white"),
+        entry("glass", "sample-m"),
+        entry("sill", "sample", "foil_one_side"),
+    ]
+    put = api.put(f"{API}/price-lists/{draft['id']}/entries", json={"entries": stored})
+    assert put.status_code == 200, put.text
+
+    listed = api.get(f"{API}/price-lists/{draft['id']}").json()["entries"]
+    assert [(e["item_kind"], e["item_ref"], e["colour"]) for e in listed] == [
+        ("consumables", "pvc", None),
+        ("glass", "sample-a", None),
+        ("glass", "sample-m", None),
+        ("glass", "sample-z", None),
+        ("sill", "sample", "foil_one_side"),
+        ("sill", "sample", "white"),
+    ]
 
 
 def test_a_draft_price_list_is_never_used_until_it_is_published(

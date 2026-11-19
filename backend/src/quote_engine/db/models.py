@@ -203,8 +203,12 @@ class PriceListVersion(WorkshopScoped, Base):
     status: Mapped[str] = mapped_column(String(SHORT), default=PUBLISHED, server_default=PUBLISHED)
     # Orders two lists valid from the same day: the one published last is in use.
     published_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), default=None)
+    # A full sort key: the app offers the first glass as a new window's default, and the editor
+    # and the CSV must list the same prices in the same order every time.
     entries: Mapped[list["PriceEntry"]] = relationship(
-        back_populates="version", cascade="all, delete-orphan", order_by="PriceEntry.item_kind"
+        back_populates="version",
+        cascade="all, delete-orphan",
+        order_by="[PriceEntry.item_kind, PriceEntry.item_ref, PriceEntry.colour]",
     )
 
 

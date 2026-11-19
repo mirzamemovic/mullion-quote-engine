@@ -17,12 +17,14 @@ from quote_engine.api.schemas import InviteAcceptIn, PositionIn, RevisionIn, Wor
 from quote_engine.db.models import Client, Session
 from quote_engine.db.repository import NotFoundError
 from quote_engine.engine.errors import InvalidInput, MissingConstant, MissingPrice
+from quote_engine.engine.measuring import Measurement, measure_opening
 from quote_engine.engine.model import Colour
 from quote_engine.engine.rules.registry import TYPES
+from quote_engine.engine.units import Mm
 from quote_engine.export_openapi import schema_text
 from quote_engine.main import create_app
 from quote_engine.services import auth, demo, demo_catalogue, sandbox, workshops
-from quote_engine.services.quotes import QuoteError
+from quote_engine.services.quotes import QuoteError, stored_size
 
 # --- problem details ----------------------------------------------------------------------------
 
@@ -60,6 +62,18 @@ def test_errors_are_problem_json(error: Exception, status: int, title: str) -> N
     assert response.headers["content-type"] == "application/problem+json"
     assert response.json()["title"] == title
     assert response.json()["status"] == status
+
+
+def test_an_unexpected_error_is_problem_json_and_says_nothing_about_its_cause() -> None:
+    cause = "sample internal detail: column quotes.number"
+    client = TestClient(app_raising(RuntimeError(cause)).app, raise_server_exceptions=False)
+
+    response = client.get("/boom")
+
+    assert response.status_code == 500
+    assert response.headers["content-type"] == "application/problem+json"
+    assert response.json()["title"] == "unexpected error"
+    assert "column" not in response.text
 
 
 def test_not_found_does_not_echo_the_id() -> None:
@@ -126,6 +140,29 @@ def test_position_limits(changes: dict[str, object]) -> None:
 
 def test_a_valid_position_passes() -> None:
     assert PositionIn.model_validate(position()).width_mm == 800
+
+
+def _measured_800_by_1400() -> Measurement:
+    """Readings that give an 800 x 1400 white window: 820 - 2 x 10 and 1420 - 2 x 10."""
+    return measure_opening(
+        [Mm(820), Mm(822), Mm(821)], [Mm(1420), Mm(1421), Mm(1420)], Colour.WHITE
+    )
+
+
+def test_a_size_that_agrees_with_the_readings_is_kept() -> None:
+    assert stored_size("P1", (800, 1400), _measured_800_by_1400()) == (800, 1400)
+
+
+@pytest.mark.xfail(reason="waits for Mirza: stored_size in services/quotes.py", strict=False)
+@pytest.mark.parametrize("sent", [(790, 1400), (800, 1410), (1200, 1200)])
+def test_a_size_the_readings_contradict_is_never_kept(sent: tuple[int, int]) -> None:
+    outcome: object
+    try:
+        outcome = stored_size("P7", sent, _measured_800_by_1400())
+    except InvalidInput as error:
+        outcome = str(error)
+    # Either way is right: keep the measured size, or refuse and name the window.
+    assert outcome == (800, 1400) or (isinstance(outcome, str) and "P7" in outcome)
 
 
 def test_revision_refs_must_be_unique_and_a_discount_is_one_kind() -> None:

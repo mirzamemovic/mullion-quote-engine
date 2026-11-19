@@ -14,6 +14,7 @@ from quote_engine.api.schemas import (
     MeasureOut,
     PaymentIn,
     PaymentOut,
+    PositionIn,
     PreviewIn,
     PreviewOut,
     QuoteCreate,
@@ -34,6 +35,7 @@ from quote_engine.services import calculation, documents
 from quote_engine.services import quotes as svc
 
 router = APIRouter(tags=["quotes"])
+LIST_LIMIT = 200  # the quotes list shows the newest this many that match
 
 
 def today() -> date:
@@ -81,7 +83,13 @@ def list_quotes(a: LoggedIn, search: str = "", status_filter: str = "") -> list[
     if search.strip():
         like = f"%{search.strip()[:50]}%"
         query = query.where(or_(Quote.number.ilike(like), Client.name.ilike(like)))
-    rows = a.db.session.scalars(query.order_by(Quote.number.desc()).limit(200)).all()
+    if status_filter:
+        # Filter before the limit, or older matches drop out. "expired" is never stored: it is a
+        # sent quote past its validity, told apart from a live one below.
+        query = query.where(
+            Quote.status == ("sent" if status_filter == "expired" else status_filter)
+        )
+    rows = a.db.session.scalars(query.order_by(Quote.number.desc()).limit(LIST_LIMIT)).all()
     found = [_summary(a.db, q) for q in rows]
     return [q for q in found if not status_filter or q.status == status_filter]
 
@@ -120,16 +128,7 @@ def update_revision(quote_id: uuid.UUID, number: int, body: RevisionIn, a: Logge
         discount_bp=body.discount_bp,
         transport_km=body.transport_km,
         valid_days=body.valid_days,
-        positions=[
-            {
-                **p.model_dump(exclude={"readings", "installation", "openings", "colour"}),
-                "colour": p.colour.value,
-                "openings": [o.value for o in p.openings],
-                "readings": p.readings.model_dump() if p.readings else None,
-                "installation": p.installation.model_dump(),
-            }
-            for p in body.positions
-        ],
+        positions=[_stored_position(p) for p in body.positions],
         extras=[
             {
                 **e.model_dump(exclude={"kind", "colour"}),
@@ -141,6 +140,26 @@ def update_revision(quote_id: uuid.UUID, number: int, body: RevisionIn, a: Logge
     )
     svc.replace_content(a.db, rev, content, a.user.id)
     return _detail(a.db, quote)
+
+
+def _stored_position(p: PositionIn) -> dict[str, Any]:
+    """A position as the database keeps it. A measured window's size is checked here against what
+    its readings give, so the size priced and the readings on record always agree; readings the
+    gap table cannot take are refused now instead of failing at the next calculation."""
+    size = (p.width_mm, p.height_mm)
+    if p.readings:
+        widths, heights = p.readings.widths, p.readings.heights
+        measured = measure_opening([Mm(v) for v in widths], [Mm(v) for v in heights], p.colour)
+        size = svc.stored_size(p.ref, size, measured)
+    return {
+        **p.model_dump(exclude={"readings", "installation", "openings", "colour"}),
+        "width_mm": size[0],
+        "height_mm": size[1],
+        "colour": p.colour.value,
+        "openings": [o.value for o in p.openings],
+        "readings": p.readings.model_dump() if p.readings else None,
+        "installation": p.installation.model_dump(),
+    }
 
 
 @router.get("/quotes/{quote_id}/revisions/{first}/diff/{second}")
@@ -255,12 +274,13 @@ def preview(body: PreviewIn, a: LoggedIn) -> PreviewOut:
     sheet = svc.current_sheet(a.db, body.profile_system_id)
     constants = system_constants_from_mapping(sheet.constants)
     p = body.position
+    stored = _stored_position(p)  # the size a save would keep, so preview and save agree
     spec = calculation.position_spec(
         _position_row(
             p.ref,
             p.construction_type,
-            p.width_mm,
-            p.height_mm,
+            stored["width_mm"],
+            stored["height_mm"],
             p.qty,
             p.colour.value,
             p.glass_build,
