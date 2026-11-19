@@ -1,5 +1,7 @@
 # Mjera (PVC Quote Engine): complete project documentation
 
+> **Archived snapshot of 15 November 2026, out of date.** Kept for its worked examples and glossary. Since then the app was renamed Mullion, became multi-workshop, gained PDFs and the admin screens, and its database tests run on PostgreSQL. For the current state read the [README](../../README.md) and [`docs/PROGRESS.md`](../PROGRESS.md).
+
 > **What this file is.** One document that explains the whole project: the business it serves, the calculation engine, the code, the design, the database, security and the current state. A developer who has never opened the repository should be able to understand the project from this file alone.
 >
 > **Snapshot.** Written on 15 November 2026 from the source code on branch `feat/m8-frontend` (latest commit `99eeb86`). The worked examples were produced by running the real engine (`services/demo_catalogue.calculate`) on the demo catalogue; they are not hand-made. If this file and the code ever disagree, the code is right and this file is out of date.
