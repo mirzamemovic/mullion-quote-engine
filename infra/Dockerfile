@@ -10,7 +10,7 @@ COPY frontend/ ./
 RUN npm run build
 
 
-FROM python:3.13-slim AS runtime
+FROM python:3.15-slim AS runtime
 
 COPY --from=ghcr.io/astral-sh/uv:0.13.7 /uv /bin/uv
 
